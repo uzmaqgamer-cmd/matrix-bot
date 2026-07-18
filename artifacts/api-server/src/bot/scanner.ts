@@ -81,7 +81,18 @@ export async function sendSignal(params: {
   }
 }
 
-export async function runFullScan() {
+// Last scan summary for /scan command
+export let lastScanSummary: {
+  startedAt: number;
+  finishedAt: number | null;
+  scanned: number;
+  total: number;
+  watchlistCount: number;
+  signalsSent: number;
+  inProgress: boolean;
+} = { startedAt: 0, finishedAt: null, scanned: 0, total: 0, watchlistCount: 0, signalsSent: 0, inProgress: false };
+
+export async function runFullScan(silent = false) {
   const state = loadState();
   if (!state.signalsEnabled) return;
 
@@ -95,8 +106,21 @@ export async function runFullScan() {
 
   console.log(`[scanner] Full scan: ${symbols.length} pairs @ ${new Date().toISOString()}`);
 
+  lastScanSummary = {
+    startedAt: Date.now(),
+    finishedAt: null,
+    scanned: 0,
+    total: symbols.length,
+    watchlistCount: 0,
+    signalsSent: 0,
+    inProgress: true,
+  };
+
+  let signalsSent = 0;
+
   for (const symbol of symbols) {
     const matrixRow = await scanSymbol(symbol);
+    lastScanSummary.scanned++;
     if (!matrixRow) continue;
 
     const freshState = loadState();
@@ -113,7 +137,29 @@ export async function runFullScan() {
         originRow: action.originRow,
         originPriority: action.originPriority,
       });
+      signalsSent++;
     }
+  }
+
+  const finalState = loadState();
+  lastScanSummary.finishedAt = Date.now();
+  lastScanSummary.watchlistCount = Object.keys(finalState.watchlist).length;
+  lastScanSummary.signalsSent = signalsSent;
+  lastScanSummary.inProgress = false;
+
+  const elapsed = ((lastScanSummary.finishedAt - lastScanSummary.startedAt) / 1000).toFixed(1);
+  console.log(`[scanner] Full scan done: ${symbols.length} pairs in ${elapsed}s | watchlist: ${lastScanSummary.watchlistCount} | signals: ${signalsSent}`);
+
+  // Send summary to Telegram (non-silent mode or if signals were found)
+  if (!silent && telegramRef && adminChatId && signalsSent === 0) {
+    try {
+      await telegramRef.sendMessage(
+        adminChatId,
+        `🔍 <b>Scan complete</b> — ${symbols.length} pairs in ${elapsed}s\n` +
+        `Radar: <b>${lastScanSummary.watchlistCount}</b> diverging  |  Signals sent: <b>${signalsSent}</b>`,
+        { parse_mode: 'HTML' }
+      );
+    } catch { /* non-critical */ }
   }
 }
 

@@ -9,43 +9,145 @@
       "row": 16,
       "priority": "MEDIUM",
       "addedAt": 1784411169568,
-      "cyclesWatched": 7
+      "cyclesWatched": 12
     },
     "LTCUSDT": {
       "row": 20,
       "priority": "MEDIUM",
       "addedAt": 1784411171206,
-      "cyclesWatched": 7
+      "cyclesWatched": 12
     },
     "USUSDT": {
       "row": 16,
       "priority": "HIGH",
       "addedAt": 1784411172825,
-      "cyclesWatched": 7
+      "cyclesWatched": 12
     },
     "DEXEUSDT": {
       "row": 25,
       "priority": "MEDIUM",
       "addedAt": 1784411173910,
-      "cyclesWatched": 7
+      "cyclesWatched": 12
     },
     "REUSDT": {
       "row": 9,
       "priority": "MEDIUM",
       "addedAt": 1784411174177,
-      "cyclesWatched": 7
+      "cyclesWatched": 12
     },
     "TOSHIUSDT": {
       "row": 19,
       "priority": "HIGH",
       "addedAt": 1784411175794,
-      "cyclesWatched": 7
+      "cyclesWatched": 12
     },
     "TRXUSDT": {
       "row": 25,
       "priority": "MEDIUM",
       "addedAt": 1784411177400,
-      "cyclesWatched": 7
+      "cyclesWatched": 12
+    },
+    "BILLUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784411851129,
+      "cyclesWatched": 0
+    },
+    "TLMUSDT": {
+      "row": 9,
+      "priority": "MEDIUM",
+      "addedAt": 1784411855361,
+      "cyclesWatched": 0
+    },
+    "AEROUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784411855512,
+      "cyclesWatched": 0
+    },
+    "VANRYUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784411856075,
+      "cyclesWatched": 0
+    },
+    "RAVEUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784411857962,
+      "cyclesWatched": 0
+    },
+    "ARXUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784411859401,
+      "cyclesWatched": 0
+    },
+    "SPELLUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784411860140,
+      "cyclesWatched": 0
+    },
+    "AERGOUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784411860594,
+      "cyclesWatched": 0
+    },
+    "BULLAUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784411862941,
+      "cyclesWatched": 0
+    },
+    "DOODUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784411863090,
+      "cyclesWatched": 0
+    },
+    "ICPUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784411863384,
+      "cyclesWatched": 0
+    },
+    "MANTRAUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784411863824,
+      "cyclesWatched": 0
+    },
+    "NEOUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784411864126,
+      "cyclesWatched": 0
+    },
+    "MEWUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784411865310,
+      "cyclesWatched": 0
+    },
+    "MOODENGUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784411868288,
+      "cyclesWatched": 0
+    },
+    "TREEUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784411869458,
+      "cyclesWatched": 0
+    },
+    "FLOCKUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784411869753,
+      "cyclesWatched": 0
     }
   },
   "totalSent": 0,

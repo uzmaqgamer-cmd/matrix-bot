@@ -4,7 +4,7 @@ import {
   formatWinRate, formatDailyResults, formatActiveSignals,
   formatTestResults, formatRadar, fmtPrice, esc,
 } from './formatter.js';
-import { runFullScan, runWatchlistScan, initScanner, sendSignal, scanSymbol, getRadarData } from './scanner.js';
+import { runFullScan, runWatchlistScan, initScanner, sendSignal, scanSymbol, getRadarData, lastScanSummary } from './scanner.js';
 import { checkActiveSignals, initTracker } from './tracker.js';
 import { runOfflineTests } from './tests.js';
 import { MATRIX } from './matrix.js';
@@ -99,6 +99,69 @@ bot.command('active', async (ctx) => {
 bot.command('radar', async (ctx) => {
   if (!isAdmin(ctx)) return;
   await handleRadar(ctx);
+});
+
+bot.command('scan', async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  const s = lastScanSummary;
+  const state = loadState();
+
+  if (s.inProgress) {
+    const pct = s.total > 0 ? ((s.scanned / s.total) * 100).toFixed(0) : '0';
+    await ctx.reply(
+      `⏳ <b>Scan in progress…</b>\n` +
+      `Checked ${s.scanned}/${s.total} pairs (${pct}%)\n` +
+      `Radar so far: ${Object.keys(state.watchlist).length} diverging`,
+      { parse_mode: 'HTML' }
+    );
+    return;
+  }
+
+  if (s.startedAt === 0) {
+    await ctx.reply(
+      `📡 <b>No scan run yet.</b>\n` +
+      `Signals ${state.signalsEnabled ? 'are ON' : 'are OFF — tap /start to enable'}.\n` +
+      `First full scan fires 5 min after enabling.\n\n` +
+      `Use /forcescan to run one immediately.`,
+      { parse_mode: 'HTML' }
+    );
+    return;
+  }
+
+  const elapsed = s.finishedAt
+    ? ((s.finishedAt - s.startedAt) / 1000).toFixed(1)
+    : '—';
+  const ago = s.finishedAt
+    ? Math.round((Date.now() - s.finishedAt) / 1000)
+    : null;
+  const agoStr = ago !== null
+    ? ago < 60 ? `${ago}s ago` : `${Math.round(ago / 60)}m ago`
+    : '—';
+
+  await ctx.reply(
+    `📡 <b>Last Scan Report</b>\n` +
+    `━━━━━━━━━━━━━━━━━━\n` +
+    `Finished: ${agoStr}\n` +
+    `Pairs scanned: <b>${s.scanned}</b> / ${s.total}\n` +
+    `Time taken: ${elapsed}s\n` +
+    `━━━━━━━━━━━━━━━━━━\n` +
+    `🎯 Radar (diverging): <b>${s.watchlistCount}</b>\n` +
+    `📤 Signals sent: <b>${s.signalsSent}</b>\n` +
+    `━━━━━━━━━━━━━━━━━━\n` +
+    `<i>Next full scan in ~5 min. Use /forcescan to run now.</i>`,
+    { parse_mode: 'HTML' }
+  );
+});
+
+bot.command('forcescan', async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  const state = loadState();
+  if (!state.signalsEnabled) {
+    await ctx.reply('⚠️ Signals are OFF. Enable them first via /start.', { parse_mode: 'HTML' });
+    return;
+  }
+  await ctx.reply('🔍 <b>Manual scan started</b> — scanning 600 pairs now. I\'ll update you when done.', { parse_mode: 'HTML' });
+  runFullScan(false).catch(console.error);
 });
 
 bot.command('test', async (ctx) => {
