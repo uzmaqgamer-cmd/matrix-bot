@@ -3,6 +3,9 @@ export type Outlook = 'PUMP' | 'DUMP' | 'STABLE' | 'BIG_COMING';
 export type SignalDirection = 'LONG' | 'SHORT';
 export type SignalStatus = 'pending' | 'accepted' | 'ignored' | 'tp_hit' | 'sl_hit' | 'expired';
 
+/** Which conviction tier determined the TP multiplier. */
+export type TpTier = 'CLEAN' | 'HIGH_DIVERGENCE' | 'MEDIUM_DIVERGENCE';
+
 export interface MatrixRow {
   row: number;
   oi: Direction;
@@ -26,8 +29,10 @@ export interface Signal {
   entry: number;
   tp: number;
   sl: number;
-  rr: number;           // risk/reward ratio
+  rr: number;           // risk/reward ratio (floats: 2.0 | 2.5 | 3.5)
   atr: number;
+  tpMultiplier: number; // 2.0 | 2.5 | 3.5
+  tpTier: TpTier;       // which conviction tier fired
   matrixRow: number;
   matrixMeaning: string;
   originRow: number;
@@ -36,6 +41,8 @@ export interface Signal {
   createdAt: number;
   resolvedAt?: number;
   messageId?: number;   // telegram message ID for editing
+  currentPrice?: number; // last known market price (updated by tracker every 30s)
+  currentPriceAt?: number; // timestamp of last price update
 }
 
 export interface DailyStats {

@@ -1,158 +1,361 @@
 {
   "signalsEnabled": true,
-  "activeSignals": [],
-  "pendingSignals": [],
-  "completedSignals": [],
-  "dailyStats": [],
-  "watchlist": {
-    "HOMEUSDT": {
-      "row": 16,
-      "priority": "MEDIUM",
-      "addedAt": 1784411169568,
-      "cyclesWatched": 12
+  "activeSignals": [
+    {
+      "id": "mrqx0iltn00x",
+      "symbol": "LUMIAUSDT",
+      "direction": "SHORT",
+      "entry": 0.07262,
+      "tp": 0.0712829,
+      "sl": 0.0732886,
+      "rr": 2,
+      "atr": 0.0006686,
+      "matrixRow": 18,
+      "matrixMeaning": "quiet control by shorts",
+      "originRow": 27,
+      "originPriority": "MEDIUM",
+      "status": "accepted",
+      "createdAt": 1784412305201,
+      "messageId": 26
     },
-    "LTCUSDT": {
+    {
+      "id": "mrqx311jv8w8",
+      "symbol": "SLXUSDT",
+      "direction": "LONG",
+      "entry": 0.1094,
+      "tp": 0.11127,
+      "sl": 0.108465,
+      "rr": 2,
+      "atr": 0.000935,
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "accepted",
+      "createdAt": 1784412422407,
+      "messageId": 28
+    },
+    {
+      "id": "mrqx80e1u024",
+      "symbol": "ICPUSDT",
+      "direction": "LONG",
+      "entry": 2.179,
+      "tp": 2.19207,
+      "sl": 2.17246,
+      "rr": 2,
+      "atr": 0.006537,
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "accepted",
+      "createdAt": 1784412654841,
+      "messageId": 31
+    },
+    {
+      "id": "mrqx896xtmxy",
+      "symbol": "NAORISUSDT",
+      "direction": "LONG",
+      "entry": 0.03985,
+      "tp": 0.0404643,
+      "sl": 0.0395429,
+      "rr": 2,
+      "atr": 0.0003071,
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "accepted",
+      "createdAt": 1784412666249,
+      "messageId": 34
+    },
+    {
+      "id": "mrqxekprxyqq",
+      "symbol": "DEXEUSDT",
+      "direction": "LONG",
+      "entry": 35.45,
+      "tp": 35.8757,
+      "sl": 35.2371,
+      "rr": 2,
+      "atr": 0.2129,
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "accepted",
+      "createdAt": 1784412961119,
+      "messageId": 42
+    }
+  ],
+  "pendingSignals": [
+    {
+      "id": "mrqxeg5byf8b",
+      "symbol": "XVSUSDT",
+      "direction": "LONG",
+      "entry": 2.832,
+      "tp": 2.85929,
+      "sl": 2.81836,
+      "rr": 2,
+      "atr": 0.01364,
+      "matrixRow": 2,
+      "matrixMeaning": "healthy",
+      "originRow": 20,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784412955199,
+      "messageId": 40
+    },
+    {
+      "id": "mrqxejjwdhy4",
+      "symbol": "ONEUSDT",
+      "direction": "SHORT",
+      "entry": 0.001119,
+      "tp": 0.00110643,
+      "sl": 0.00112529,
+      "rr": 2,
+      "atr": 0.000006286,
+      "matrixRow": 11,
+      "matrixMeaning": "healthy downtrend",
+      "originRow": 20,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784412959612,
+      "messageId": 41
+    }
+  ],
+  "completedSignals": [
+    {
+      "id": "mrqx7yy8lgml",
+      "symbol": "BILLUSDT",
+      "direction": "LONG",
+      "entry": 0.0254,
+      "tp": 0.0262086,
+      "sl": 0.0249957,
+      "rr": 2,
+      "atr": 0.0004043,
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "sl_hit",
+      "createdAt": 1784412652976,
+      "messageId": 30,
+      "resolvedAt": 1784412923142
+    }
+  ],
+  "dailyStats": [
+    {
+      "date": "2026-07-18",
+      "sent": 8,
+      "accepted": 6,
+      "ignored": 0,
+      "tpHit": 0,
+      "slHit": 1
+    }
+  ],
+  "watchlist": {
+    "WOOUSDT": {
       "row": 20,
       "priority": "MEDIUM",
-      "addedAt": 1784411171206,
+      "addedAt": 1784412213715,
+      "cyclesWatched": 17
+    },
+    "HOMEUSDT": {
+      "row": 10,
+      "priority": "HIGH",
+      "addedAt": 1784412485482,
       "cyclesWatched": 12
     },
     "USUSDT": {
       "row": 16,
       "priority": "HIGH",
-      "addedAt": 1784411172825,
-      "cyclesWatched": 12
-    },
-    "DEXEUSDT": {
-      "row": 25,
-      "priority": "MEDIUM",
-      "addedAt": 1784411173910,
+      "addedAt": 1784412488537,
       "cyclesWatched": 12
     },
     "REUSDT": {
-      "row": 9,
+      "row": 27,
       "priority": "MEDIUM",
-      "addedAt": 1784411174177,
+      "addedAt": 1784412490872,
       "cyclesWatched": 12
     },
     "TOSHIUSDT": {
-      "row": 19,
+      "row": 16,
       "priority": "HIGH",
-      "addedAt": 1784411175794,
+      "addedAt": 1784412492612,
       "cyclesWatched": 12
     },
     "TRXUSDT": {
       "row": 25,
       "priority": "MEDIUM",
-      "addedAt": 1784411177400,
+      "addedAt": 1784412494363,
       "cyclesWatched": 12
+    },
+    "SLXUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784412504032,
+      "cyclesWatched": 12
+    },
+    "龙虾USDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784412569529,
+      "cyclesWatched": 11
     },
     "BILLUSDT": {
       "row": 25,
       "priority": "MEDIUM",
-      "addedAt": 1784411851129,
+      "addedAt": 1784412784244,
+      "cyclesWatched": 6
+    },
+    "LUMIAUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784412788930,
+      "cyclesWatched": 6
+    },
+    "ESPORTSUSDT": {
+      "row": 15,
+      "priority": "MEDIUM",
+      "addedAt": 1784413073919,
+      "cyclesWatched": 0
+    },
+    "1000BONKUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784413076867,
       "cyclesWatched": 0
     },
     "TLMUSDT": {
       "row": 9,
       "priority": "MEDIUM",
-      "addedAt": 1784411855361,
+      "addedAt": 1784413087725,
       "cyclesWatched": 0
     },
     "AEROUSDT": {
       "row": 27,
       "priority": "MEDIUM",
-      "addedAt": 1784411855512,
+      "addedAt": 1784413087872,
       "cyclesWatched": 0
     },
     "VANRYUSDT": {
       "row": 27,
       "priority": "MEDIUM",
-      "addedAt": 1784411856075,
+      "addedAt": 1784413088170,
       "cyclesWatched": 0
     },
     "RAVEUSDT": {
-      "row": 27,
+      "row": 9,
       "priority": "MEDIUM",
-      "addedAt": 1784411857962,
+      "addedAt": 1784413090472,
       "cyclesWatched": 0
     },
     "ARXUSDT": {
-      "row": 27,
-      "priority": "MEDIUM",
-      "addedAt": 1784411859401,
+      "row": 21,
+      "priority": "HIGH",
+      "addedAt": 1784413091345,
       "cyclesWatched": 0
     },
     "SPELLUSDT": {
-      "row": 27,
+      "row": 21,
+      "priority": "HIGH",
+      "addedAt": 1784413093114,
+      "cyclesWatched": 0
+    },
+    "SKYUSDT": {
+      "row": 20,
       "priority": "MEDIUM",
-      "addedAt": 1784411860140,
+      "addedAt": 1784413093263,
       "cyclesWatched": 0
     },
     "AERGOUSDT": {
       "row": 27,
       "priority": "MEDIUM",
-      "addedAt": 1784411860594,
+      "addedAt": 1784413093569,
+      "cyclesWatched": 0
+    },
+    "DOODUSDT": {
+      "row": 22,
+      "priority": "MEDIUM",
+      "addedAt": 1784413095045,
       "cyclesWatched": 0
     },
     "BULLAUSDT": {
       "row": 25,
       "priority": "MEDIUM",
-      "addedAt": 1784411862941,
-      "cyclesWatched": 0
-    },
-    "DOODUSDT": {
-      "row": 25,
-      "priority": "MEDIUM",
-      "addedAt": 1784411863090,
+      "addedAt": 1784413095192,
       "cyclesWatched": 0
     },
     "ICPUSDT": {
       "row": 25,
       "priority": "MEDIUM",
-      "addedAt": 1784411863384,
+      "addedAt": 1784413095336,
       "cyclesWatched": 0
     },
     "MANTRAUSDT": {
       "row": 25,
       "priority": "MEDIUM",
-      "addedAt": 1784411863824,
+      "addedAt": 1784413095784,
       "cyclesWatched": 0
     },
     "NEOUSDT": {
       "row": 27,
       "priority": "MEDIUM",
-      "addedAt": 1784411864126,
+      "addedAt": 1784413096303,
       "cyclesWatched": 0
     },
     "MEWUSDT": {
-      "row": 25,
-      "priority": "MEDIUM",
-      "addedAt": 1784411865310,
+      "row": 16,
+      "priority": "HIGH",
+      "addedAt": 1784413097487,
       "cyclesWatched": 0
     },
     "MOODENGUSDT": {
       "row": 25,
       "priority": "MEDIUM",
-      "addedAt": 1784411868288,
+      "addedAt": 1784413100619,
       "cyclesWatched": 0
     },
     "TREEUSDT": {
       "row": 25,
       "priority": "MEDIUM",
-      "addedAt": 1784411869458,
+      "addedAt": 1784413101514,
       "cyclesWatched": 0
     },
     "FLOCKUSDT": {
       "row": 25,
       "priority": "MEDIUM",
-      "addedAt": 1784411869753,
+      "addedAt": 1784413101958,
+      "cyclesWatched": 0
+    },
+    "1000FLOKIUSDT": {
+      "row": 21,
+      "priority": "HIGH",
+      "addedAt": 1784413104298,
+      "cyclesWatched": 0
+    },
+    "TOWNSUSDT": {
+      "row": 20,
+      "priority": "MEDIUM",
+      "addedAt": 1784413107425,
+      "cyclesWatched": 0
+    },
+    "BLESSUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784413110392,
+      "cyclesWatched": 0
+    },
+    "USUALUSDT": {
+      "row": 20,
+      "priority": "MEDIUM",
+      "addedAt": 1784413111578,
       "cyclesWatched": 0
     }
   },
-  "totalSent": 0,
-  "totalAccepted": 0,
+  "totalSent": 8,
+  "totalAccepted": 6,
   "totalIgnored": 0,
   "totalTpHit": 0,
-  "totalSlHit": 0
+  "totalSlHit": 1
 }

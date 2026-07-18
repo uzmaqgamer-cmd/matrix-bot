@@ -25,10 +25,16 @@ export async function checkActiveSignals() {
   if (state.activeSignals.length === 0) return;
 
   const toRemove: string[] = [];
+  let pricesUpdated = false;
 
   for (const signal of state.activeSignals) {
     try {
       const price = await getCurrentPrice(signal.symbol);
+
+      // Always store the latest price for live P&L display
+      signal.currentPrice = price;
+      signal.currentPriceAt = Date.now();
+      pricesUpdated = true;
 
       let hit: 'tp' | 'sl' | null = null;
 
@@ -71,6 +77,10 @@ export async function checkActiveSignals() {
 
   if (toRemove.length > 0) {
     state.activeSignals = state.activeSignals.filter(s => !toRemove.includes(s.id));
+  }
+
+  // Save if prices changed or signals were removed
+  if (pricesUpdated || toRemove.length > 0) {
     saveState(state);
   }
 }
