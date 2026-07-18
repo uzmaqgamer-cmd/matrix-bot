@@ -1,6 +1,6 @@
 import { getCloseSeries, getOpenInterestSeries, getFundingRateSeries, getTopSymbolsByVolume } from './binance.js';
 import { classify } from './classifier.js';
-import { lookupRow } from './matrix.js';
+import { lookupRow, isDivergenceRow } from './matrix.js';
 import { updateWatchlist } from './watchlist.js';
 import { buildSignal } from './signalBuilder.js';
 import { loadState, saveState, getOrCreateDailyStats } from './storage.js';
@@ -8,7 +8,7 @@ import { formatSignalMessage } from './formatter.js';
 import type { Telegram } from 'telegraf';
 import { Markup } from 'telegraf';
 
-const TOP_N = 50; // Scan top 50 by volume (reduces API load)
+const TOP_N = 600;
 const CANDLE_INTERVAL = '15m';
 const OI_PERIOD = '15m';
 const LOOKBACK_CANDLES = 20;
@@ -22,7 +22,7 @@ export function initScanner(telegram: Telegram, chatId: string) {
   adminChatId = chatId;
 }
 
-async function scanSymbol(symbol: string) {
+export async function scanSymbol(symbol: string) {
   try {
     const [priceSeries, oiSeries, fundingSeries] = await Promise.all([
       getCloseSeries(symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES),
@@ -37,22 +37,21 @@ async function scanSymbol(symbol: string) {
   }
 }
 
-async function sendSignal(params: {
+export async function sendSignal(params: {
   symbol: string;
   direction: 'LONG' | 'SHORT';
   matrixRow: number;
   matrixMeaning: string;
   originRow: number;
   originPriority: 'HIGH' | 'MEDIUM';
-}) {
+}, forceSend = false) {
   if (!telegramRef || !adminChatId) return;
 
   const state = loadState();
-  if (!state.signalsEnabled) return;
+  if (!state.signalsEnabled && !forceSend) return;
 
-  // Don't send if already pending a signal for this symbol
+  // Don't send if already pending or active for this symbol
   if (state.pendingSignals.some(s => s.symbol === params.symbol)) return;
-  // Don't send if already active for this symbol
   if (state.activeSignals.some(s => s.symbol === params.symbol)) return;
 
   const signal = await buildSignal(params);
@@ -65,7 +64,7 @@ async function sendSignal(params: {
       Markup.button.callback('❌ Ignore', `ignore_${signal.id}`),
     ]);
     const msg = await telegramRef.sendMessage(adminChatId, text, {
-      parse_mode: 'Markdown',
+      parse_mode: 'HTML',
       reply_markup: keyboard.reply_markup,
     });
     signal.messageId = msg.message_id;
@@ -76,7 +75,7 @@ async function sendSignal(params: {
     getOrCreateDailyStats(state).sent++;
     saveState(state);
 
-    console.log(`[scanner] Signal sent for ${params.symbol} ${params.direction}`);
+    console.log(`[scanner] Signal sent: ${params.symbol} ${params.direction}`);
   } catch (err) {
     console.error('[scanner] Failed to send signal:', err);
   }
@@ -100,8 +99,9 @@ export async function runFullScan() {
     const matrixRow = await scanSymbol(symbol);
     if (!matrixRow) continue;
 
-    const action = updateWatchlist(symbol, matrixRow, state);
-    saveState(state);
+    const freshState = loadState();
+    const action = updateWatchlist(symbol, matrixRow, freshState);
+    saveState(freshState);
 
     if (action.type === 'ESCALATED') {
       const direction = matrixRow.outlook === 'PUMP' ? 'LONG' : 'SHORT';
@@ -130,8 +130,9 @@ export async function runWatchlistScan() {
     const matrixRow = await scanSymbol(symbol);
     if (!matrixRow) continue;
 
-    const action = updateWatchlist(symbol, matrixRow, state);
-    saveState(state);
+    const freshState = loadState();
+    const action = updateWatchlist(symbol, matrixRow, freshState);
+    saveState(freshState);
 
     if (action.type === 'ESCALATED') {
       const direction = matrixRow.outlook === 'PUMP' ? 'LONG' : 'SHORT';
@@ -145,4 +146,24 @@ export async function runWatchlistScan() {
       });
     }
   }
+}
+
+/** Get current radar data — all watchlist pairs sorted by priority then cycles watched. */
+export function getRadarData(state: ReturnType<typeof loadState>) {
+  const entries = Object.entries(state.watchlist)
+    .map(([symbol, entry]) => ({
+      symbol,
+      row: entry.row,
+      priority: entry.priority,
+      cyclesWatched: entry.cyclesWatched,
+      meaning: '',  // filled below
+    }));
+
+  // Sort: HIGH priority first, then by cycles watched (most watched = closest to resolving)
+  entries.sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority === 'HIGH' ? -1 : 1;
+    return b.cyclesWatched - a.cyclesWatched;
+  });
+
+  return entries;
 }

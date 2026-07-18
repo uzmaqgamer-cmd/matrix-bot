@@ -14,7 +14,7 @@ export function initTracker(telegram: Telegram, chatId: string) {
 async function sendAlert(text: string) {
   if (!telegramRef || !adminChatId) return;
   try {
-    await telegramRef.sendMessage(adminChatId, text, { parse_mode: 'Markdown' });
+    await telegramRef.sendMessage(adminChatId, text, { parse_mode: 'HTML' });
   } catch (err) {
     console.error('[tracker] sendAlert failed:', err);
   }

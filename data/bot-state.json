@@ -1,0 +1,56 @@
+{
+  "signalsEnabled": true,
+  "activeSignals": [],
+  "pendingSignals": [],
+  "completedSignals": [],
+  "dailyStats": [],
+  "watchlist": {
+    "HOMEUSDT": {
+      "row": 16,
+      "priority": "MEDIUM",
+      "addedAt": 1784411169568,
+      "cyclesWatched": 7
+    },
+    "LTCUSDT": {
+      "row": 20,
+      "priority": "MEDIUM",
+      "addedAt": 1784411171206,
+      "cyclesWatched": 7
+    },
+    "USUSDT": {
+      "row": 16,
+      "priority": "HIGH",
+      "addedAt": 1784411172825,
+      "cyclesWatched": 7
+    },
+    "DEXEUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784411173910,
+      "cyclesWatched": 7
+    },
+    "REUSDT": {
+      "row": 9,
+      "priority": "MEDIUM",
+      "addedAt": 1784411174177,
+      "cyclesWatched": 7
+    },
+    "TOSHIUSDT": {
+      "row": 19,
+      "priority": "HIGH",
+      "addedAt": 1784411175794,
+      "cyclesWatched": 7
+    },
+    "TRXUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784411177400,
+      "cyclesWatched": 7
+    }
+  },
+  "totalSent": 0,
+  "totalAccepted": 0,
+  "totalIgnored": 0,
+  "totalTpHit": 0,
+  "totalSlHit": 0
+}

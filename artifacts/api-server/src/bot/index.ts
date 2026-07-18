@@ -1,53 +1,60 @@
 import { Telegraf, Markup } from 'telegraf';
 import { loadState, saveState, getOrCreateDailyStats } from './storage.js';
-import { formatWinRate, formatDailyResults, formatActiveSignals, formatSignalMessage } from './formatter.js';
-import { runFullScan, runWatchlistScan, initScanner } from './scanner.js';
+import {
+  formatWinRate, formatDailyResults, formatActiveSignals,
+  formatTestResults, formatRadar, fmtPrice, esc,
+} from './formatter.js';
+import { runFullScan, runWatchlistScan, initScanner, sendSignal, scanSymbol, getRadarData } from './scanner.js';
 import { checkActiveSignals, initTracker } from './tracker.js';
 import { runOfflineTests } from './tests.js';
+import { MATRIX } from './matrix.js';
 
 const BOT_TOKEN = process.env['TELEGRAM_BOT_TOKEN']!;
-const ADMIN_ID = process.env['TELEGRAM_ADMIN_ID'] || process.env['TELEGRAM_CHAT_ID'] || '';
+const ADMIN_ID  = process.env['TELEGRAM_ADMIN_ID'] || process.env['TELEGRAM_CHAT_ID'] || '';
 
-if (!BOT_TOKEN) {
-  throw new Error('TELEGRAM_BOT_TOKEN environment variable is required');
-}
+if (!BOT_TOKEN) throw new Error('TELEGRAM_BOT_TOKEN is required');
 
 const bot = new Telegraf(BOT_TOKEN);
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Guards ───────────────────────────────────────────────────────────────────
 
 function isAdmin(ctx: any): boolean {
   return String(ctx.from?.id) === String(ADMIN_ID);
 }
 
-function signalsToggleKeyboard(enabled: boolean) {
-  const label = enabled ? '🟢 Signals: ON  — tap to disable' : '🔴 Signals: OFF — tap to enable';
+// ─── Main menu ────────────────────────────────────────────────────────────────
+
+function mainKeyboard(enabled: boolean) {
+  const toggleLabel = enabled
+    ? '🟢 Signals: ON  — tap to disable'
+    : '🔴 Signals: OFF — tap to enable';
   return Markup.inlineKeyboard([
-    [Markup.button.callback(label, 'toggle_signals')],
+    [Markup.button.callback(toggleLabel, 'toggle_signals')],
     [
       Markup.button.callback('📋 Active', 'show_active'),
       Markup.button.callback('📊 Win Rate', 'show_winrate'),
       Markup.button.callback('📅 Daily', 'show_daily'),
     ],
-    [Markup.button.callback('🧪 Run Tests', 'run_tests')],
+    [
+      Markup.button.callback('🎯 Radar', 'show_radar'),
+      Markup.button.callback('🧪 Run Tests', 'run_tests'),
+    ],
   ]);
 }
 
 function mainMenuText(state: ReturnType<typeof loadState>): string {
-  const active = state.activeSignals.length;
-  const pending = state.pendingSignals.length;
-  const wr = (state.totalTpHit + state.totalSlHit) === 0
-    ? 'n/a'
-    : `${(state.totalTpHit / (state.totalTpHit + state.totalSlHit) * 100).toFixed(1)}%`;
+  const total = state.totalTpHit + state.totalSlHit;
+  const wr = total === 0 ? 'n/a' : `${(state.totalTpHit / total * 100).toFixed(1)}%`;
   return (
-    `🤖 *Matrix Signal Bot*\n` +
+    `🤖 <b>Matrix Signal Bot</b>\n` +
     `━━━━━━━━━━━━━━━━━━\n` +
-    `Status: ${state.signalsEnabled ? '🟢 Scanning' : '🔴 Paused'}\n` +
-    `Active signals: ${active}/5\n` +
-    `Pending: ${pending}\n` +
+    `Status:  ${state.signalsEnabled ? '🟢 Scanning (600 pairs)' : '🔴 Paused'}\n` +
+    `Active:  ${state.activeSignals.length}/5\n` +
+    `Pending: ${state.pendingSignals.length}\n` +
+    `Radar:   ${Object.keys(state.watchlist).length} pairs diverging\n` +
     `Win rate: ${wr}\n` +
     `━━━━━━━━━━━━━━━━━━\n` +
-    `_OI + Price + Funding Rate matrix scanner_`
+    `<i>OI + Price + Funding Rate matrix scanner</i>`
   );
 }
 
@@ -57,51 +64,51 @@ bot.command('start', async (ctx) => {
   if (!isAdmin(ctx)) return ctx.reply('⛔ Unauthorized.');
   const state = loadState();
   await ctx.reply(mainMenuText(state), {
-    parse_mode: 'Markdown',
-    reply_markup: signalsToggleKeyboard(state.signalsEnabled).reply_markup,
+    parse_mode: 'HTML',
+    reply_markup: mainKeyboard(state.signalsEnabled).reply_markup,
   });
-});
-
-bot.command('winrate', async (ctx) => {
-  if (!isAdmin(ctx)) return;
-  const state = loadState();
-  await ctx.reply(formatWinRate(state), { parse_mode: 'Markdown' });
-});
-
-bot.command('daily', async (ctx) => {
-  if (!isAdmin(ctx)) return;
-  const state = loadState();
-  await ctx.reply(formatDailyResults(state), { parse_mode: 'Markdown' });
-});
-
-bot.command('active', async (ctx) => {
-  if (!isAdmin(ctx)) return;
-  const state = loadState();
-  await ctx.reply(formatActiveSignals(state), { parse_mode: 'Markdown' });
 });
 
 bot.command('status', async (ctx) => {
   if (!isAdmin(ctx)) return;
   const state = loadState();
   await ctx.reply(mainMenuText(state), {
-    parse_mode: 'Markdown',
-    reply_markup: signalsToggleKeyboard(state.signalsEnabled).reply_markup,
+    parse_mode: 'HTML',
+    reply_markup: mainKeyboard(state.signalsEnabled).reply_markup,
   });
+});
+
+bot.command('winrate', async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  const state = loadState();
+  await ctx.reply(formatWinRate(state), { parse_mode: 'HTML' });
+});
+
+bot.command('daily', async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  const state = loadState();
+  await ctx.reply(formatDailyResults(state), { parse_mode: 'HTML' });
+});
+
+bot.command('active', async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  const state = loadState();
+  await ctx.reply(formatActiveSignals(state), { parse_mode: 'HTML' });
+});
+
+bot.command('radar', async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  await handleRadar(ctx);
 });
 
 bot.command('test', async (ctx) => {
   if (!isAdmin(ctx)) return;
   await ctx.reply('🧪 Running offline logic tests...');
   const { results, passed, failed } = runOfflineTests();
-  let msg = `🧪 *Test Results*\n━━━━━━━━━━━━━━━━━━\n`;
-  for (const r of results) {
-    msg += `${r.passed ? '✅' : '❌'} ${r.label}\n`;
-  }
-  msg += `━━━━━━━━━━━━━━━━━━\n${passed} passed, ${failed} failed`;
-  await ctx.reply(msg, { parse_mode: 'Markdown' });
+  await ctx.reply(formatTestResults(results, passed, failed), { parse_mode: 'HTML' });
 });
 
-// ─── Inline button actions ────────────────────────────────────────────────────
+// ─── Toggle ───────────────────────────────────────────────────────────────────
 
 bot.action('toggle_signals', async (ctx) => {
   if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔ Unauthorized');
@@ -109,48 +116,124 @@ bot.action('toggle_signals', async (ctx) => {
   state.signalsEnabled = !state.signalsEnabled;
   saveState(state);
   await ctx.answerCbQuery(state.signalsEnabled ? '🟢 Signals enabled!' : '🔴 Signals disabled');
-  await ctx.editMessageText(mainMenuText(state), {
-    parse_mode: 'Markdown',
-    reply_markup: signalsToggleKeyboard(state.signalsEnabled).reply_markup,
-  });
+  try {
+    await ctx.editMessageText(mainMenuText(state), {
+      parse_mode: 'HTML',
+      reply_markup: mainKeyboard(state.signalsEnabled).reply_markup,
+    });
+  } catch { /* message may be stale */ }
   if (state.signalsEnabled) {
-    // Kick off a scan immediately when enabled
     setImmediate(() => runFullScan().catch(console.error));
   }
 });
 
+// ─── Menu buttons ─────────────────────────────────────────────────────────────
+
 bot.action('show_active', async (ctx) => {
   if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
-  const state = loadState();
   await ctx.answerCbQuery();
-  await ctx.reply(formatActiveSignals(state), { parse_mode: 'Markdown' });
+  const state = loadState();
+  await ctx.reply(formatActiveSignals(state), { parse_mode: 'HTML' });
 });
 
 bot.action('show_winrate', async (ctx) => {
   if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
-  const state = loadState();
   await ctx.answerCbQuery();
-  await ctx.reply(formatWinRate(state), { parse_mode: 'Markdown' });
+  const state = loadState();
+  await ctx.reply(formatWinRate(state), { parse_mode: 'HTML' });
 });
 
 bot.action('show_daily', async (ctx) => {
   if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
-  const state = loadState();
   await ctx.answerCbQuery();
-  await ctx.reply(formatDailyResults(state), { parse_mode: 'Markdown' });
+  const state = loadState();
+  await ctx.reply(formatDailyResults(state), { parse_mode: 'HTML' });
 });
 
 bot.action('run_tests', async (ctx) => {
   if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
   await ctx.answerCbQuery('Running tests...');
   const { results, passed, failed } = runOfflineTests();
-  let msg = `🧪 *Test Results*\n━━━━━━━━━━━━━━━━━━\n`;
-  for (const r of results) msg += `${r.passed ? '✅' : '❌'} ${r.label}\n`;
-  msg += `━━━━━━━━━━━━━━━━━━\n*${passed} passed, ${failed} failed*`;
-  await ctx.reply(msg, { parse_mode: 'Markdown' });
+  await ctx.reply(formatTestResults(results, passed, failed), { parse_mode: 'HTML' });
 });
 
-// ─── Accept / Ignore signal ───────────────────────────────────────────────────
+// ─── Radar ────────────────────────────────────────────────────────────────────
+
+async function handleRadar(ctx: any) {
+  await ctx.answerCbQuery?.();
+  const state = loadState();
+  const radarEntries = getRadarData(state);
+
+  // Enrich with meaning from matrix
+  const enriched = radarEntries.map(e => {
+    const row = MATRIX.find(r => r.row === e.row);
+    return { ...e, meaning: row?.meaning ?? '' };
+  });
+
+  const text = formatRadar(state, enriched.slice(0, 20)); // show top 20
+
+  // Build inline keyboard: "Send Signal" button for top 8 pairs
+  const topPairs = enriched.slice(0, 8);
+  const buttons = topPairs.map(p =>
+    Markup.button.callback(
+      `${p.priority === 'HIGH' ? '🔥' : '⚡'} ${p.symbol}`,
+      `radar_signal_${p.symbol}`
+    )
+  );
+  // Group into rows of 2
+  const rows = [];
+  for (let i = 0; i < buttons.length; i += 2) {
+    rows.push(buttons.slice(i, i + 2));
+  }
+  rows.push([Markup.button.callback('🔄 Refresh', 'show_radar')]);
+  const keyboard = Markup.inlineKeyboard(rows);
+
+  await ctx.reply(text, { parse_mode: 'HTML', reply_markup: keyboard.reply_markup });
+}
+
+bot.action('show_radar', async (ctx) => {
+  if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
+  await handleRadar(ctx);
+});
+
+// Dynamic: fire a manual signal for a radar pair
+bot.action(/^radar_signal_(.+)$/, async (ctx) => {
+  if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
+  const symbol = ctx.match[1];
+  await ctx.answerCbQuery(`Scanning ${symbol}...`);
+
+  const state = loadState();
+  const entry = state.watchlist[symbol];
+  if (!entry) {
+    await ctx.reply(`⚠️ <b>${esc(symbol)}</b> is no longer in the radar (may have resolved).`, { parse_mode: 'HTML' });
+    return;
+  }
+
+  await ctx.reply(`🔍 Scanning <b>${esc(symbol)}</b> and building signal...`, { parse_mode: 'HTML' });
+
+  try {
+    const matrixRow = await scanSymbol(symbol);
+    if (!matrixRow) {
+      await ctx.reply(`⚠️ Could not fetch data for <b>${esc(symbol)}</b>.`, { parse_mode: 'HTML' });
+      return;
+    }
+
+    const direction = matrixRow.outlook === 'DUMP' ? 'SHORT' : 'LONG';
+    await sendSignal({
+      symbol,
+      direction,
+      matrixRow: matrixRow.row,
+      matrixMeaning: matrixRow.meaning,
+      originRow: entry.row,
+      originPriority: entry.priority,
+    }, true /* forceSend */);
+  } catch (err) {
+    console.error('[radar_signal] Error:', err);
+    await ctx.reply(`❌ Failed to build signal for <b>${esc(symbol)}</b>.`, { parse_mode: 'HTML' });
+  }
+});
+
+// ─── Accept / Ignore ──────────────────────────────────────────────────────────
 
 bot.action(/^accept_(.+)$/, async (ctx) => {
   if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
@@ -158,16 +241,13 @@ bot.action(/^accept_(.+)$/, async (ctx) => {
   const state = loadState();
 
   const idx = state.pendingSignals.findIndex(s => s.id === signalId);
-  if (idx === -1) return ctx.answerCbQuery('Signal not found or already handled.');
-
-  const signal = state.pendingSignals[idx];
+  if (idx === -1) return ctx.answerCbQuery('Signal already handled.');
 
   if (state.activeSignals.length >= 5) {
-    await ctx.answerCbQuery('⚠️ Max 5 active signals reached. Close one first.');
-    return;
+    return ctx.answerCbQuery('⚠️ 5 active signals already. Close one first.');
   }
 
-  // Move from pending → active
+  const signal = state.pendingSignals[idx];
   signal.status = 'accepted';
   state.activeSignals.push(signal);
   state.pendingSignals.splice(idx, 1);
@@ -177,13 +257,16 @@ bot.action(/^accept_(.+)$/, async (ctx) => {
 
   await ctx.answerCbQuery('✅ Signal accepted! Tracking started.');
   try {
-    await ctx.editMessageReplyMarkup({ inline_keyboard: [[{ text: '✅ Accepted — Tracking', callback_data: 'noop' }]] });
-  } catch { /* message may be too old */ }
+    await ctx.editMessageReplyMarkup({
+      inline_keyboard: [[{ text: '✅ Accepted — Tracking', callback_data: 'noop' }]],
+    });
+  } catch { /* ok */ }
+
   await ctx.reply(
-    `✅ *Tracking started for ${signal.symbol}*\n` +
-    `Entry: \`${signal.entry}\` | TP: \`${signal.tp}\` | SL: \`${signal.sl}\`\n` +
-    `Active signals: ${state.activeSignals.length}/5`,
-    { parse_mode: 'Markdown' }
+    `✅ <b>Tracking: ${esc(signal.symbol)}</b>\n` +
+    `Entry <code>${fmtPrice(signal.entry)}</code>  |  TP <code>${fmtPrice(signal.tp)}</code>  |  SL <code>${fmtPrice(signal.sl)}</code>\n` +
+    `Active: ${state.activeSignals.length}/5`,
+    { parse_mode: 'HTML' }
   );
 });
 
@@ -202,9 +285,11 @@ bot.action(/^ignore_(.+)$/, async (ctx) => {
   getOrCreateDailyStats(state).ignored++;
   saveState(state);
 
-  await ctx.answerCbQuery('❌ Signal ignored.');
+  await ctx.answerCbQuery('❌ Ignored — not counted toward limit.');
   try {
-    await ctx.editMessageReplyMarkup({ inline_keyboard: [[{ text: '❌ Ignored', callback_data: 'noop' }]] });
+    await ctx.editMessageReplyMarkup({
+      inline_keyboard: [[{ text: '❌ Ignored', callback_data: 'noop' }]],
+    });
   } catch { /* ok */ }
 });
 
@@ -222,20 +307,19 @@ export async function startBot() {
   initScanner(bot.telegram, ADMIN_ID);
   initTracker(bot.telegram, ADMIN_ID);
 
-  // TP/SL tracker: check every 30 seconds
+  // TP/SL price monitor every 30 seconds
   setInterval(() => checkActiveSignals().catch(console.error), 30 * 1000);
 
   // Full scan every 5 minutes
   setInterval(() => runFullScan().catch(console.error), 5 * 60 * 1000);
 
-  // Watchlist scan every 60 seconds
+  // Watchlist tight scan every 60 seconds
   setInterval(() => runWatchlistScan().catch(console.error), 60 * 1000);
 
   await bot.launch({ dropPendingUpdates: true });
-  console.log('[bot] Matrix Signal Bot started. Polling Telegram...');
+  console.log('[bot] Matrix Signal Bot started. Scanning 600 pairs.');
 
-  // Graceful stop
-  process.once('SIGINT', () => bot.stop('SIGINT'));
+  process.once('SIGINT',  () => bot.stop('SIGINT'));
   process.once('SIGTERM', () => bot.stop('SIGTERM'));
 }
 
