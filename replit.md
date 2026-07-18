@@ -1,45 +1,67 @@
-# [Project name]
+# Matrix Signal Bot — @cryptomatrixAI_bot
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Telegram signal bot that scans Binance USDT-M perpetuals using a 27-row OI + Price + Funding Rate matrix, sends actionable LONG/SHORT signals with TP/SL levels, and tracks outcomes in real time.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `pnpm --filter @workspace/api-server run dev` — run the API server + bot (port 8080)
+- `pnpm run typecheck` — full typecheck
+- Bot logs appear in the API Server workflow output
+
+## Secrets / Env Required
+
+- `TELEGRAM_BOT_TOKEN` — Replit Secret (already set)
+- `TELEGRAM_CHAT_ID` — shared env var (set to admin's Telegram ID)
+- `TELEGRAM_ADMIN_ID` — shared env var (same as CHAT_ID)
+- Bot state is persisted to `/home/runner/workspace/data/bot-state.json`
+
+## Bot Commands
+
+- `/start` — main panel with signals toggle button + quick stats
+- `/status` — same as /start
+- `/active` — show current active signals (max 5)
+- `/winrate` — win rate, TP/SL counts, acceptance stats
+- `/daily` — today's signals and results
+- `/test` — run offline logic tests (no network needed)
+
+## Signal Flow
+
+1. Scanner runs every 5 min (top 50 USDT-M perps by volume)
+2. Watchlist scanner runs every 60s for flagged pairs
+3. When a divergence resolves into PUMP/DUMP → bot sends signal with Accept/Ignore buttons
+4. **Accepted** signals: tracked against real-time Binance price (checked every 30s)
+5. **Ignored** signals: discarded, do NOT count toward the 5-signal limit
+6. When TP or SL hit → bot notifies immediately with result
+7. Stats (win rate, daily) updated automatically
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Bot: Telegraf v4
+- Market data: Binance Futures API (no key needed — public endpoints)
+- Risk management: ATR-based TP/SL (2:1 R/R), 15m candles
+- State persistence: JSON file at `data/bot-state.json`
+- Server: Express 5 (keeps workflow alive)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
-
-## Architecture decisions
-
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
-
-## Product
-
-_Describe the high-level user-facing capabilities of this app once they exist._
+- `artifacts/api-server/src/bot/` — all bot logic
+  - `index.ts` — Telegraf bot, all commands and button handlers
+  - `scanner.ts` — Binance scan loop (full + watchlist)
+  - `tracker.ts` — real-time TP/SL monitoring
+  - `signalBuilder.ts` — ATR-based TP/SL calculation
+  - `formatter.ts` — all message templates
+  - `watchlist.ts` — divergence tracking
+  - `matrix.ts` — 27-row lookup table
+  - `classifier.ts` — RISING/STABLE/FALLING classifier
+  - `binance.ts` — Binance Futures API client
+  - `storage.ts` — JSON persistence
+  - `tests.ts` — offline test suite (17 checks)
+  - `types.ts` — shared TypeScript types
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
-
-## Gotchas
-
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Admin Telegram ID: 5629038273
+- Max 5 active (accepted) signals at a time
+- Ignored signals don't count toward the limit
+- Signals auto-enabled/disabled via toggle button in /start

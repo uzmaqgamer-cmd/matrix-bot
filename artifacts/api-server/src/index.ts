@@ -1,5 +1,6 @@
-import app from "./app";
-import { logger } from "./lib/logger";
+import app from "./app.js";
+import { logger } from "./lib/logger.js";
+import { startBot } from "./bot/index.js";
 
 const rawPort = process.env["PORT"];
 
@@ -20,6 +21,11 @@ app.listen(port, (err) => {
     logger.error({ err }, "Error listening on port");
     process.exit(1);
   }
-
   logger.info({ port }, "Server listening");
+});
+
+// Start the Telegram bot (non-blocking — runs alongside the HTTP server)
+startBot().catch((err) => {
+  logger.error({ err }, "Telegram bot crashed");
+  process.exit(1);
 });
