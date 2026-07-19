@@ -8,6 +8,7 @@
 import type { ActivityEntry } from './activityEntry';
 import type { DailyStatsSnapshot } from './dailyStatsSnapshot';
 import type { DashboardSnapshotRowFrequency } from './dashboardSnapshotRowFrequency';
+import type { DashboardSnapshotSignalMode } from './dashboardSnapshotSignalMode';
 import type { LiveSignal } from './liveSignal';
 import type { PriorityResolution } from './priorityResolution';
 import type { ScanEntry } from './scanEntry';
@@ -17,6 +18,8 @@ import type { WatchlistItem } from './watchlistItem';
 export interface DashboardSnapshot {
   uptimeSeconds: number;
   signalsEnabled: boolean;
+  /** LIMITED = max 5, manual accept/ignore. UNLIMITED = no cap, all signals auto-tracked. */
+  signalMode?: DashboardSnapshotSignalMode;
   totalSent: number;
   totalAccepted: number;
   totalIgnored: number;

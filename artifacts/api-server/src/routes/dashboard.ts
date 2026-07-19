@@ -151,6 +151,7 @@ router.get('/dashboard', (_req, res) => {
   const response = {
     uptimeSeconds: parseFloat(process.uptime().toFixed(1)),
     signalsEnabled: state.signalsEnabled,
+    signalMode: state.signalMode ?? 'LIMITED',
     totalSent: state.totalSent,
     totalAccepted: state.totalAccepted,
     totalIgnored: state.totalIgnored,

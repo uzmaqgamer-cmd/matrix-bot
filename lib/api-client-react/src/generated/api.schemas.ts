@@ -157,6 +157,17 @@ export interface PriorityResolution {
 }
 
 /**
+ * LIMITED = max 5, manual accept/ignore. UNLIMITED = no cap, all signals auto-tracked.
+ */
+export type DashboardSnapshotSignalMode = typeof DashboardSnapshotSignalMode[keyof typeof DashboardSnapshotSignalMode];
+
+
+export const DashboardSnapshotSignalMode = {
+  LIMITED: 'LIMITED',
+  UNLIMITED: 'UNLIMITED',
+} as const;
+
+/**
  * Map of matrix row number -> count seen this session
  */
 export type DashboardSnapshotRowFrequency = {[key: string]: number};
@@ -164,6 +175,8 @@ export type DashboardSnapshotRowFrequency = {[key: string]: number};
 export interface DashboardSnapshot {
   uptimeSeconds: number;
   signalsEnabled: boolean;
+  /** LIMITED = max 5, manual accept/ignore. UNLIMITED = no cap, all signals auto-tracked. */
+  signalMode?: DashboardSnapshotSignalMode;
   totalSent: number;
   totalAccepted: number;
   totalIgnored: number;

@@ -11,6 +11,7 @@ export * from './activityEntryKind';
 export * from './dailyStatsSnapshot';
 export * from './dashboardSnapshot';
 export * from './dashboardSnapshotRowFrequency';
+export * from './dashboardSnapshotSignalMode';
 export * from './healthStatus';
 export * from './liveSignal';
 export * from './liveSignalDirection';

@@ -54,10 +54,16 @@ export interface DailyStats {
   slHit: number;
 }
 
+/** Signal tracking mode.
+ *  LIMITED   — max 5 active signals; each signal needs manual Accept/Ignore.
+ *  UNLIMITED — no cap; signals are auto-accepted the moment they fire. */
+export type SignalMode = 'LIMITED' | 'UNLIMITED';
+
 export interface BotState {
   signalsEnabled: boolean;
-  activeSignals: Signal[];      // accepted, currently being tracked (max 5)
-  pendingSignals: Signal[];     // sent to user, awaiting accept/ignore
+  signalMode: SignalMode;
+  activeSignals: Signal[];      // accepted, currently being tracked
+  pendingSignals: Signal[];     // sent to user, awaiting accept/ignore (LIMITED mode only)
   completedSignals: Signal[];   // tp_hit or sl_hit (last 100)
   dailyStats: DailyStats[];     // last 30 days
   watchlist: Record<string, WatchlistEntry>;

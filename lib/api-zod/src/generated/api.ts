@@ -23,6 +23,7 @@ export const HealthCheckResponse = zod.object({
 export const GetDashboardResponse = zod.object({
   "uptimeSeconds": zod.number(),
   "signalsEnabled": zod.boolean(),
+  "signalMode": zod.enum(['LIMITED', 'UNLIMITED']).optional().describe('LIMITED = max 5, manual accept\/ignore. UNLIMITED = no cap, all signals auto-tracked.'),
   "totalSent": zod.number(),
   "totalAccepted": zod.number(),
   "totalIgnored": zod.number(),

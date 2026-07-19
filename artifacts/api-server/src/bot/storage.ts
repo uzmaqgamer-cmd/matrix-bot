@@ -6,6 +6,7 @@ const STATE_FILE = '/home/runner/workspace/data/bot-state.json';
 
 const DEFAULT_STATE: BotState = {
   signalsEnabled: false,
+  signalMode: 'LIMITED',
   activeSignals: [],
   pendingSignals: [],
   completedSignals: [],

@@ -20,8 +20,19 @@ export function Header({ dashboard }: { dashboard: DashboardSnapshot }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className={`flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] tracking-[0.4px] font-medium border ${dashboard.signalsEnabled ? 'bg-[rgba(93,202,165,0.1)] text-[#5DCAA5] border-[rgba(93,202,165,0.3)]' : 'bg-[rgba(240,113,110,0.1)] text-[#F0716E] border-[rgba(240,113,110,0.3)]'} `}>
+      <div className="flex items-center gap-2">
+        {/* Signal mode badge */}
+        {(dashboard as any).signalMode === 'UNLIMITED' ? (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] tracking-[0.4px] font-medium border bg-[rgba(133,183,235,0.1)] text-[#85B7EB] border-[rgba(133,183,235,0.3)]">
+            <span>♾ UNLIMITED</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] tracking-[0.4px] font-medium border bg-[rgba(245,180,87,0.1)] text-[#F5B457] border-[rgba(245,180,87,0.3)]">
+            <span>LIMITED · 5 MAX</span>
+          </div>
+        )}
+        {/* Signals enabled/disabled badge */}
+        <div className={`flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] tracking-[0.4px] font-medium border ${dashboard.signalsEnabled ? 'bg-[rgba(93,202,165,0.1)] text-[#5DCAA5] border-[rgba(93,202,165,0.3)]' : 'bg-[rgba(240,113,110,0.1)] text-[#F0716E] border-[rgba(240,113,110,0.3)]'}`}>
           <span>{dashboard.signalsEnabled ? 'SIGNAL-ONLY' : 'SIGNALS DISABLED'}</span>
         </div>
         <span className="font-mono text-[9.5px] text-[#55636f] tracking-[0.9px] uppercase font-medium">

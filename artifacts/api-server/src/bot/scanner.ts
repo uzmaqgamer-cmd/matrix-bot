@@ -57,32 +57,54 @@ export async function sendSignal(params: {
   const signal = await buildSignal(params);
   if (!signal) return;
 
+  const isUnlimited = state.signalMode === 'UNLIMITED';
+
   try {
     const text = formatSignalMessage(signal);
-    const keyboard = Markup.inlineKeyboard([
-      Markup.button.callback('✅ Accept', `accept_${signal.id}`),
-      Markup.button.callback('❌ Ignore', `ignore_${signal.id}`),
-    ]);
-    const msg = await telegramRef.sendMessage(adminChatId, text, {
-      parse_mode: 'HTML',
-      reply_markup: keyboard.reply_markup,
-    });
-    signal.messageId = msg.message_id;
-    signal.status = 'pending';
 
-    state.pendingSignals.push(signal);
-    state.totalSent++;
-    getOrCreateDailyStats(state).sent++;
-    saveState(state);
+    if (isUnlimited) {
+      // ─── UNLIMITED MODE: auto-accept, no user prompt ─────────────────────
+      signal.status = 'accepted';
+      state.activeSignals.push(signal);
+      state.totalSent++;
+      state.totalAccepted++;
+      const ds = getOrCreateDailyStats(state);
+      ds.sent++;
+      ds.accepted++;
+      saveState(state);
+
+      // Send informational notification (no buttons needed)
+      const autoText =
+        `⚡ <b>AUTO-TRACKED</b>\n` +
+        text +
+        `\n\n<i>Unlimited mode — tracking ${state.activeSignals.length} active signals.</i>`;
+      await telegramRef.sendMessage(adminChatId, autoText, { parse_mode: 'HTML' });
+    } else {
+      // ─── LIMITED MODE: send with Accept / Ignore buttons ─────────────────
+      const keyboard = Markup.inlineKeyboard([
+        Markup.button.callback('✅ Accept', `accept_${signal.id}`),
+        Markup.button.callback('❌ Ignore', `ignore_${signal.id}`),
+      ]);
+      const msg = await telegramRef.sendMessage(adminChatId, text, {
+        parse_mode: 'HTML',
+        reply_markup: keyboard.reply_markup,
+      });
+      signal.messageId = msg.message_id;
+      signal.status = 'pending';
+      state.pendingSignals.push(signal);
+      state.totalSent++;
+      getOrCreateDailyStats(state).sent++;
+      saveState(state);
+    }
 
     logActivity({
       ts: Date.now(),
-      text: `SIGNAL ${params.direction}: ${params.symbol} | Row #${params.matrixRow} | R/R 1:${signal.rr}`,
+      text: `SIGNAL ${params.direction}: ${params.symbol} | Row #${params.matrixRow} | R/R 1:${signal.rr}${isUnlimited ? ' [AUTO]' : ''}`,
       kind: 'signal',
       symbol: params.symbol,
     });
 
-    console.log(`[scanner] Signal sent: ${params.symbol} ${params.direction}`);
+    console.log(`[scanner] Signal sent: ${params.symbol} ${params.direction}${isUnlimited ? ' (auto-accepted)' : ''}`);
   } catch (err) {
     console.error('[scanner] Failed to send signal:', err);
   }
@@ -140,11 +162,11 @@ export async function runFullScan(silent = false) {
     if (action.type === 'ADDED') {
       logActivity({
         ts: Date.now(),
-        text: `WATCH: ${symbol} → Row #${matrixRow.row} (${action.originPriority}) — ${matrixRow.meaning}`,
+        text: `WATCH: ${symbol} → Row #${matrixRow.row} (${action.priority}) — ${matrixRow.meaning}`,
         kind: 'watch',
         symbol,
       });
-    } else if (action.type === 'DROPPED') {
+    } else if (action.type === 'DROPPED_STABLE') {
       logActivity({
         ts: Date.now(),
         text: `DROP: ${symbol} — false alarm (timed out at Row #${matrixRow.row})`,

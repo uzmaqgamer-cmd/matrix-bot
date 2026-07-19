@@ -17,7 +17,8 @@ export function runOfflineTests(): { results: TestResult[]; passed: number; fail
   let output = '';
 
   const makeState = (): BotState => ({
-    signalsEnabled: false, activeSignals: [], pendingSignals: [], completedSignals: [],
+    signalsEnabled: false, signalMode: 'LIMITED',
+    activeSignals: [], pendingSignals: [], completedSignals: [],
     dailyStats: [], watchlist: {}, totalSent: 0, totalAccepted: 0,
     totalIgnored: 0, totalTpHit: 0, totalSlHit: 0,
   });

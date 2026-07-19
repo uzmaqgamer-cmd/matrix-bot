@@ -24,12 +24,16 @@ function isAdmin(ctx: any): boolean {
 
 // ─── Main menu ────────────────────────────────────────────────────────────────
 
-function mainKeyboard(enabled: boolean) {
+function mainKeyboard(enabled: boolean, mode: import('./types.js').SignalMode) {
   const toggleLabel = enabled
     ? '🟢 Signals: ON  — tap to disable'
     : '🔴 Signals: OFF — tap to enable';
+  const modeLabel = mode === 'LIMITED'
+    ? '🔢 Mode: LIMITED (5 max) — tap to switch'
+    : '♾️  Mode: UNLIMITED (all auto) — tap to switch';
   return Markup.inlineKeyboard([
     [Markup.button.callback(toggleLabel, 'toggle_signals')],
+    [Markup.button.callback(modeLabel, 'toggle_mode')],
     [
       Markup.button.callback('📋 Active', 'show_active'),
       Markup.button.callback('📊 Win Rate', 'show_winrate'),
@@ -45,12 +49,18 @@ function mainKeyboard(enabled: boolean) {
 function mainMenuText(state: ReturnType<typeof loadState>): string {
   const total = state.totalTpHit + state.totalSlHit;
   const wr = total === 0 ? 'n/a' : `${(state.totalTpHit / total * 100).toFixed(1)}%`;
+  const mode = state.signalMode ?? 'LIMITED';
+  const cap = mode === 'LIMITED' ? '/5' : '/∞';
+  const pendingLine = mode === 'LIMITED'
+    ? `Pending: ${state.pendingSignals.length}\n`
+    : '';
   return (
     `🤖 <b>Matrix Signal Bot</b>\n` +
     `━━━━━━━━━━━━━━━━━━\n` +
     `Status:  ${state.signalsEnabled ? '🟢 Scanning (600 pairs)' : '🔴 Paused'}\n` +
-    `Active:  ${state.activeSignals.length}/5\n` +
-    `Pending: ${state.pendingSignals.length}\n` +
+    `Mode:    ${mode === 'LIMITED' ? '🔢 LIMITED (5 max, manual accept)' : '♾️  UNLIMITED (auto-track all)'}\n` +
+    `Active:  ${state.activeSignals.length}${cap}\n` +
+    pendingLine +
     `Radar:   ${Object.keys(state.watchlist).length} pairs diverging\n` +
     `Win rate: ${wr}\n` +
     `━━━━━━━━━━━━━━━━━━\n` +
@@ -61,11 +71,11 @@ function mainMenuText(state: ReturnType<typeof loadState>): string {
 // ─── Commands ─────────────────────────────────────────────────────────────────
 
 bot.command('start', async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.reply('⛔ Unauthorized.');
+  if (!isAdmin(ctx)) return void ctx.reply('⛔ Unauthorized.');
   const state = loadState();
   await ctx.reply(mainMenuText(state), {
     parse_mode: 'HTML',
-    reply_markup: mainKeyboard(state.signalsEnabled).reply_markup,
+    reply_markup: mainKeyboard(state.signalsEnabled, state.signalMode ?? 'LIMITED').reply_markup,
   });
 });
 
@@ -74,7 +84,7 @@ bot.command('status', async (ctx) => {
   const state = loadState();
   await ctx.reply(mainMenuText(state), {
     parse_mode: 'HTML',
-    reply_markup: mainKeyboard(state.signalsEnabled).reply_markup,
+    reply_markup: mainKeyboard(state.signalsEnabled, state.signalMode ?? 'LIMITED').reply_markup,
   });
 });
 
@@ -174,7 +184,7 @@ bot.command('test', async (ctx) => {
 // ─── Toggle ───────────────────────────────────────────────────────────────────
 
 bot.action('toggle_signals', async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔ Unauthorized');
+  if (!isAdmin(ctx)) return void ctx.answerCbQuery('⛔ Unauthorized');
   const state = loadState();
   state.signalsEnabled = !state.signalsEnabled;
   saveState(state);
@@ -182,7 +192,7 @@ bot.action('toggle_signals', async (ctx) => {
   try {
     await ctx.editMessageText(mainMenuText(state), {
       parse_mode: 'HTML',
-      reply_markup: mainKeyboard(state.signalsEnabled).reply_markup,
+      reply_markup: mainKeyboard(state.signalsEnabled, state.signalMode ?? 'LIMITED').reply_markup,
     });
   } catch { /* message may be stale */ }
   if (state.signalsEnabled) {
@@ -190,31 +200,53 @@ bot.action('toggle_signals', async (ctx) => {
   }
 });
 
+// ─── Mode toggle ──────────────────────────────────────────────────────────────
+
+bot.action('toggle_mode', async (ctx) => {
+  if (!isAdmin(ctx)) return void ctx.answerCbQuery('⛔ Unauthorized');
+  const state = loadState();
+  const prev = state.signalMode ?? 'LIMITED';
+  state.signalMode = prev === 'LIMITED' ? 'UNLIMITED' : 'LIMITED';
+  saveState(state);
+
+  const label = state.signalMode === 'LIMITED'
+    ? '🔢 Switched to LIMITED — signals need manual accept (max 5)'
+    : '♾️ Switched to UNLIMITED — all signals auto-tracked immediately';
+  await ctx.answerCbQuery(label);
+
+  try {
+    await ctx.editMessageText(mainMenuText(state), {
+      parse_mode: 'HTML',
+      reply_markup: mainKeyboard(state.signalsEnabled, state.signalMode).reply_markup,
+    });
+  } catch { /* message may be stale */ }
+});
+
 // ─── Menu buttons ─────────────────────────────────────────────────────────────
 
 bot.action('show_active', async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
+  if (!isAdmin(ctx)) return void ctx.answerCbQuery('⛔');
   await ctx.answerCbQuery();
   const state = loadState();
   await ctx.reply(formatActiveSignals(state), { parse_mode: 'HTML' });
 });
 
 bot.action('show_winrate', async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
+  if (!isAdmin(ctx)) return void ctx.answerCbQuery('⛔');
   await ctx.answerCbQuery();
   const state = loadState();
   await ctx.reply(formatWinRate(state), { parse_mode: 'HTML' });
 });
 
 bot.action('show_daily', async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
+  if (!isAdmin(ctx)) return void ctx.answerCbQuery('⛔');
   await ctx.answerCbQuery();
   const state = loadState();
   await ctx.reply(formatDailyResults(state), { parse_mode: 'HTML' });
 });
 
 bot.action('run_tests', async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
+  if (!isAdmin(ctx)) return void ctx.answerCbQuery('⛔');
   await ctx.answerCbQuery('Running tests...');
   const { results, passed, failed } = runOfflineTests();
   await ctx.reply(formatTestResults(results, passed, failed), { parse_mode: 'HTML' });
@@ -255,13 +287,13 @@ async function handleRadar(ctx: any) {
 }
 
 bot.action('show_radar', async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
+  if (!isAdmin(ctx)) return void ctx.answerCbQuery('⛔');
   await handleRadar(ctx);
 });
 
 // Dynamic: fire a manual signal for a radar pair
 bot.action(/^radar_signal_(.+)$/, async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
+  if (!isAdmin(ctx)) return void ctx.answerCbQuery('⛔');
   const symbol = ctx.match[1];
   await ctx.answerCbQuery(`Scanning ${symbol}...`);
 
@@ -299,15 +331,15 @@ bot.action(/^radar_signal_(.+)$/, async (ctx) => {
 // ─── Accept / Ignore ──────────────────────────────────────────────────────────
 
 bot.action(/^accept_(.+)$/, async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
+  if (!isAdmin(ctx)) return void ctx.answerCbQuery('⛔');
   const signalId = ctx.match[1];
   const state = loadState();
 
   const idx = state.pendingSignals.findIndex(s => s.id === signalId);
-  if (idx === -1) return ctx.answerCbQuery('Signal already handled.');
+  if (idx === -1) return void ctx.answerCbQuery('Signal already handled.');
 
-  if (state.activeSignals.length >= 5) {
-    return ctx.answerCbQuery('⚠️ 5 active signals already. Close one first.');
+  if ((state.signalMode ?? 'LIMITED') === 'LIMITED' && state.activeSignals.length >= 5) {
+    return void ctx.answerCbQuery('⚠️ 5 active signals already. Switch to Unlimited mode or close one first.');
   }
 
   const signal = state.pendingSignals[idx];
@@ -325,21 +357,22 @@ bot.action(/^accept_(.+)$/, async (ctx) => {
     });
   } catch { /* ok */ }
 
+  const cap = (state.signalMode ?? 'LIMITED') === 'LIMITED' ? '/5' : '/∞';
   await ctx.reply(
     `✅ <b>Tracking: ${esc(signal.symbol)}</b>\n` +
     `Entry <code>${fmtPrice(signal.entry)}</code>  |  TP <code>${fmtPrice(signal.tp)}</code>  |  SL <code>${fmtPrice(signal.sl)}</code>\n` +
-    `Active: ${state.activeSignals.length}/5`,
+    `Active: ${state.activeSignals.length}${cap}`,
     { parse_mode: 'HTML' }
   );
 });
 
 bot.action(/^ignore_(.+)$/, async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.answerCbQuery('⛔');
+  if (!isAdmin(ctx)) return void ctx.answerCbQuery('⛔');
   const signalId = ctx.match[1];
   const state = loadState();
 
   const idx = state.pendingSignals.findIndex(s => s.id === signalId);
-  if (idx === -1) return ctx.answerCbQuery('Signal not found.');
+  if (idx === -1) return void ctx.answerCbQuery('Signal not found.');
 
   const signal = state.pendingSignals[idx];
   signal.status = 'ignored';
