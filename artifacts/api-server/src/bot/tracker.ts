@@ -1,6 +1,7 @@
 import { getCurrentPrice } from './binance.js';
 import { loadState, saveState, getOrCreateDailyStats } from './storage.js';
 import { formatTpHitMessage, formatSlHitMessage } from './formatter.js';
+import { logActivity } from './eventLog.js';
 import type { Telegram } from 'telegraf';
 
 let telegramRef: Telegram | null = null;
@@ -62,10 +63,28 @@ export async function checkActiveSignals() {
           state.totalTpHit++;
           getOrCreateDailyStats(state).tpHit++;
           await sendAlert(formatTpHitMessage(signal, price));
+          const pnl = signal.direction === 'LONG'
+            ? ((price - signal.entry) / signal.entry * 100).toFixed(2)
+            : ((signal.entry - price) / signal.entry * 100).toFixed(2);
+          logActivity({
+            ts: Date.now(),
+            text: `TP HIT: ${signal.symbol} ${signal.direction} +${pnl}% @ ${price.toPrecision(6)} (R/R 1:${signal.rr.toFixed(1)})`,
+            kind: 'tp',
+            symbol: signal.symbol,
+          });
         } else {
           state.totalSlHit++;
           getOrCreateDailyStats(state).slHit++;
           await sendAlert(formatSlHitMessage(signal, price));
+          const loss = signal.direction === 'LONG'
+            ? ((signal.entry - price) / signal.entry * 100).toFixed(2)
+            : ((price - signal.entry) / signal.entry * 100).toFixed(2);
+          logActivity({
+            ts: Date.now(),
+            text: `SL HIT: ${signal.symbol} ${signal.direction} -${loss}% @ ${price.toPrecision(6)}`,
+            kind: 'sl',
+            symbol: signal.symbol,
+          });
         }
 
         console.log(`[tracker] ${signal.symbol} ${hit.toUpperCase()} hit @ ${price}`);

@@ -1,10 +1,11 @@
 import { getCloseSeries, getOpenInterestSeries, getFundingRateSeries, getTopSymbolsByVolume } from './binance.js';
 import { classify } from './classifier.js';
-import { lookupRow, isDivergenceRow } from './matrix.js';
+import { lookupRow, isDivergenceRow, MATRIX } from './matrix.js';
 import { updateWatchlist } from './watchlist.js';
 import { buildSignal } from './signalBuilder.js';
 import { loadState, saveState, getOrCreateDailyStats } from './storage.js';
 import { formatSignalMessage } from './formatter.js';
+import { logActivity, logScan } from './eventLog.js';
 import type { Telegram } from 'telegraf';
 import { Markup } from 'telegraf';
 
@@ -50,7 +51,6 @@ export async function sendSignal(params: {
   const state = loadState();
   if (!state.signalsEnabled && !forceSend) return;
 
-  // Don't send if already pending or active for this symbol
   if (state.pendingSignals.some(s => s.symbol === params.symbol)) return;
   if (state.activeSignals.some(s => s.symbol === params.symbol)) return;
 
@@ -74,6 +74,13 @@ export async function sendSignal(params: {
     state.totalSent++;
     getOrCreateDailyStats(state).sent++;
     saveState(state);
+
+    logActivity({
+      ts: Date.now(),
+      text: `SIGNAL ${params.direction}: ${params.symbol} | Row #${params.matrixRow} | R/R 1:${signal.rr}`,
+      kind: 'signal',
+      symbol: params.symbol,
+    });
 
     console.log(`[scanner] Signal sent: ${params.symbol} ${params.direction}`);
   } catch (err) {
@@ -123,11 +130,28 @@ export async function runFullScan(silent = false) {
     lastScanSummary.scanned++;
     if (!matrixRow) continue;
 
+    // Feed scan entries to dashboard
+    logScan({ symbol, row: matrixRow.row, outlook: matrixRow.outlook, ts: Date.now() });
+
     const freshState = loadState();
     const action = updateWatchlist(symbol, matrixRow, freshState);
     saveState(freshState);
 
-    if (action.type === 'ESCALATED') {
+    if (action.type === 'ADDED') {
+      logActivity({
+        ts: Date.now(),
+        text: `WATCH: ${symbol} → Row #${matrixRow.row} (${action.originPriority}) — ${matrixRow.meaning}`,
+        kind: 'watch',
+        symbol,
+      });
+    } else if (action.type === 'DROPPED') {
+      logActivity({
+        ts: Date.now(),
+        text: `DROP: ${symbol} — false alarm (timed out at Row #${matrixRow.row})`,
+        kind: 'drop',
+        symbol,
+      });
+    } else if (action.type === 'ESCALATED') {
       const direction = matrixRow.outlook === 'PUMP' ? 'LONG' : 'SHORT';
       await sendSignal({
         symbol,
@@ -150,7 +174,13 @@ export async function runFullScan(silent = false) {
   const elapsed = ((lastScanSummary.finishedAt - lastScanSummary.startedAt) / 1000).toFixed(1);
   console.log(`[scanner] Full scan done: ${symbols.length} pairs in ${elapsed}s | watchlist: ${lastScanSummary.watchlistCount} | signals: ${signalsSent}`);
 
-  // Send summary to Telegram (non-silent mode or if signals were found)
+  logActivity({
+    ts: Date.now(),
+    text: `SCAN DONE: ${symbols.length} pairs in ${elapsed}s | radar: ${lastScanSummary.watchlistCount} | signals: ${signalsSent}`,
+    kind: 'scan',
+    symbol: null,
+  });
+
   if (!silent && telegramRef && adminChatId && signalsSent === 0) {
     try {
       await telegramRef.sendMessage(
@@ -176,6 +206,8 @@ export async function runWatchlistScan() {
     const matrixRow = await scanSymbol(symbol);
     if (!matrixRow) continue;
 
+    logScan({ symbol, row: matrixRow.row, outlook: matrixRow.outlook, ts: Date.now() });
+
     const freshState = loadState();
     const action = updateWatchlist(symbol, matrixRow, freshState);
     saveState(freshState);
@@ -194,7 +226,6 @@ export async function runWatchlistScan() {
   }
 }
 
-/** Get current radar data — all watchlist pairs sorted by priority then cycles watched. */
 export function getRadarData(state: ReturnType<typeof loadState>) {
   const entries = Object.entries(state.watchlist)
     .map(([symbol, entry]) => ({
@@ -202,10 +233,9 @@ export function getRadarData(state: ReturnType<typeof loadState>) {
       row: entry.row,
       priority: entry.priority,
       cyclesWatched: entry.cyclesWatched,
-      meaning: '',  // filled below
+      meaning: '',
     }));
 
-  // Sort: HIGH priority first, then by cycles watched (most watched = closest to resolving)
   entries.sort((a, b) => {
     if (a.priority !== b.priority) return a.priority === 'HIGH' ? -1 : 1;
     return b.cyclesWatched - a.cyclesWatched;

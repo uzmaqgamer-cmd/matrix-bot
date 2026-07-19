@@ -1,22 +1,22 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Matrix Signal Bot API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+    description: Dashboard data
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +24,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Full dashboard snapshot
+      description: All data needed to render the live dashboard — bot state, stats, signals, watchlist, scan feed, escalation log.
+      responses:
+        "200":
+          description: Dashboard snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSnapshot"
+
+  /dashboard/activity:
+    get:
+      operationId: getDashboardActivity
+      tags: [dashboard]
+      summary: Recent escalation + trade log
+      responses:
+        "200":
+          description: Activity log
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityEntry"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +64,292 @@ components:
       required:
         - status
 
+    LiveSignal:
+      type: object
+      required:
+        - id
+        - symbol
+        - direction
+        - entry
+        - tp
+        - sl
+        - rr
+        - atr
+        - tpMultiplier
+        - tpTier
+        - matrixRow
+        - matrixMeaning
+        - originRow
+        - originPriority
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+        symbol:
+          type: string
+        direction:
+          type: string
+          enum: [LONG, SHORT]
+        entry:
+          type: number
+        tp:
+          type: number
+        sl:
+          type: number
+        rr:
+          type: number
+        atr:
+          type: number
+        tpMultiplier:
+          type: number
+        tpTier:
+          type: string
+          enum: [CLEAN, HIGH_DIVERGENCE, MEDIUM_DIVERGENCE]
+        matrixRow:
+          type: integer
+        matrixMeaning:
+          type: string
+        originRow:
+          type: integer
+        originPriority:
+          type: string
+          enum: [HIGH, MEDIUM]
+        status:
+          type: string
+          enum: [pending, accepted, ignored, tp_hit, sl_hit, expired]
+        createdAt:
+          type: number
+        resolvedAt:
+          type: ["number", "null"]
+        currentPrice:
+          type: ["number", "null"]
+        currentPriceAt:
+          type: ["number", "null"]
+        pnlPct:
+          type: ["number", "null"]
+          description: Live P&L percentage (positive = profit direction)
+        tpProgressPct:
+          type: ["number", "null"]
+          description: 0-100% progress toward TP (can be negative = moving toward SL)
+
+    WatchlistItem:
+      type: object
+      required:
+        - symbol
+        - row
+        - priority
+        - cyclesWatched
+        - addedAt
+      properties:
+        symbol:
+          type: string
+        row:
+          type: integer
+        priority:
+          type: string
+          enum: [HIGH, MEDIUM]
+        cyclesWatched:
+          type: integer
+        addedAt:
+          type: number
+        meaning:
+          type: string
+        expectedTpMultiplier:
+          type: number
+          description: TP multiplier if this pair escalates to a signal
+
+    ScanEntry:
+      type: object
+      required:
+        - symbol
+        - row
+        - outlook
+        - ts
+      properties:
+        symbol:
+          type: string
+        row:
+          type: integer
+        outlook:
+          type: string
+        ts:
+          type: number
+
+    ActivityEntry:
+      type: object
+      required:
+        - ts
+        - text
+        - kind
+      properties:
+        ts:
+          type: number
+        text:
+          type: string
+        kind:
+          type: string
+          enum: [signal, tp, sl, watch, drop, scan]
+        symbol:
+          type: ["string", "null"]
+
+    DailyStatsSnapshot:
+      type: object
+      required:
+        - date
+        - sent
+        - accepted
+        - ignored
+        - tpHit
+        - slHit
+      properties:
+        date:
+          type: string
+        sent:
+          type: integer
+        accepted:
+          type: integer
+        ignored:
+          type: integer
+        tpHit:
+          type: integer
+        slHit:
+          type: integer
+
+    ScanSummary:
+      type: object
+      required:
+        - inProgress
+        - scanned
+        - total
+        - watchlistCount
+        - signalsSent
+        - startedAt
+      properties:
+        inProgress:
+          type: boolean
+        scanned:
+          type: integer
+        total:
+          type: integer
+        watchlistCount:
+          type: integer
+        signalsSent:
+          type: integer
+        startedAt:
+          type: number
+        finishedAt:
+          type: ["number", "null"]
+        elapsedMs:
+          type: ["number", "null"]
+
+    PriorityResolution:
+      type: object
+      required:
+        - highResolved
+        - highTotal
+        - medResolved
+        - medTotal
+      properties:
+        highResolved:
+          type: integer
+        highTotal:
+          type: integer
+        medResolved:
+          type: integer
+        medTotal:
+          type: integer
+
+    DashboardSnapshot:
+      type: object
+      required:
+        - uptimeSeconds
+        - signalsEnabled
+        - totalSent
+        - totalAccepted
+        - totalIgnored
+        - totalTpHit
+        - totalSlHit
+        - paperBalance
+        - paperBalanceDelta
+        - paperBalancePct
+        - balanceHistory
+        - rowFrequency
+        - priorityResolution
+        - activeSignals
+        - pendingSignals
+        - recentTrades
+        - watchlist
+        - scanFeed
+        - activity
+        - today
+        - scan
+        - escalationAccuracyPct
+      properties:
+        uptimeSeconds:
+          type: number
+        signalsEnabled:
+          type: boolean
+        totalSent:
+          type: integer
+        totalAccepted:
+          type: integer
+        totalIgnored:
+          type: integer
+        totalTpHit:
+          type: integer
+        totalSlHit:
+          type: integer
+        paperBalance:
+          type: number
+          description: Simulated $100 starting balance adjusted by TP/SL history
+        paperBalanceDelta:
+          type: number
+        paperBalancePct:
+          type: number
+        balanceHistory:
+          type: array
+          items:
+            type: number
+          description: Running paper balance after each trade (last 50)
+        rowFrequency:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Map of matrix row number -> count seen this session
+        priorityResolution:
+          $ref: "#/components/schemas/PriorityResolution"
+        escalationAccuracyPct:
+          type: ["number", "null"]
+          description: Percentage of escalated signals that hit TP
+        activeSignals:
+          type: array
+          items:
+            $ref: "#/components/schemas/LiveSignal"
+        pendingSignals:
+          type: array
+          items:
+            $ref: "#/components/schemas/LiveSignal"
+        recentTrades:
+          type: array
+          items:
+            $ref: "#/components/schemas/LiveSignal"
+          description: Last 20 completed signals
+        watchlist:
+          type: array
+          items:
+            $ref: "#/components/schemas/WatchlistItem"
+        scanFeed:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScanEntry"
+          description: Last 30 scanned pairs
+        activity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityEntry"
+          description: Last 20 escalation/trade events
+        today:
+          $ref: "#/components/schemas/DailyStatsSnapshot"
+        scan:
+          $ref: "#/components/schemas/ScanSummary"

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+html, body { background: #030509; height: 100%; }
+body { font-family: 'Inter', -apple-system, sans-serif; color: #e8ecf0; padding: 14px 18px; overflow: hidden; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+.wrap { max-width: 1280px; margin: 0 auto; position: relative; height: calc(100vh - 28px); display: flex; flex-direction: column; gap: 10px; }
+#bgGrid { position: fixed; inset: 0; z-index: 0; opacity: 0.5; pointer-events: none; }
+.wrap > * { position: relative; z-index: 1; }
+.card { background: linear-gradient(180deg, #0c1119 0%, #090d13 100%); border: 1px solid #1c2530; border-radius: 12px; padding: 12px 16px; position: relative; overflow: hidden; }
+.card::before { content:""; position:absolute; top:0; left:0; right:0; height:1px; background: linear-gradient(90deg, transparent, rgba(93,202,165,0.4), transparent); }
+.grid { display: grid; gap: 10px; }
+.g2 { grid-template-columns: 1fr 1.5fr; }
+.g3col { grid-template-columns: 1fr 1fr 1fr; }
+.gsig { grid-template-columns: 1.2fr 1fr 0.9fr; }
+.label { font-size: 9.5px; color: #55636f; letter-spacing: 0.9px; text-transform: uppercase; font-weight: 500; }
+.badge { font-size: 10px; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.4px; font-weight: 500; border: 1px solid; }
+.b-amber { background: rgba(239,159,39,0.1); color: #EF9F27; border-color: rgba(239,159,39,0.3); }
+table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+th { text-align: left; font-size: 9px; color: #4a565f; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; padding-bottom: 5px; border-bottom: 1px solid #1c2530; }
+td { padding: 5px 4px; border-bottom: 1px solid #12171f; }
+.green { color: #5DCAA5; text-shadow: 0 0 10px rgba(93,202,165,0.45); } .red { color: #F0716E; text-shadow: 0 0 10px rgba(240,113,110,0.35); }
+.amber { color: #F5B457; text-shadow: 0 0 10px rgba(245,180,87,0.35); } .muted { color: #4a565f; }
+.glownum { text-shadow: 0 0 18px currentColor; }
+@keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+@keyframes flicker { 0%,100%{opacity:1;} 50%{opacity:0.55;} }
+</style>
+</head>
+<body>
+<canvas id="bgGrid"></canvas>
+<div class="wrap">
+
+<div style="display:flex;justify-content:space-between;align-items:center;">
+<div style="display:flex;align-items:center;gap:10px;">
+<div style="width:28px;height:28px;border-radius:8px;background:radial-gradient(circle at 30% 30%, #1D9E75, #04342C); display:flex;align-items:center;justify-content:center;color:#5DCAA5;font-weight:700;font-size:13px;box-shadow:0 0 16px rgba(29,158,117,0.5);">M</div>
+<div>
+<div style="font-size:13px;font-weight:600;">MATRIX SIGNAL ENGINE</div>
+<div style="font-size:10px;color:#55636f;">OI · PRICE · FUNDING NEURAL LATTICE</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;align-items:center;">
+<span class="badge b-amber">SIGNAL-ONLY</span>
+<span class="mono label" id="clock">00:00:00</span>
+</div>
+</div>
+
+<div class="grid gsig" style="flex:0 0 auto;">
+<div class="card" style="display:flex;justify-content:space-between;gap:12px;">
+<div>
+<div class="label">resolution accuracy</div>
+<div style="font-size:28px;font-weight:700;margin:2px 0;" class="green glownum" id="accPct">—</div>
+<div style="font-size:10.5px;color:#55636f;">escalated vs false alarm · <span id="sampleN">0</span> resolved</div>
+<div style="display:flex;gap:16px;margin-top:8px;font-size:11px;">
+<div><span class="muted">esc</span> <span style="font-weight:600;" class="green" id="escCount">0</span></div>
+<div><span class="muted">fa</span> <span style="font-weight:600;" class="red" id="faCount">0</span></div>
+<div><span class="muted">watch</span> <span style="font-weight:600;" id="activeCount">0</span></div>
+</div>
+</div>
+<div style="border-left:1px solid #1c2530;padding-left:14px;min-width:110px;">
+<div class="label">paper balance</div>
+<div class="mono glownum" id="balanceOut" style="font-size:22px;font-weight:700;margin:2px 0;color:#5DCAA5;">$100.00</div>
+<div style="font-size:10.5px;" id="balanceDelta">+$0.00 · 0.0%</div>
+</div>
+</div>
+<div class="card">
+<div class="label" style="margin-bottom:4px;">system status</div>
+<div style="display:flex;flex-direction:column;gap:5px;font-size:11px;">
+<div style="display:flex;justify-content:space-between;"><span class="muted">binance api</span><span class="green" style="animation:flicker 3s ease infinite;">● connected</span></div>
+<div style="display:flex;justify-content:space-between;"><span class="muted">matrix engine</span><span class="green">● running</span></div>
+<div style="display:flex;justify-content:space-between;"><span class="muted">telegram</span><span class="amber">● log-only</span></div>
+</div>
+</div>
+<div class="card">
+<div class="label" style="margin-bottom:4px;">uptime</div>
+<div class="mono" id="uptime" style="font-size:20px;font-weight:600;">00:00:00</div>
+<div class="label" style="margin-top:8px;">scan interval</div>
+<div style="font-size:12px;">5m full · 1m watch</div>
+</div>
+</div>
+
+<div class="grid g3col" style="flex:0 0 auto;">
+<div class="card">
+<div class="label" style="margin-bottom:2px;">price network</div>
+<canvas id="netPrice" style="width:100%;height:100px;display:block;"></canvas>
+</div>
+<div class="card">
+<div class="label" style="margin-bottom:2px;">open interest network</div>
+<canvas id="netOI" style="width:100%;height:100px;display:block;"></canvas>
+</div>
+<div class="card">
+<div class="label" style="margin-bottom:2px;">funding rate network</div>
+<canvas id="netFunding" style="width:100%;height:100px;display:block;"></canvas>
+</div>
+</div>
+
+<div class="grid g3col" style="flex:1 1 auto; min-height:0;">
+<div class="card" style="overflow:hidden;display:flex;flex-direction:column;">
+<div class="label" style="margin-bottom:4px;">live matrix scan</div>
+<table><thead><tr><th>pair</th><th>row</th><th>outlook</th></tr></thead><tbody id="scanTable"></tbody></table>
+<div class="label" style="margin-top:10px;margin-bottom:5px;">row frequency this session</div>
+<div id="rowHeatmap" style="display:grid;grid-template-columns:repeat(9,1fr);gap:3px;"></div>
+<div style="display:flex;justify-content:space-between;font-size:9px;color:#4a565f;margin-top:4px;">
+<span>row 1</span><span>row 27</span>
+</div>
+</div>
+<div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+<div class="label" style="margin-bottom:2px;align-self:flex-start;">radar</div>
+<svg width="150" height="130" viewBox="0 0 260 190">
+<defs><radialGradient id="radarGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#5DCAA5" stop-opacity="0.25"/><stop offset="100%" stop-color="#5DCAA5" stop-opacity="0"/></radialGradient></defs>
+<g transform="translate(130,96)">
+<circle r="80" fill="url(#radarGlow)"/>
+<circle r="80" fill="none" stroke="#1c2530" stroke-width="1"/>
+<circle r="53" fill="none" stroke="#1c2530" stroke-width="1"/>
+<circle r="27" fill="none" stroke="#1c2530" stroke-width="1"/>
+<line x1="0" y1="-80" x2="0" y2="80" stroke="#1c2530"/>
+<line x1="-70" y1="-40" x2="70" y2="40" stroke="#1c2530"/>
+<line x1="-70" y1="40" x2="70" y2="-40" stroke="#1c2530"/>
+<text x="0" y="-86" text-anchor="middle" font-size="10" fill="#55636f">price</text>
+<text x="78" y="-43" text-anchor="start" font-size="10" fill="#55636f">OI</text>
+<text x="-78" y="-43" text-anchor="end" font-size="10" fill="#55636f">funding</text>
+<g style="transform-origin:0px 0px;animation:spin 3s linear infinite;">
+<path d="M0 0 L0 -80 A80 80 0 0 1 57 -57 Z" fill="#5DCAA5" opacity="0.22"/>
+<line x1="0" y1="0" x2="0" y2="-80" stroke="#5DCAA5" stroke-width="1.5" style="filter:drop-shadow(0 0 4px #1D9E75)"/>
+</g>
+<circle id="rp" cx="0" cy="-40" r="4.5" fill="#A29BF0" style="filter:drop-shadow(0 0 7px #A29BF0)"/>
+<circle id="ro" cx="35" cy="20" r="4.5" fill="#85B7EB" style="filter:drop-shadow(0 0 7px #85B7EB)"/>
+<circle id="rf" cx="-30" cy="25" r="4.5" fill="#D4537E" style="filter:drop-shadow(0 0 7px #D4537E)"/>
+</g>
+</svg>
+<div style="width:100%;margin-top:6px;">
+<div class="label" style="margin-bottom:4px;">divergence priority resolution</div>
+<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px;"><span style="color:#F0716E;">high</span><span id="highPct" class="mono">—</span></div>
+<div style="height:5px;background:#12171f;border-radius:3px;overflow:hidden;"><div id="highBar" style="height:100%;width:0%;background:#F0716E;box-shadow:0 0 6px #F0716E;transition:width .5s;"></div></div>
+<div style="display:flex;justify-content:space-between;font-size:10px;margin:6px 0 3px;"><span style="color:#F5B457;">medium</span><span id="medPct" class="mono">—</span></div>
+<div style="height:5px;background:#12171f;border-radius:3px;overflow:hidden;"><div id="medBar" style="height:100%;width:0%;background:#F5B457;box-shadow:0 0 6px #F5B457;transition:width .5s;"></div></div>
+</div>
+<div style="width:100%;margin-top:10px;">
+<div class="label" style="margin-bottom:4px;">ATR volatility · watched pairs</div>
+<div id="atrBars" style="display:flex;flex-direction:column;gap:4px;"></div>
+</div>
+</div>
+<div class="card" style="overflow:hidden;display:flex;flex-direction:column;">
+<div class="label" style="margin-bottom:4px;">escalation log</div>
+<div id="logFeed" class="mono" style="font-size:10px;line-height:1.8;flex-shrink:0;max-height:96px;overflow:hidden;color:#4a565f;"></div>
+<div class="label" style="margin-top:8px;margin-bottom:3px;">account balance</div>
+<svg width="100%" height="42" viewBox="0 0 300 42" style="flex-shrink:0;">
+<polyline id="balLine" points="" fill="none" stroke="#5DCAA5" stroke-width="1.5" style="filter:drop-shadow(0 0 4px #1D9E75)"/>
+</svg>
+<div class="label" style="margin-top:6px;margin-bottom:3px;">trade results</div>
+<div id="tradeLog" class="mono" style="font-size:10px;line-height:1.7;flex:1;overflow:hidden;"></div>
+</div>
+</div>
+
+<div style="text-align:center;font-size:10px;color:#333d47;">
+simulated visualization of matrix-signal-bot internals · not live trading data · signal-only, no execution
+</div>
+
+</div>
+<script>
+var bgCanvas = document.getElementById("bgGrid");
+var bgCtx = bgCanvas.getContext("2d");
+function sizeBg(){ bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight; }
+sizeBg();
+var gridOffset = 0;
+function drawGrid(){
+bgCtx.clearRect(0,0,bgCanvas.width,bgCanvas.height);
+bgCtx.strokeStyle = "rgba(93,202,165,0.04)"; bgCtx.lineWidth = 1;
+var size = 42; gridOffset = (gridOffset + 0.05) % size;
+for(var x = -size+gridOffset; x < bgCanvas.width; x += size){ bgCtx.beginPath(); bgCtx.moveTo(x,0); bgCtx.lineTo(x,bgCanvas.height); bgCtx.stroke(); }
+for(var y = -size+gridOffset; y < bgCanvas.height; y += size){ bgCtx.beginPath(); bgCtx.moveTo(0,y); bgCtx.lineTo(bgCanvas.width,y); bgCtx.stroke(); }
+requestAnimationFrame(drawGrid);
+}
+drawGrid();
+
+var pairNames = ["LUMIA","SLX","ESP","VVV","ALLO","ESPORTS"];
+function makeNetwork(canvasId, accentColor, unit){
+var c = document.getElementById(canvasId);
+var ctx = c.getContext("2d");
+function size(){ c.width = c.clientWidth*2; c.height = 100*2; ctx.scale(2,2); }
+size();
+var nds = pairNames.map(function(n){
+return { name:n, x:20+Math.random()*(c.clientWidth-40), y:15+Math.random()*70, vx:(Math.random()-0.5)*0.75, vy:(Math.random()-0.5)*0.75, dir:0, pulse:Math.random()*6, val:(Math.random()*2-1)*0.8 };
+});
+function dirColor(d){ return d>0 ? accentColor.up : d<0 ? accentColor.down : "#3a4650"; }
+function draw(){
+var w = c.clientWidth, h = 100;
+ctx.clearRect(0,0,w,h);
+nds.forEach(function(n){
+n.x+=n.vx; n.y+=n.vy; n.pulse+=0.05;
+if(n.x<15||n.x>w-15) n.vx*=-1;
+if(n.y<12||n.y>h-12) n.vy*=-1;
+});
+for(var i=0;i<nds.length;i++) for(var j=i+1;j<nds.length;j++){
+var a=nds[i],b=nds[j],d=Math.hypot(a.x-b.x,a.y-b.y);
+if(d<95){ ctx.strokeStyle="rgba(255,255,255,"+(0.05*(1-d/95))+")"; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+}
+nds.forEach(function(n){
+var r = 3+Math.sin(n.pulse)*1;
+var col = dirColor(n.dir);
+ctx.save(); ctx.shadowColor=col; ctx.shadowBlur = n.dir===0?3:10;
+ctx.fillStyle=col; ctx.beginPath(); ctx.arc(n.x,n.y,r,0,7); ctx.fill(); ctx.restore();
+ctx.fillStyle = col; ctx.font = "9px JetBrains Mono, monospace"; ctx.textAlign = "center";
+var sign = n.val >= 0 ? "+" : "";
+ctx.fillText(sign+n.val.toFixed(2)+unit, n.x, n.y-8);
+});
+requestAnimationFrame(draw);
+}
+draw();
+setInterval(function(){
+nds.forEach(function(n){ n.val += (Math.random()-0.5)*0.3; n.val = Math.max(-3,Math.min(3,n.val)); });
+}, 350);
+return nds;
+}
+var priceNodes = makeNetwork("netPrice", {up:"#5DCAA5", down:"#F0716E"}, "%");
+var oiNodes = makeNetwork("netOI", {up:"#85B7EB", down:"#F5B457"}, "%");
+var fundNodes = makeNetwork("netFunding", {up:"#A29BF0", down:"#D4537E"}, "bp");
+function jiggleDirections(){
+[priceNodes, oiNodes, fundNodes].forEach(function(group){
+var n = group[Math.floor(Math.random()*group.length)];
+n.dir = Math.random()<0.5 ? (Math.random()<0.5?1:-1) : 0;
+});
+}
+setInterval(jiggleDirections, 1200);
+
+var pairs = ["LUMIAUSDT","SLXUSDT","ESPUSDT","VVVUSDT","ALLOUSDT","ESPORTSUSDT"];
+var rowBank = [{n:2,o:"PUMP",c:"#5DCAA5"},{n:14,o:"DUMP",c:"#F0716E"},{n:8,o:"STABLE",c:"#7a8a94"},{n:17,o:"DUMP",c:"#F0716E"},{n:1,o:"PUMP",c:"#F5B457"}];
+var divBank = [{n:10,pr:"HIGH"},{n:16,pr:"HIGH"},{n:19,pr:"HIGH"},{n:21,pr:"HIGH"},{n:9,pr:"MEDIUM"},{n:13,pr:"MEDIUM"},{n:25,pr:"MEDIUM"}];
+var scanRows = [], watchlist = [], escCount = 0, faCount = 0, startTime = Date.now();
+var rowFreq = {}; for(var ri=1; ri<=27; ri++) rowFreq[ri] = 0;
+var highResolved = 0, highTotal = 0, medResolved = 0, medTotal = 0;
+var atrPairs = [{n:"LUMIA",v:0.55},{n:"SLX",v:0.72},{n:"ESP",v:0.38},{n:"VVV",v:0.61},{n:"ALLO",v:0.44},{n:"ESPORTS",v:0.85}];
+var balance = 100, balHistory = [100], tradeResults = [];
+function renderBalance(){
+var out = document.getElementById("balanceOut");
+out.textContent = "$"+balance.toFixed(2);
+out.style.color = balance >= 100 ? "#5DCAA5" : "#F0716E";
+var delta = balance - 100, pct = delta/100*100;
+var d = document.getElementById("balanceDelta");
+d.textContent = (delta>=0?"+":"")+"$"+delta.toFixed(2)+" · "+(pct>=0?"+":"")+pct.toFixed(1)+"%";
+d.style.color = delta >= 0 ? "#5DCAA5" : "#F0716E";
+}
+function renderBalChart(){
+var w=300,h=42; var hist = balHistory.slice(-20);
+var minV = Math.min.apply(null, hist), maxV = Math.max.apply(null, hist);
+var range = Math.max(maxV-minV, 1);
+var step = w/((hist.length-1)||1);
+var pts = hist.map(function(v,i){ return (i*step).toFixed(1)+","+(h-4-((v-minV)/range*(h-8))).toFixed(1); }).join(" ");
+document.getElementById("balLine").setAttribute("points", pts);
+var line = document.getElementById("balLine");
+line.setAttribute("stroke", balance>=100 ? "#5DCAA5" : "#F0716E");
+}
+function logTrade(pair, pnl){
+var el = document.getElementById("tradeLog");
+var row = document.createElement("div");
+row.style.color = pnl>=0 ? "#5DCAA5" : "#F0716E";
+row.textContent = pair.replace("USDT","")+" "+(pnl>=0?"+":"")+"$"+pnl.toFixed(2);
+el.insertBefore(row, el.firstChild);
+while(el.children.length > 5) el.removeChild(el.lastChild);
+}
+function renderHeatmap(){
+var maxF = Math.max.apply(null, Object.values(rowFreq).concat([1]));
+document.getElementById("rowHeatmap").innerHTML = Array.from({length:27},function(_,i){
+var row = i+1, f = rowFreq[row], t = f/maxF;
+var bg = f===0 ? "#12171f" : "rgba(93,202,165,"+(0.15+t*0.75)+")";
+return "<div title='row "+row+": "+f+"' style='aspect-ratio:1;border-radius:3px;background:"+bg+";'></div>";
+}).join("");
+}
+function renderPriority(){
+document.getElementById("highPct").textContent = highTotal ? Math.round(highResolved/highTotal*100)+"%" : "—";
+document.getElementById("medPct").textContent = medTotal ? Math.round(medResolved/medTotal*100)+"%" : "—";
+document.getElementById("highBar").style.width = (highTotal ? highResolved/highTotal*100 : 0)+"%";
+document.getElementById("medBar").style.width = (medTotal ? medResolved/medTotal*100 : 0)+"%";
+}
+function renderAtr(){
+var maxV = Math.max.apply(null, atrPairs.map(function(p){return p.v;}));
+document.getElementById("atrBars").innerHTML = atrPairs.map(function(p){
+var pct = (p.v/maxV*100).toFixed(0);
+return "<div style='display:flex;align-items:center;gap:6px;font-size:10px;'>"+
+"<span style='width:44px;color:#7a8a94;'>"+p.n+"</span>"+
+"<div style='flex:1;height:5px;background:#12171f;border-radius:3px;overflow:hidden;'><div style='height:100%;width:"+pct+"%;background:#85B7EB;'></div></div>"+
+"</div>";
+}).join("");
+}
+renderHeatmap(); renderPriority(); renderAtr(); renderBalance(); renderBalChart();
+setInterval(function(){
+atrPairs.forEach(function(p){ p.v = Math.max(0.15, Math.min(1, p.v + (Math.random()-0.5)*0.08)); });
+renderAtr();
+}, 2200);
+function fmtClock(s){var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return [h,m,sec].map(function(x){return String(x).padStart(2,"0");}).join(":");}
+function renderScan(){
+document.getElementById("scanTable").innerHTML = scanRows.slice(0,5).map(function(r){
+return "<tr><td>"+r.pair.replace("USDT","")+"</td><td class='mono'>#"+r.row+"</td><td style='color:"+r.color+"'>"+r.outlook+"</td></tr>";
+}).join("");
+}
+function renderStats(){
+document.getElementById("activeCount").textContent = watchlist.length;
+var total = escCount + faCount;
+document.getElementById("accPct").textContent = total ? Math.round(escCount/total*100)+"%" : "—";
+document.getElementById("sampleN").textContent = total;
+document.getElementById("escCount").textContent = escCount;
+document.getElementById("faCount").textContent = faCount;
+}
+function log(text, cls){
+var el = document.getElementById("logFeed");
+var row = document.createElement("div"); row.className = cls||""; row.textContent = text;
+el.insertBefore(row, el.firstChild);
+while(el.children.length > 6) el.removeChild(el.lastChild);
+}
+function tick(){
+var pair = pairs[Math.floor(Math.random()*pairs.length)];
+var roll = Math.random();
+if(roll < 0.35 && watchlist.length < 4 && !watchlist.find(function(w){return w.pair===pair;})){
+var d = divBank[Math.floor(Math.random()*divBank.length)];
+watchlist.push({pair:pair, row:d.n, priority:d.pr, cycle:1});
+scanRows.unshift({pair:pair, row:d.n, outlook:"WATCH", color:"#F5B457"});
+log("[WATCH] "+pair+" -> row #"+d.n+" ("+d.pr+")", "amber");
+rowFreq[d.n] = (rowFreq[d.n]||0)+1;
+if(d.pr==="HIGH") highTotal++; else medTotal++;
+} else if(roll < 0.55 && watchlist.length > 0){
+var idx = Math.floor(Math.random()*watchlist.length);
+var w = watchlist[idx];
+if(Math.random() < 0.6){
+var r = rowBank[Math.floor(Math.random()*rowBank.length)];
+watchlist.splice(idx,1);
+scanRows.unshift({pair:w.pair, row:r.n, outlook:r.o, color:r.c});
+log("[ALERT] "+w.pair+" -> "+r.o+" (from #"+w.row+")", r.o==="DUMP"?"red":"green");
+escCount++;
+rowFreq[r.n] = (rowFreq[r.n]||0)+1;
+if(w.priority==="HIGH") highResolved++; else medResolved++;
+var win = Math.random() < 0.62;
+var pnl = win ? (Math.random()*3+0.8) : -(Math.random()*2+0.5);
+balance = Math.max(0, balance + pnl);
+balHistory.push(balance);
+logTrade(w.pair, pnl);
+renderBalance(); renderBalChart();
+} else {
+watchlist.splice(idx,1);
+scanRows.unshift({pair:w.pair, row:26, outlook:"STABLE", color:"#7a8a94"});
+log("[DROP] "+w.pair+" -> false alarm", "muted");
+faCount++;
+rowFreq[26] = (rowFreq[26]||0)+1;
+}
+} else {
+var r2 = rowBank[Math.floor(Math.random()*rowBank.length)];
+scanRows.unshift({pair:pair, row:r2.n, outlook:r2.o, color:r2.c});
+rowFreq[r2.n] = (rowFreq[r2.n]||0)+1;
+}
+scanRows = scanRows.slice(0,8);
+renderScan(); renderStats(); renderHeatmap(); renderPriority();
+document.getElementById("rp").setAttribute("cy", -55+Math.random()*30);
+document.getElementById("ro").setAttribute("cx", 20+Math.random()*30);
+document.getElementById("rf").setAttribute("cy", 10+Math.random()*30);
+}
+function clockTick(){
+var s = Math.floor((Date.now()-startTime)/1000);
+document.getElementById("uptime").textContent = fmtClock(s);
+document.getElementById("clock").textContent = new Date().toLocaleTimeString("en-GB");
+}
+window.addEventListener("resize", sizeBg);
+tick();
+setInterval(tick, 1400);
+setInterval(clockTick, 1000);
+</script>
+</body>
+</html>

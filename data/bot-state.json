@@ -2,89 +2,109 @@
   "signalsEnabled": true,
   "activeSignals": [
     {
-      "id": "mrqx0iltn00x",
-      "symbol": "LUMIAUSDT",
+      "id": "mrrfwxigbg23",
+      "symbol": "BULLAUSDT",
+      "direction": "LONG",
+      "entry": 0.011125,
+      "tp": 0.0122871,
+      "sl": 0.0106601,
+      "rr": 2.5,
+      "atr": 0.0004649,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 1,
+      "matrixMeaning": "but late-stage, squeeze risk",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "accepted",
+      "createdAt": 1784444050600,
+      "messageId": 76,
+      "currentPrice": 0.011471,
+      "currentPriceAt": 1784455518513
+    },
+    {
+      "id": "mrrgo1r34yv1",
+      "symbol": "SPORTFUNUSDT",
       "direction": "SHORT",
-      "entry": 0.07262,
-      "tp": 0.0712829,
-      "sl": 0.0732886,
-      "rr": 2,
-      "atr": 0.0006686,
+      "entry": 0.02175,
+      "tp": 0.0212339,
+      "sl": 0.0219564,
+      "rr": 2.5,
+      "atr": 0.0002064,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
       "matrixRow": 18,
       "matrixMeaning": "quiet control by shorts",
       "originRow": 27,
       "originPriority": "MEDIUM",
       "status": "accepted",
-      "createdAt": 1784412305201,
-      "messageId": 26
+      "createdAt": 1784445315807,
+      "messageId": 106,
+      "currentPrice": 0.02139,
+      "currentPriceAt": 1784455518652
     },
     {
-      "id": "mrqx311jv8w8",
-      "symbol": "SLXUSDT",
-      "direction": "LONG",
-      "entry": 0.1094,
-      "tp": 0.11127,
-      "sl": 0.108465,
-      "rr": 2,
-      "atr": 0.000935,
-      "matrixRow": 7,
-      "matrixMeaning": "mild, low conviction",
-      "originRow": 25,
+      "id": "mrrgzqest2gz",
+      "symbol": "GWEIUSDT",
+      "direction": "SHORT",
+      "entry": 0.0303,
+      "tp": 0.0291571,
+      "sl": 0.0307571,
+      "rr": 2.5,
+      "atr": 0.0004571,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 18,
+      "matrixMeaning": "quiet control by shorts",
+      "originRow": 27,
       "originPriority": "MEDIUM",
       "status": "accepted",
-      "createdAt": 1784412422407,
-      "messageId": 28
+      "createdAt": 1784445860980,
+      "messageId": 115,
+      "currentPrice": 0.0298,
+      "currentPriceAt": 1784455518793
     },
     {
-      "id": "mrqx80e1u024",
-      "symbol": "ICPUSDT",
-      "direction": "LONG",
-      "entry": 2.179,
-      "tp": 2.19207,
-      "sl": 2.17246,
-      "rr": 2,
-      "atr": 0.006537,
-      "matrixRow": 7,
-      "matrixMeaning": "mild, low conviction",
-      "originRow": 25,
+      "id": "mrrjvkuqjzh4",
+      "symbol": "1000XECUSDT",
+      "direction": "SHORT",
+      "entry": 0.008453,
+      "tp": 0.00801604,
+      "sl": 0.00862779,
+      "rr": 2.5,
+      "atr": 0.0001748,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 18,
+      "matrixMeaning": "quiet control by shorts",
+      "originRow": 27,
       "originPriority": "MEDIUM",
       "status": "accepted",
-      "createdAt": 1784412654841,
-      "messageId": 31
+      "createdAt": 1784450706002,
+      "messageId": 176,
+      "currentPrice": 0.008291,
+      "currentPriceAt": 1784455518936
     },
     {
-      "id": "mrqx896xtmxy",
-      "symbol": "NAORISUSDT",
+      "id": "mrrm0s7h3rqy",
+      "symbol": "TOWNSUSDT",
       "direction": "LONG",
-      "entry": 0.03985,
-      "tp": 0.0404643,
-      "sl": 0.0395429,
-      "rr": 2,
-      "atr": 0.0003071,
-      "matrixRow": 7,
-      "matrixMeaning": "mild, low conviction",
-      "originRow": 25,
+      "entry": 0.002168,
+      "tp": 0.0022355,
+      "sl": 0.002141,
+      "rr": 2.5,
+      "atr": 0.000027,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 2,
+      "matrixMeaning": "healthy",
+      "originRow": 20,
       "originPriority": "MEDIUM",
       "status": "accepted",
-      "createdAt": 1784412666249,
-      "messageId": 34
-    },
-    {
-      "id": "mrqxekprxyqq",
-      "symbol": "DEXEUSDT",
-      "direction": "LONG",
-      "entry": 35.45,
-      "tp": 35.8757,
-      "sl": 35.2371,
-      "rr": 2,
-      "atr": 0.2129,
-      "matrixRow": 7,
-      "matrixMeaning": "mild, low conviction",
-      "originRow": 25,
-      "originPriority": "MEDIUM",
-      "status": "accepted",
-      "createdAt": 1784412961119,
-      "messageId": 42
+      "createdAt": 1784454308045,
+      "messageId": 202,
+      "currentPrice": 0.002177,
+      "currentPriceAt": 1784455519079
     }
   ],
   "pendingSignals": [
@@ -121,6 +141,310 @@
       "status": "pending",
       "createdAt": 1784412959612,
       "messageId": 41
+    },
+    {
+      "id": "mrqy56q9n09q",
+      "symbol": "BANKUSDT",
+      "direction": "SHORT",
+      "entry": 0.11097,
+      "tp": 0.0994896,
+      "sl": 0.115562,
+      "rr": 2.5,
+      "atr": 0.004592,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 11,
+      "matrixMeaning": "healthy downtrend",
+      "originRow": 20,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784414202705,
+      "messageId": 59
+    },
+    {
+      "id": "mrqygq9jrph3",
+      "symbol": "SENTUSDT",
+      "direction": "LONG",
+      "entry": 0.01357,
+      "tp": 0.0137504,
+      "sl": 0.0134979,
+      "rr": 2.5,
+      "atr": 0.00007214,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784414741239,
+      "messageId": 62
+    },
+    {
+      "id": "mrrgcbzx1ou5",
+      "symbol": "XAIUSDT",
+      "direction": "SHORT",
+      "entry": 0.006949,
+      "tp": 0.00686204,
+      "sl": 0.00698379,
+      "rr": 2.5,
+      "atr": 0.00003479,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 18,
+      "matrixMeaning": "quiet control by shorts",
+      "originRow": 27,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784444769213,
+      "messageId": 95
+    },
+    {
+      "id": "mrrgmr2kb06o",
+      "symbol": "TACUSDT",
+      "direction": "LONG",
+      "entry": 0.003532,
+      "tp": 0.00369039,
+      "sl": 0.00346864,
+      "rr": 2.5,
+      "atr": 0.00006336,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784445255308,
+      "messageId": 103
+    },
+    {
+      "id": "mrrhdo1rxn84",
+      "symbol": "FLOCKUSDT",
+      "direction": "LONG",
+      "entry": 0.03214,
+      "tp": 0.0329525,
+      "sl": 0.031815,
+      "rr": 2.5,
+      "atr": 0.000325,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784446511103,
+      "messageId": 121
+    },
+    {
+      "id": "mrri9tm5l4d6",
+      "symbol": "ARIAUSDT",
+      "direction": "SHORT",
+      "entry": 0.02681,
+      "tp": 0.0242925,
+      "sl": 0.0275293,
+      "rr": 3.5,
+      "atr": 0.0007193,
+      "tpMultiplier": 3.5,
+      "tpTier": "HIGH_DIVERGENCE",
+      "matrixRow": 17,
+      "matrixMeaning": "weak, low conviction",
+      "originRow": 16,
+      "originPriority": "HIGH",
+      "status": "pending",
+      "createdAt": 1784448011309,
+      "messageId": 139
+    },
+    {
+      "id": "mrri9vc5nnpz",
+      "symbol": "VANAUSDT",
+      "direction": "LONG",
+      "entry": 1.143,
+      "tp": 1.19907,
+      "sl": 1.12057,
+      "rr": 2.5,
+      "atr": 0.02243,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 2,
+      "matrixMeaning": "healthy",
+      "originRow": 20,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784448013541,
+      "messageId": 140
+    },
+    {
+      "id": "mrriazojkpnm",
+      "symbol": "ACEUSDT",
+      "direction": "LONG",
+      "entry": 0.06383,
+      "tp": 0.0654586,
+      "sl": 0.0631786,
+      "rr": 2.5,
+      "atr": 0.0006514,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 2,
+      "matrixMeaning": "healthy",
+      "originRow": 3,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784448065827,
+      "messageId": 142
+    },
+    {
+      "id": "mrridmne1fbt",
+      "symbol": "BUSDT",
+      "direction": "LONG",
+      "entry": 0.1834,
+      "tp": 0.196293,
+      "sl": 0.178243,
+      "rr": 2.5,
+      "atr": 0.005157,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 2,
+      "matrixMeaning": "healthy",
+      "originRow": 3,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784448188906,
+      "messageId": 147
+    },
+    {
+      "id": "mrrilfto5gak",
+      "symbol": "MUSDT",
+      "direction": "LONG",
+      "entry": 1.2464,
+      "tp": 1.26365,
+      "sl": 1.2395,
+      "rr": 2.5,
+      "atr": 0.0069,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784448553308,
+      "messageId": 149
+    },
+    {
+      "id": "mrrjbakmcbt2",
+      "symbol": "DODOXUSDT",
+      "direction": "SHORT",
+      "entry": 0.020568,
+      "tp": 0.0199696,
+      "sl": 0.0208074,
+      "rr": 2.5,
+      "atr": 0.0002394,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 18,
+      "matrixMeaning": "quiet control by shorts",
+      "originRow": 27,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784449759558,
+      "messageId": 160
+    },
+    {
+      "id": "mrrjca4y14m8",
+      "symbol": "NEOUSDT",
+      "direction": "SHORT",
+      "entry": 2.033,
+      "tp": 1.99479,
+      "sl": 2.04829,
+      "rr": 2.5,
+      "atr": 0.01529,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 18,
+      "matrixMeaning": "quiet control by shorts",
+      "originRow": 27,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784449805650,
+      "messageId": 161
+    },
+    {
+      "id": "mrrjdkgkmkc0",
+      "symbol": "PHAUSDT",
+      "direction": "LONG",
+      "entry": 0.02404,
+      "tp": 0.0248632,
+      "sl": 0.0237107,
+      "rr": 2.5,
+      "atr": 0.0003293,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 2,
+      "matrixMeaning": "healthy",
+      "originRow": 20,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784449865684,
+      "messageId": 163
+    },
+    {
+      "id": "mrrjdpdbk8rb",
+      "symbol": "LYNUSDT",
+      "direction": "LONG",
+      "entry": 0.0379,
+      "tp": 0.0387446,
+      "sl": 0.0375621,
+      "rr": 2.5,
+      "atr": 0.0003379,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784449872047,
+      "messageId": 164
+    },
+    {
+      "id": "mrrjo16s40g4",
+      "symbol": "VICUSDT",
+      "direction": "LONG",
+      "entry": 0.03793,
+      "tp": 0.0384889,
+      "sl": 0.0377064,
+      "rr": 2.5,
+      "atr": 0.0002236,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 2,
+      "matrixMeaning": "healthy",
+      "originRow": 20,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784450353924,
+      "messageId": 169
+    },
+    {
+      "id": "mrrmb28nec8w",
+      "symbol": "ESPORTSUSDT",
+      "direction": "SHORT",
+      "entry": 0.04097,
+      "tp": 0.0336039,
+      "sl": 0.0439164,
+      "rr": 2.5,
+      "atr": 0.002946,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 18,
+      "matrixMeaning": "quiet control by shorts",
+      "originRow": 12,
+      "originPriority": "MEDIUM",
+      "status": "pending",
+      "createdAt": 1784454787607,
+      "messageId": 211
     }
   ],
   "completedSignals": [
@@ -141,221 +465,527 @@
       "createdAt": 1784412652976,
       "messageId": 30,
       "resolvedAt": 1784412923142
+    },
+    {
+      "id": "mrqx0iltn00x",
+      "symbol": "LUMIAUSDT",
+      "direction": "SHORT",
+      "entry": 0.07262,
+      "tp": 0.0712829,
+      "sl": 0.0732886,
+      "rr": 2,
+      "atr": 0.0006686,
+      "matrixRow": 18,
+      "matrixMeaning": "quiet control by shorts",
+      "originRow": 27,
+      "originPriority": "MEDIUM",
+      "status": "tp_hit",
+      "createdAt": 1784412305201,
+      "messageId": 26,
+      "currentPrice": 0.07077,
+      "currentPriceAt": 1784444014364,
+      "resolvedAt": 1784444014364
+    },
+    {
+      "id": "mrqx80e1u024",
+      "symbol": "ICPUSDT",
+      "direction": "LONG",
+      "entry": 2.179,
+      "tp": 2.19207,
+      "sl": 2.17246,
+      "rr": 2,
+      "atr": 0.006537,
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "sl_hit",
+      "createdAt": 1784412654841,
+      "messageId": 31,
+      "currentPrice": 2.163,
+      "currentPriceAt": 1784444015379,
+      "resolvedAt": 1784444015379
+    },
+    {
+      "id": "mrqxekprxyqq",
+      "symbol": "DEXEUSDT",
+      "direction": "LONG",
+      "entry": 35.45,
+      "tp": 35.8757,
+      "sl": 35.2371,
+      "rr": 2,
+      "atr": 0.2129,
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "sl_hit",
+      "createdAt": 1784412961119,
+      "messageId": 42,
+      "currentPrice": 34.45,
+      "currentPriceAt": 1784444015886,
+      "resolvedAt": 1784444015886
+    },
+    {
+      "id": "mrqx311jv8w8",
+      "symbol": "SLXUSDT",
+      "direction": "LONG",
+      "entry": 0.1094,
+      "tp": 0.11127,
+      "sl": 0.108465,
+      "rr": 2,
+      "atr": 0.000935,
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "tp_hit",
+      "createdAt": 1784412422407,
+      "messageId": 28,
+      "currentPrice": 0.11187,
+      "currentPriceAt": 1784444134347,
+      "resolvedAt": 1784444134347
+    },
+    {
+      "id": "mrrfwsskkngz",
+      "symbol": "HOMEUSDT",
+      "direction": "LONG",
+      "entry": 0.00818,
+      "tp": 0.00903,
+      "sl": 0.00793714,
+      "rr": 3.5,
+      "atr": 0.0002429,
+      "tpMultiplier": 3.5,
+      "tpTier": "HIGH_DIVERGENCE",
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 10,
+      "originPriority": "HIGH",
+      "status": "sl_hit",
+      "createdAt": 1784444044484,
+      "messageId": 70,
+      "currentPrice": 0.00793,
+      "currentPriceAt": 1784444797210,
+      "resolvedAt": 1784444797210
+    },
+    {
+      "id": "mrrfwv3jz5fn",
+      "symbol": "TLMUSDT",
+      "direction": "LONG",
+      "entry": 0.001679,
+      "tp": 0.0018015,
+      "sl": 0.00163,
+      "rr": 2.5,
+      "atr": 0.000049,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 2,
+      "matrixMeaning": "healthy",
+      "originRow": 3,
+      "originPriority": "MEDIUM",
+      "status": "tp_hit",
+      "createdAt": 1784444047471,
+      "messageId": 73,
+      "currentPrice": 0.001816,
+      "currentPriceAt": 1784445124702,
+      "resolvedAt": 1784445124702
+    },
+    {
+      "id": "mrrg4nzshlm7",
+      "symbol": "AVAAIUSDT",
+      "direction": "SHORT",
+      "entry": 0.008192,
+      "tp": 0.00770736,
+      "sl": 0.00838586,
+      "rr": 2.5,
+      "atr": 0.0001939,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 18,
+      "matrixMeaning": "quiet control by shorts",
+      "originRow": 27,
+      "originPriority": "MEDIUM",
+      "status": "tp_hit",
+      "createdAt": 1784444411512,
+      "messageId": 87,
+      "currentPrice": 0.007697,
+      "currentPriceAt": 1784445394768,
+      "resolvedAt": 1784445394768
+    },
+    {
+      "id": "mrrgnyvwzf4m",
+      "symbol": "1000XECUSDT",
+      "direction": "LONG",
+      "entry": 0.008766,
+      "tp": 0.00918136,
+      "sl": 0.00859986,
+      "rr": 2.5,
+      "atr": 0.0001661,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 4,
+      "matrixMeaning": "expensive, fragile",
+      "originRow": 13,
+      "originPriority": "MEDIUM",
+      "status": "sl_hit",
+      "createdAt": 1784445312092,
+      "messageId": 105,
+      "currentPrice": 0.008568,
+      "currentPriceAt": 1784445845790,
+      "resolvedAt": 1784445845790
+    },
+    {
+      "id": "mrqx896xtmxy",
+      "symbol": "NAORISUSDT",
+      "direction": "LONG",
+      "entry": 0.03985,
+      "tp": 0.0404643,
+      "sl": 0.0395429,
+      "rr": 2,
+      "atr": 0.0003071,
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "tp_hit",
+      "createdAt": 1784412666249,
+      "messageId": 34,
+      "currentPrice": 0.04064,
+      "currentPriceAt": 1784448215233,
+      "resolvedAt": 1784448215233
+    },
+    {
+      "id": "mrriqieweguo",
+      "symbol": "SIRENUSDT",
+      "direction": "LONG",
+      "entry": 0.02926,
+      "tp": 0.0300743,
+      "sl": 0.0289343,
+      "rr": 2.5,
+      "atr": 0.0003257,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 7,
+      "matrixMeaning": "mild, low conviction",
+      "originRow": 25,
+      "originPriority": "MEDIUM",
+      "status": "sl_hit",
+      "createdAt": 1784448789944,
+      "messageId": 151,
+      "currentPrice": 0.0289,
+      "currentPriceAt": 1784451065844,
+      "resolvedAt": 1784451065844
+    },
+    {
+      "id": "mrrgir0mrebg",
+      "symbol": "YBUSDT",
+      "direction": "LONG",
+      "entry": 0.08294,
+      "tp": 0.0857614,
+      "sl": 0.0818114,
+      "rr": 2.5,
+      "atr": 0.001129,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 2,
+      "matrixMeaning": "healthy",
+      "originRow": 20,
+      "originPriority": "MEDIUM",
+      "status": "tp_hit",
+      "createdAt": 1784445068614,
+      "messageId": 99,
+      "currentPrice": 0.08588,
+      "currentPriceAt": 1784453675725,
+      "resolvedAt": 1784453675725
     }
   ],
   "dailyStats": [
     {
       "date": "2026-07-18",
-      "sent": 8,
+      "sent": 11,
       "accepted": 6,
-      "ignored": 0,
+      "ignored": 1,
       "tpHit": 0,
       "slHit": 1
+    },
+    {
+      "date": "2026-07-19",
+      "sent": 47,
+      "accepted": 11,
+      "ignored": 22,
+      "tpHit": 6,
+      "slHit": 5
     }
   ],
   "watchlist": {
-    "WOOUSDT": {
-      "row": 20,
-      "priority": "MEDIUM",
-      "addedAt": 1784412213715,
-      "cyclesWatched": 17
-    },
-    "HOMEUSDT": {
-      "row": 10,
-      "priority": "HIGH",
-      "addedAt": 1784412485482,
-      "cyclesWatched": 12
-    },
-    "USUSDT": {
-      "row": 16,
-      "priority": "HIGH",
-      "addedAt": 1784412488537,
-      "cyclesWatched": 12
-    },
-    "REUSDT": {
-      "row": 27,
-      "priority": "MEDIUM",
-      "addedAt": 1784412490872,
-      "cyclesWatched": 12
-    },
-    "TOSHIUSDT": {
-      "row": 16,
-      "priority": "HIGH",
-      "addedAt": 1784412492612,
-      "cyclesWatched": 12
-    },
-    "TRXUSDT": {
+    "MUSDT": {
       "row": 25,
       "priority": "MEDIUM",
-      "addedAt": 1784412494363,
-      "cyclesWatched": 12
+      "addedAt": 1784453935038,
+      "cyclesWatched": 19
     },
-    "SLXUSDT": {
+    "PLAYUSDT": {
       "row": 25,
       "priority": "MEDIUM",
-      "addedAt": 1784412504032,
-      "cyclesWatched": 12
-    },
-    "龙虾USDT": {
-      "row": 27,
-      "priority": "MEDIUM",
-      "addedAt": 1784412569529,
-      "cyclesWatched": 11
+      "addedAt": 1784453947480,
+      "cyclesWatched": 18
     },
     "BILLUSDT": {
-      "row": 25,
+      "row": 3,
       "priority": "MEDIUM",
-      "addedAt": 1784412784244,
-      "cyclesWatched": 6
+      "addedAt": 1784454494190,
+      "cyclesWatched": 19
     },
-    "LUMIAUSDT": {
-      "row": 27,
+    "BIRBUSDT": {
+      "row": 12,
       "priority": "MEDIUM",
-      "addedAt": 1784412788930,
-      "cyclesWatched": 6
+      "addedAt": 1784454510812,
+      "cyclesWatched": 19
     },
-    "ESPORTSUSDT": {
-      "row": 15,
-      "priority": "MEDIUM",
-      "addedAt": 1784413073919,
-      "cyclesWatched": 0
-    },
-    "1000BONKUSDT": {
-      "row": 25,
-      "priority": "MEDIUM",
-      "addedAt": 1784413076867,
-      "cyclesWatched": 0
-    },
-    "TLMUSDT": {
+    "SKLUSDT": {
       "row": 9,
       "priority": "MEDIUM",
-      "addedAt": 1784413087725,
-      "cyclesWatched": 0
+      "addedAt": 1784454511108,
+      "cyclesWatched": 19
     },
-    "AEROUSDT": {
+    "HOTUSDT": {
       "row": 27,
       "priority": "MEDIUM",
-      "addedAt": 1784413087872,
-      "cyclesWatched": 0
+      "addedAt": 1784454522518,
+      "cyclesWatched": 19
     },
-    "VANRYUSDT": {
-      "row": 27,
-      "priority": "MEDIUM",
-      "addedAt": 1784413088170,
-      "cyclesWatched": 0
-    },
-    "RAVEUSDT": {
-      "row": 9,
-      "priority": "MEDIUM",
-      "addedAt": 1784413090472,
-      "cyclesWatched": 0
-    },
-    "ARXUSDT": {
-      "row": 21,
-      "priority": "HIGH",
-      "addedAt": 1784413091345,
-      "cyclesWatched": 0
-    },
-    "SPELLUSDT": {
-      "row": 21,
-      "priority": "HIGH",
-      "addedAt": 1784413093114,
-      "cyclesWatched": 0
-    },
-    "SKYUSDT": {
+    "ONEUSDT": {
       "row": 20,
       "priority": "MEDIUM",
-      "addedAt": 1784413093263,
-      "cyclesWatched": 0
+      "addedAt": 1784454525774,
+      "cyclesWatched": 19
     },
-    "AERGOUSDT": {
+    "GTCUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784454556371,
+      "cyclesWatched": 17
+    },
+    "CELRUSDT": {
       "row": 27,
       "priority": "MEDIUM",
-      "addedAt": 1784413093569,
-      "cyclesWatched": 0
+      "addedAt": 1784454564690,
+      "cyclesWatched": 17
     },
-    "DOODUSDT": {
-      "row": 22,
+    "POLYXUSDT": {
+      "row": 27,
       "priority": "MEDIUM",
-      "addedAt": 1784413095045,
-      "cyclesWatched": 0
+      "addedAt": 1784454566769,
+      "cyclesWatched": 17
     },
-    "BULLAUSDT": {
-      "row": 25,
-      "priority": "MEDIUM",
-      "addedAt": 1784413095192,
-      "cyclesWatched": 0
-    },
-    "ICPUSDT": {
-      "row": 25,
-      "priority": "MEDIUM",
-      "addedAt": 1784413095336,
-      "cyclesWatched": 0
-    },
-    "MANTRAUSDT": {
-      "row": 25,
-      "priority": "MEDIUM",
-      "addedAt": 1784413095784,
-      "cyclesWatched": 0
+    "LABUSDT": {
+      "row": 10,
+      "priority": "HIGH",
+      "addedAt": 1784454791929,
+      "cyclesWatched": 13
     },
     "NEOUSDT": {
       "row": 27,
       "priority": "MEDIUM",
-      "addedAt": 1784413096303,
-      "cyclesWatched": 0
+      "addedAt": 1784454808581,
+      "cyclesWatched": 13
     },
-    "MEWUSDT": {
+    "ONGUSDT": {
+      "row": 24,
+      "priority": "MEDIUM",
+      "addedAt": 1784454829838,
+      "cyclesWatched": 13
+    },
+    "LAYERUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784454832840,
+      "cyclesWatched": 13
+    },
+    "SCRTUSDT": {
+      "row": 20,
+      "priority": "MEDIUM",
+      "addedAt": 1784454878123,
+      "cyclesWatched": 12
+    },
+    "BBUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784454928487,
+      "cyclesWatched": 10
+    },
+    "1000XECUSDT": {
       "row": 16,
       "priority": "HIGH",
-      "addedAt": 1784413097487,
-      "cyclesWatched": 0
+      "addedAt": 1784455086441,
+      "cyclesWatched": 7
     },
-    "MOODENGUSDT": {
+    "KNCUSDT": {
       "row": 25,
       "priority": "MEDIUM",
-      "addedAt": 1784413100619,
+      "addedAt": 1784455171683,
+      "cyclesWatched": 5
+    },
+    "ESPORTSUSDT": {
+      "row": 12,
+      "priority": "MEDIUM",
+      "addedAt": 1784455489619,
       "cyclesWatched": 0
     },
-    "TREEUSDT": {
+    "TLMUSDT": {
+      "row": 3,
+      "priority": "MEDIUM",
+      "addedAt": 1784455490758,
+      "cyclesWatched": 0
+    },
+    "1000BONKUSDT": {
+      "row": 9,
+      "priority": "MEDIUM",
+      "addedAt": 1784455492730,
+      "cyclesWatched": 0
+    },
+    "REUSDT": {
       "row": 25,
       "priority": "MEDIUM",
-      "addedAt": 1784413101514,
+      "addedAt": 1784455493008,
       "cyclesWatched": 0
     },
-    "FLOCKUSDT": {
-      "row": 25,
-      "priority": "MEDIUM",
-      "addedAt": 1784413101958,
-      "cyclesWatched": 0
-    },
-    "1000FLOKIUSDT": {
-      "row": 21,
+    "TRADOORUSDT": {
+      "row": 16,
       "priority": "HIGH",
-      "addedAt": 1784413104298,
+      "addedAt": 1784455493718,
+      "cyclesWatched": 0
+    },
+    "TRXUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784455495127,
+      "cyclesWatched": 0
+    },
+    "DEXEUSDT": {
+      "row": 16,
+      "priority": "HIGH",
+      "addedAt": 1784455495406,
+      "cyclesWatched": 0
+    },
+    "XMRUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784455498604,
+      "cyclesWatched": 0
+    },
+    "TOSHIUSDT": {
+      "row": 22,
+      "priority": "MEDIUM",
+      "addedAt": 1784455500009,
+      "cyclesWatched": 0
+    },
+    "DODOXUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784455500440,
+      "cyclesWatched": 0
+    },
+    "GUSDT": {
+      "row": 20,
+      "priority": "MEDIUM",
+      "addedAt": 1784455505359,
+      "cyclesWatched": 0
+    },
+    "1000SHIBUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784455505916,
+      "cyclesWatched": 0
+    },
+    "QTUMUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784455506059,
+      "cyclesWatched": 0
+    },
+    "JASMYUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784455506765,
+      "cyclesWatched": 0
+    },
+    "GASUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784455508897,
+      "cyclesWatched": 0
+    },
+    "SIRENUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784455510332,
+      "cyclesWatched": 0
+    },
+    "CHZUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784455510645,
+      "cyclesWatched": 0
+    },
+    "ARXUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784455511077,
+      "cyclesWatched": 0
+    },
+    "SPELLUSDT": {
+      "row": 22,
+      "priority": "MEDIUM",
+      "addedAt": 1784455511503,
       "cyclesWatched": 0
     },
     "TOWNSUSDT": {
       "row": 20,
       "priority": "MEDIUM",
-      "addedAt": 1784413107425,
+      "addedAt": 1784455516271,
       "cyclesWatched": 0
     },
-    "BLESSUSDT": {
+    "HUSDT": {
       "row": 25,
       "priority": "MEDIUM",
-      "addedAt": 1784413110392,
+      "addedAt": 1784455524205,
       "cyclesWatched": 0
     },
-    "USUALUSDT": {
+    "GIGGLEUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784455529324,
+      "cyclesWatched": 0
+    },
+    "MOODENGUSDT": {
       "row": 20,
       "priority": "MEDIUM",
-      "addedAt": 1784413111578,
+      "addedAt": 1784455530994,
+      "cyclesWatched": 0
+    },
+    "SUNUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784455531136,
+      "cyclesWatched": 0
+    },
+    "QNTUSDT": {
+      "row": 27,
+      "priority": "MEDIUM",
+      "addedAt": 1784455534159,
+      "cyclesWatched": 0
+    },
+    "ERAUSDT": {
+      "row": 25,
+      "priority": "MEDIUM",
+      "addedAt": 1784455538473,
       "cyclesWatched": 0
     }
   },
-  "totalSent": 8,
-  "totalAccepted": 6,
-  "totalIgnored": 0,
-  "totalTpHit": 0,
-  "totalSlHit": 1
+  "totalSent": 58,
+  "totalAccepted": 17,
+  "totalIgnored": 23,
+  "totalTpHit": 6,
+  "totalSlHit": 6
 }
