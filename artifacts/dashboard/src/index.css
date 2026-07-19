@@ -35,28 +35,28 @@
 }
 
 :root, .dark {
-  --background: 240 10% 4%;
-  --foreground: 210 20% 80%;
-  --card: 240 10% 6%;
-  --card-foreground: 210 20% 80%;
-  --card-border: 240 10% 12%;
-  --popover: 240 10% 6%;
-  --popover-foreground: 210 20% 80%;
-  --popover-border: 240 10% 12%;
-  --primary: 190 90% 50%;
+  --background: 240 50% 3%;
+  --foreground: 210 20% 93%;
+  --card: 220 30% 7%;
+  --card-foreground: 210 20% 93%;
+  --card-border: 214 26% 15%;
+  --popover: 220 30% 7%;
+  --popover-foreground: 210 20% 93%;
+  --popover-border: 214 26% 15%;
+  --primary: 161 51% 58%;
   --primary-foreground: 240 10% 4%;
   --secondary: 240 10% 15%;
   --secondary-foreground: 210 20% 80%;
-  --muted: 240 10% 10%;
-  --muted-foreground: 240 10% 50%;
-  --accent: 190 90% 50%;
+  --muted: 210 15% 15%;
+  --muted-foreground: 208 13% 38%;
+  --accent: 161 51% 58%;
   --accent-foreground: 240 10% 4%;
-  --destructive: 0 80% 60%;
+  --destructive: 3 83% 69%;
   --destructive-foreground: 240 10% 4%;
-  --border: 240 10% 12%;
-  --input: 240 10% 12%;
-  --ring: 190 90% 50%;
-  --radius: 0.25rem;
+  --border: 214 26% 15%;
+  --input: 214 26% 15%;
+  --ring: 161 51% 58%;
+  --radius: 0.75rem;
   --app-font-sans: 'Inter', sans-serif;
   --app-font-mono: 'JetBrains Mono', monospace;
 }
@@ -65,6 +65,29 @@
   * { @apply border-border; }
   body { @apply font-sans antialiased bg-background text-foreground; }
 }
+
+.matrix-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid #1c2530;
+  background: linear-gradient(180deg, #0c1119 0%, #090d13 100%);
+}
+
+.matrix-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(93,202,165,0.4), transparent);
+  z-index: 10;
+}
+
+.glow-green { text-shadow: 0 0 18px #5DCAA5; }
+.glow-red { text-shadow: 0 0 10px rgba(240,113,110,0.35); }
+.glow-amber { text-shadow: 0 0 10px rgba(245,180,87,0.35); }
 
 .bg-scanlines {
   background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.15));
@@ -84,4 +107,19 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(200px); }
 }
