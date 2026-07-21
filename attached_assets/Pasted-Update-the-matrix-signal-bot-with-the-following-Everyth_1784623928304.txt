@@ -1,4 +1,4 @@
-Update the matrix signal bot with the following. Everything stays scoped to the existing paper trading account — no exchange API keys, no real order placement.
+notUpdate the matrix signal bot with the following. Everything stays scoped to the existing paper trading account — no exchange API keys, no real order placement.
 
 1. Reset paper balance & add fixed risk management
 Reset the paper trading balance to $100.00 as the new baseline starting point (mark this as "Test 2" / "post-fix" in the data so it's distinguishable from prior history).
