@@ -13,6 +13,8 @@ import type { LiveSignal } from './liveSignal';
 import type { PriorityResolution } from './priorityResolution';
 import type { ScanEntry } from './scanEntry';
 import type { ScanSummary } from './scanSummary';
+import type { Test1Stats } from './test1Stats';
+import type { Test2Stats } from './test2Stats';
 import type { WatchlistItem } from './watchlistItem';
 
 export interface DashboardSnapshot {
@@ -29,8 +31,12 @@ export interface DashboardSnapshot {
   paperBalance: number;
   paperBalanceDelta: number;
   paperBalancePct: number;
-  /** Running paper balance after each trade (last 50) */
+  /** Running paper balance after each Test 2 trade close (starts at 100) */
   balanceHistory: number[];
+  test2Stats?: Test2Stats;
+  test1Stats?: Test1Stats;
+  /** Unix timestamp when Test 2 was activated */
+  test2StartedAt?: number;
   /** Map of matrix row number -> count seen this session */
   rowFrequency: DashboardSnapshotRowFrequency;
   priorityResolution: PriorityResolution;

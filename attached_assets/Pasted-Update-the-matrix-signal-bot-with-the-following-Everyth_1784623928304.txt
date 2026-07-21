@@ -1,0 +1,43 @@
+Update the matrix signal bot with the following. Everything stays scoped to the existing paper trading account — no exchange API keys, no real order placement.
+
+1. Reset paper balance & add fixed risk management
+Reset the paper trading balance to $100.00 as the new baseline starting point (mark this as "Test 2" / "post-fix" in the data so it's distinguishable from prior history).
+Every trade risks exactly 1% of current balance (compounding). On SL hit, balance decreases by 1%. On TP hit, balance increases by (R/R multiplier × 1%) — e.g. a 1:2.5 win adds 2.5%, a 1:3.5 win adds 3.5%. Store and display current balance and running trade counter on the dashboard.
+
+2. Continuous trade monitoring
+For every open/tracked position, re-run the classifier on a regular interval (e.g. every 60s via config.positionMonitoring.rescanIntervalMs) and compare current matrix row/outlook to the original thesis.
+
+LONG whose outlook turns bearish → auto-close at current price. Log [AUTO-CLOSE] pair, reason: thesis invalidated, row #X → #Y, P&L: $Z.
+SHORT whose outlook turns bullish → same, reversed.
+No fixed stale-position timeout needed — continuous monitoring already catches invalidation before any arbitrary time limit would.
+
+3. ATR-based minimum stop-loss filter
+Before a signal is sent/tracked, check ATR / entryPrice * 100. Skip signals where this is below a configurable floor (config.minAtrPercentOfPrice, default 1.1%, tunable) — these produce stops so tight normal volatility triggers them without the thesis failing. Log skipped signals as [SKIP] pair → ATR X% below floor, don't send/track them.
+
+4. Partial TP + breakeven
+Once an open position's unrealized P&L reaches 50% of the distance from entry to TP:
+
+Auto-close 50% of the position size at current price (bank partial profit)
+Move SL on the remaining 50% to breakeven (entry price)
+Log [PARTIAL-TP] pair, 50% closed at $X, remaining SL moved to breakeven. Reflect both the partial close and the eventual full close/SL of the remainder in the balance calculation and trade log.
+
+5. Dashboard — required stats, live
+Display, updated in real time as trades resolve:
+
+Current balance (starting $100, Test 2)
+Total trades, win count, loss count, win rate %
+Profit factor and expectancy (in R)
+Breakdown by direction (LONG vs SHORT): trade count, win rate, isolated $ contribution
+Breakdown by R/R tier (2.0 / 2.5 / 3.5): trade count, win rate
+Clearly separated "Test 1 baseline" vs "Test 2 (post-fix)" comparison view, visible without manual recalculation
+
+6. Fix Active Targets panel layout (UI bug)
+The "Active Targets" panel currently overlaps and truncates rows, making entry/direction/tier/progress unreadable with 15+ open positions. Fix:
+
+Move Active Targets into its own dedicated tab or expandable panel, separate from the main dashboard grid
+Each row shows fully, non-overlapping: symbol, direction, tier badge, % progress to TP, current unrealized P&L
+Fixed row height with scroll (not squeeze) if list exceeds panel height — same behavior as the Escalation Log panel
+Default sort by closest-to-TP or closest-to-SL, so actionable positions are visible without scrolling
+This is a UI/layout fix only — no changes to underlying tracking logic.
+
+Keep all existing matrix/watchlist/escalation core logic untouched — everything above is additive only.

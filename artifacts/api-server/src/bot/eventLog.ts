@@ -6,7 +6,7 @@
 export interface ActivityEntry {
   ts: number;
   text: string;
-  kind: 'signal' | 'tp' | 'sl' | 'watch' | 'drop' | 'scan';
+  kind: 'signal' | 'tp' | 'sl' | 'watch' | 'drop' | 'scan' | 'auto_close' | 'partial_tp' | 'adjust';
   symbol: string | null;
 }
 

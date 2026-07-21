@@ -16,4 +16,7 @@ export const ActivityEntryKind = {
   watch: 'watch',
   drop: 'drop',
   scan: 'scan',
+  auto_close: 'auto_close',
+  partial_tp: 'partial_tp',
+  adjust: 'adjust',
 } as const;

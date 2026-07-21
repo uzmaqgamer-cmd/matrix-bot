@@ -5,7 +5,7 @@ import {
   formatTestResults, formatRadar, fmtPrice, esc,
 } from './formatter.js';
 import { runFullScan, runWatchlistScan, initScanner, sendSignal, scanSymbol, getRadarData, lastScanSummary } from './scanner.js';
-import { checkActiveSignals, initTracker } from './tracker.js';
+import { checkActiveSignals, initTracker, monitorPositionTheses } from './tracker.js';
 import { runOfflineTests } from './tests.js';
 import { MATRIX } from './matrix.js';
 
@@ -344,6 +344,9 @@ bot.action(/^accept_(.+)$/, async (ctx) => {
 
   const signal = state.pendingSignals[idx];
   signal.status = 'accepted';
+  // Stamp compounding risk amounts at the moment of acceptance (Test 2)
+  signal.balanceAtEntry = state.paperBalance;
+  signal.riskAmt = parseFloat((state.paperBalance * 0.01).toFixed(4));
   state.activeSignals.push(signal);
   state.pendingSignals.splice(idx, 1);
   state.totalAccepted++;
@@ -411,6 +414,12 @@ export async function startBot() {
 
   // Watchlist tight scan every 60 seconds
   setInterval(() => runWatchlistScan().catch(console.error), 60 * 1000);
+
+  // Thesis invalidation monitor (re-classifies open positions)
+  setInterval(
+    () => monitorPositionTheses().catch(console.error),
+    60 * 1000 // configurable via config.positionMonitoring.rescanIntervalMs but 60s default
+  );
 
   await bot.launch({ dropPendingUpdates: true });
   console.log('[bot] Matrix Signal Bot started. Scanning 600 pairs.');

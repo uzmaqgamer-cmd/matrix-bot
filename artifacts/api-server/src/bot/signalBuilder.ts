@@ -1,10 +1,6 @@
 import { getOhlcSeries, calcATR, getCurrentPrice } from './binance.js';
+import { config } from './config.js';
 import type { Signal, SignalDirection, TpTier } from './types.js';
-
-// ─── Configuration ────────────────────────────────────────────────────────────
-
-/** Minimum ATR/price ratio. Signals with tighter ATR are suppressed entirely. */
-const MIN_ATR_RATIO = 0.005; // 0.5% of entry price
 
 /** Matrix rows that are pure trend rows — no divergence buildup in origin. */
 const CLEAN_ORIGIN_ROWS = new Set([1, 2, 4, 7, 11, 14, 17, 18]);
@@ -19,7 +15,6 @@ function getConvictionTier(originRow: number, originPriority: 'HIGH' | 'MEDIUM')
   tier: TpTier;
   tierLabel: string;
 } {
-  // HIGH-priority divergence origin (compression → explosion setups)
   if (originPriority === 'HIGH' || HIGH_DIVERGENCE_ORIGIN_ROWS.has(originRow)) {
     return {
       multiplier: 3.5,
@@ -27,8 +22,6 @@ function getConvictionTier(originRow: number, originPriority: 'HIGH' | 'MEDIUM')
       tierLabel: `3.5× ATR — HIGH priority divergence origin (Row #${originRow})`,
     };
   }
-
-  // Clean signal: origin was itself a pure trend row (not BIG_COMING)
   if (CLEAN_ORIGIN_ROWS.has(originRow) || originRow === 0) {
     return {
       multiplier: 2.0,
@@ -36,8 +29,6 @@ function getConvictionTier(originRow: number, originPriority: 'HIGH' | 'MEDIUM')
       tierLabel: '2× ATR — clean resolved row (no divergence origin)',
     };
   }
-
-  // MEDIUM-priority divergence origin
   return {
     multiplier: 2.5,
     tier: 'MEDIUM_DIVERGENCE',
@@ -68,13 +59,12 @@ export async function buildSignal(params: {
     const atr = calcATR(ohlc);
     if (atr === 0 || entry === 0) return null;
 
-    // ── Minimum ATR gate ─────────────────────────────────────────────────────
-    // Suppress signals where the ATR is too tight relative to price.
-    // These setups have TP/SL so close to entry they're not worth tracking.
-    const atrRatio = atr / entry;
-    if (atrRatio < MIN_ATR_RATIO) {
+    // ── ATR minimum gate ─────────────────────────────────────────────────────
+    // Signals with stops so tight that normal volatility triggers them are useless.
+    const atrPct = (atr / entry) * 100;
+    if (atrPct < config.minAtrPercentOfPrice) {
       console.log(
-        `[signalBuilder] ${params.symbol} suppressed — ATR ratio ${(atrRatio * 100).toFixed(3)}% < ${MIN_ATR_RATIO * 100}% minimum`
+        `[SKIP] ${params.symbol} → ATR ${atrPct.toFixed(2)}% below ${config.minAtrPercentOfPrice}% floor`
       );
       return null;
     }
@@ -85,22 +75,21 @@ export async function buildSignal(params: {
       params.originPriority
     );
 
-    // SL stays at 1× ATR in all cases
     let tp: number;
     let sl: number;
 
     if (params.direction === 'LONG') {
       tp = entry + atr * multiplier;
-      sl = entry - atr * 1;
+      sl = entry - atr;
     } else {
       tp = entry - atr * multiplier;
-      sl = entry + atr * 1;
+      sl = entry + atr;
     }
 
     const rr = multiplier; // SL is always 1× so R/R = multiplier
 
     console.log(
-      `[signalBuilder] ${params.symbol} ${params.direction} | ATR=${(atrRatio * 100).toFixed(3)}% | tier=${tier} | TP=${multiplier}× | R/R=1:${rr}`
+      `[signalBuilder] ${params.symbol} ${params.direction} | ATR=${atrPct.toFixed(2)}% | tier=${tier} | TP=${multiplier}× | R/R=1:${rr}`
     );
 
     return {

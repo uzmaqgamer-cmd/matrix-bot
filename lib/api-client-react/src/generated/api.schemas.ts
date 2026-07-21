@@ -44,6 +44,7 @@ export const LiveSignalStatus = {
   tp_hit: 'tp_hit',
   sl_hit: 'sl_hit',
   expired: 'expired',
+  auto_closed: 'auto_closed',
 } as const;
 
 export interface LiveSignal {
@@ -79,6 +80,39 @@ export interface LiveSignal {
      * @nullable
      */
   tpProgressPct?: number | null;
+  /**
+     * Paper balance at the moment the signal was accepted (Test 2)
+     * @nullable
+     */
+  balanceAtEntry?: number | null;
+  /**
+     * 1% of balanceAtEntry — dollar risk on this trade (Test 2)
+     * @nullable
+     */
+  riskAmt?: number | null;
+  /**
+     * Total $ P&L from this trade including partial close, set at resolution
+     * @nullable
+     */
+  finalPnlAmt?: number | null;
+  /** @nullable */
+  partialTpFired?: boolean | null;
+  /** @nullable */
+  partialTpAt?: number | null;
+  /** @nullable */
+  partialTpPrice?: number | null;
+  /** @nullable */
+  partialTpPnlAmt?: number | null;
+  /** @nullable */
+  breakevenMoved?: boolean | null;
+  /** @nullable */
+  currentMatrixRow?: number | null;
+  /** @nullable */
+  autoClosedAt?: number | null;
+  /** @nullable */
+  autoCloseReason?: string | null;
+  /** @nullable */
+  autoClosePrice?: number | null;
 }
 
 export type WatchlistItemPriority = typeof WatchlistItemPriority[keyof typeof WatchlistItemPriority];
@@ -117,6 +151,9 @@ export const ActivityEntryKind = {
   watch: 'watch',
   drop: 'drop',
   scan: 'scan',
+  auto_close: 'auto_close',
+  partial_tp: 'partial_tp',
+  adjust: 'adjust',
 } as const;
 
 export interface ActivityEntry {
@@ -156,6 +193,69 @@ export interface PriorityResolution {
   medTotal: number;
 }
 
+export interface DirectionStats {
+  trades?: number;
+  wins?: number;
+  pnlAmt?: number;
+  /** @nullable */
+  winRate?: number | null;
+}
+
+export interface TierStats {
+  trades?: number;
+  wins?: number;
+  /** @nullable */
+  winRate?: number | null;
+}
+
+export type Test2StatsByDirection = {
+  LONG?: DirectionStats;
+  SHORT?: DirectionStats;
+};
+
+export type Test2StatsByTier = {
+  '2.0'?: TierStats;
+  '2.5'?: TierStats;
+  '3.5'?: TierStats;
+};
+
+/**
+ * Paper trading stats for Test 2 (post-fix, compounding 1% risk from $100 baseline)
+ */
+export interface Test2Stats {
+  balance?: number;
+  tradeCount?: number;
+  winCount?: number;
+  lossCount?: number;
+  autoClosedCount?: number;
+  partialTpCount?: number;
+  /**
+     * Win rate as percentage (0-100)
+     * @nullable
+     */
+  winRate?: number | null;
+  /** @nullable */
+  profitFactor?: number | null;
+  /**
+     * Average R earned per trade
+     * @nullable
+     */
+  expectancyR?: number | null;
+  byDirection?: Test2StatsByDirection;
+  byTier?: Test2StatsByTier;
+}
+
+/**
+ * Baseline stats for Test 1 (pre-reset history, no compounding)
+ */
+export interface Test1Stats {
+  tpHit?: number;
+  slHit?: number;
+  total?: number;
+  /** @nullable */
+  winRate?: number | null;
+}
+
 /**
  * LIMITED = max 5, manual accept/ignore. UNLIMITED = no cap, all signals auto-tracked.
  */
@@ -186,8 +286,12 @@ export interface DashboardSnapshot {
   paperBalance: number;
   paperBalanceDelta: number;
   paperBalancePct: number;
-  /** Running paper balance after each trade (last 50) */
+  /** Running paper balance after each Test 2 trade close (starts at 100) */
   balanceHistory: number[];
+  test2Stats?: Test2Stats;
+  test1Stats?: Test1Stats;
+  /** Unix timestamp when Test 2 was activated */
+  test2StartedAt?: number;
   /** Map of matrix row number -> count seen this session */
   rowFrequency: DashboardSnapshotRowFrequency;
   priorityResolution: PriorityResolution;

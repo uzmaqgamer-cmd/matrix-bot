@@ -65,6 +65,9 @@ export async function sendSignal(params: {
     if (isUnlimited) {
       // ─── UNLIMITED MODE: auto-accept, no user prompt ─────────────────────
       signal.status = 'accepted';
+      // Stamp compounding risk amounts at the moment of acceptance (Test 2)
+      signal.balanceAtEntry = state.paperBalance;
+      signal.riskAmt = parseFloat((state.paperBalance * 0.01).toFixed(4));
       state.activeSignals.push(signal);
       state.totalSent++;
       state.totalAccepted++;

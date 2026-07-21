@@ -32,7 +32,56 @@ export const GetDashboardResponse = zod.object({
   "paperBalance": zod.number().describe('Simulated $100 starting balance adjusted by TP\/SL history'),
   "paperBalanceDelta": zod.number(),
   "paperBalancePct": zod.number(),
-  "balanceHistory": zod.array(zod.number()).describe('Running paper balance after each trade (last 50)'),
+  "balanceHistory": zod.array(zod.number()).describe('Running paper balance after each Test 2 trade close (starts at 100)'),
+  "test2Stats": zod.object({
+  "balance": zod.number().optional(),
+  "tradeCount": zod.number().optional(),
+  "winCount": zod.number().optional(),
+  "lossCount": zod.number().optional(),
+  "autoClosedCount": zod.number().optional(),
+  "partialTpCount": zod.number().optional(),
+  "winRate": zod.number().nullish().describe('Win rate as percentage (0-100)'),
+  "profitFactor": zod.number().nullish(),
+  "expectancyR": zod.number().nullish().describe('Average R earned per trade'),
+  "byDirection": zod.object({
+  "LONG": zod.object({
+  "trades": zod.number().optional(),
+  "wins": zod.number().optional(),
+  "pnlAmt": zod.number().optional(),
+  "winRate": zod.number().nullish()
+}).optional(),
+  "SHORT": zod.object({
+  "trades": zod.number().optional(),
+  "wins": zod.number().optional(),
+  "pnlAmt": zod.number().optional(),
+  "winRate": zod.number().nullish()
+}).optional()
+}).optional(),
+  "byTier": zod.object({
+  "2.0": zod.object({
+  "trades": zod.number().optional(),
+  "wins": zod.number().optional(),
+  "winRate": zod.number().nullish()
+}).optional(),
+  "2.5": zod.object({
+  "trades": zod.number().optional(),
+  "wins": zod.number().optional(),
+  "winRate": zod.number().nullish()
+}).optional(),
+  "3.5": zod.object({
+  "trades": zod.number().optional(),
+  "wins": zod.number().optional(),
+  "winRate": zod.number().nullish()
+}).optional()
+}).optional()
+}).optional().describe('Paper trading stats for Test 2 (post-fix, compounding 1% risk from $100 baseline)'),
+  "test1Stats": zod.object({
+  "tpHit": zod.number().optional(),
+  "slHit": zod.number().optional(),
+  "total": zod.number().optional(),
+  "winRate": zod.number().nullish()
+}).optional().describe('Baseline stats for Test 1 (pre-reset history, no compounding)'),
+  "test2StartedAt": zod.number().optional().describe('Unix timestamp when Test 2 was activated'),
   "rowFrequency": zod.record(zod.string(), zod.number()).describe('Map of matrix row number -> count seen this session'),
   "priorityResolution": zod.object({
   "highResolved": zod.number(),
@@ -56,13 +105,25 @@ export const GetDashboardResponse = zod.object({
   "matrixMeaning": zod.string(),
   "originRow": zod.number(),
   "originPriority": zod.enum(['HIGH', 'MEDIUM']),
-  "status": zod.enum(['pending', 'accepted', 'ignored', 'tp_hit', 'sl_hit', 'expired']),
+  "status": zod.enum(['pending', 'accepted', 'ignored', 'tp_hit', 'sl_hit', 'expired', 'auto_closed']),
   "createdAt": zod.number(),
   "resolvedAt": zod.number().nullish(),
   "currentPrice": zod.number().nullish(),
   "currentPriceAt": zod.number().nullish(),
   "pnlPct": zod.number().nullish().describe('Live P&L percentage (positive = profit direction)'),
-  "tpProgressPct": zod.number().nullish().describe('0-100% progress toward TP (can be negative = moving toward SL)')
+  "tpProgressPct": zod.number().nullish().describe('0-100% progress toward TP (can be negative = moving toward SL)'),
+  "balanceAtEntry": zod.number().nullish().describe('Paper balance at the moment the signal was accepted (Test 2)'),
+  "riskAmt": zod.number().nullish().describe('1% of balanceAtEntry — dollar risk on this trade (Test 2)'),
+  "finalPnlAmt": zod.number().nullish().describe('Total $ P&L from this trade including partial close, set at resolution'),
+  "partialTpFired": zod.boolean().nullish(),
+  "partialTpAt": zod.number().nullish(),
+  "partialTpPrice": zod.number().nullish(),
+  "partialTpPnlAmt": zod.number().nullish(),
+  "breakevenMoved": zod.boolean().nullish(),
+  "currentMatrixRow": zod.number().nullish(),
+  "autoClosedAt": zod.number().nullish(),
+  "autoCloseReason": zod.string().nullish(),
+  "autoClosePrice": zod.number().nullish()
 })),
   "pendingSignals": zod.array(zod.object({
   "id": zod.string(),
@@ -79,13 +140,25 @@ export const GetDashboardResponse = zod.object({
   "matrixMeaning": zod.string(),
   "originRow": zod.number(),
   "originPriority": zod.enum(['HIGH', 'MEDIUM']),
-  "status": zod.enum(['pending', 'accepted', 'ignored', 'tp_hit', 'sl_hit', 'expired']),
+  "status": zod.enum(['pending', 'accepted', 'ignored', 'tp_hit', 'sl_hit', 'expired', 'auto_closed']),
   "createdAt": zod.number(),
   "resolvedAt": zod.number().nullish(),
   "currentPrice": zod.number().nullish(),
   "currentPriceAt": zod.number().nullish(),
   "pnlPct": zod.number().nullish().describe('Live P&L percentage (positive = profit direction)'),
-  "tpProgressPct": zod.number().nullish().describe('0-100% progress toward TP (can be negative = moving toward SL)')
+  "tpProgressPct": zod.number().nullish().describe('0-100% progress toward TP (can be negative = moving toward SL)'),
+  "balanceAtEntry": zod.number().nullish().describe('Paper balance at the moment the signal was accepted (Test 2)'),
+  "riskAmt": zod.number().nullish().describe('1% of balanceAtEntry — dollar risk on this trade (Test 2)'),
+  "finalPnlAmt": zod.number().nullish().describe('Total $ P&L from this trade including partial close, set at resolution'),
+  "partialTpFired": zod.boolean().nullish(),
+  "partialTpAt": zod.number().nullish(),
+  "partialTpPrice": zod.number().nullish(),
+  "partialTpPnlAmt": zod.number().nullish(),
+  "breakevenMoved": zod.boolean().nullish(),
+  "currentMatrixRow": zod.number().nullish(),
+  "autoClosedAt": zod.number().nullish(),
+  "autoCloseReason": zod.string().nullish(),
+  "autoClosePrice": zod.number().nullish()
 })),
   "recentTrades": zod.array(zod.object({
   "id": zod.string(),
@@ -102,13 +175,25 @@ export const GetDashboardResponse = zod.object({
   "matrixMeaning": zod.string(),
   "originRow": zod.number(),
   "originPriority": zod.enum(['HIGH', 'MEDIUM']),
-  "status": zod.enum(['pending', 'accepted', 'ignored', 'tp_hit', 'sl_hit', 'expired']),
+  "status": zod.enum(['pending', 'accepted', 'ignored', 'tp_hit', 'sl_hit', 'expired', 'auto_closed']),
   "createdAt": zod.number(),
   "resolvedAt": zod.number().nullish(),
   "currentPrice": zod.number().nullish(),
   "currentPriceAt": zod.number().nullish(),
   "pnlPct": zod.number().nullish().describe('Live P&L percentage (positive = profit direction)'),
-  "tpProgressPct": zod.number().nullish().describe('0-100% progress toward TP (can be negative = moving toward SL)')
+  "tpProgressPct": zod.number().nullish().describe('0-100% progress toward TP (can be negative = moving toward SL)'),
+  "balanceAtEntry": zod.number().nullish().describe('Paper balance at the moment the signal was accepted (Test 2)'),
+  "riskAmt": zod.number().nullish().describe('1% of balanceAtEntry — dollar risk on this trade (Test 2)'),
+  "finalPnlAmt": zod.number().nullish().describe('Total $ P&L from this trade including partial close, set at resolution'),
+  "partialTpFired": zod.boolean().nullish(),
+  "partialTpAt": zod.number().nullish(),
+  "partialTpPrice": zod.number().nullish(),
+  "partialTpPnlAmt": zod.number().nullish(),
+  "breakevenMoved": zod.boolean().nullish(),
+  "currentMatrixRow": zod.number().nullish(),
+  "autoClosedAt": zod.number().nullish(),
+  "autoCloseReason": zod.string().nullish(),
+  "autoClosePrice": zod.number().nullish()
 })).describe('Last 20 completed signals'),
   "watchlist": zod.array(zod.object({
   "symbol": zod.string(),
@@ -128,7 +213,7 @@ export const GetDashboardResponse = zod.object({
   "activity": zod.array(zod.object({
   "ts": zod.number(),
   "text": zod.string(),
-  "kind": zod.enum(['signal', 'tp', 'sl', 'watch', 'drop', 'scan']),
+  "kind": zod.enum(['signal', 'tp', 'sl', 'watch', 'drop', 'scan', 'auto_close', 'partial_tp', 'adjust']),
   "symbol": zod.string().nullish()
 })).describe('Last 20 escalation\/trade events'),
   "today": zod.object({
@@ -158,7 +243,7 @@ export const GetDashboardResponse = zod.object({
 export const GetDashboardActivityResponseItem = zod.object({
   "ts": zod.number(),
   "text": zod.string(),
-  "kind": zod.enum(['signal', 'tp', 'sl', 'watch', 'drop', 'scan']),
+  "kind": zod.enum(['signal', 'tp', 'sl', 'watch', 'drop', 'scan', 'auto_close', 'partial_tp', 'adjust']),
   "symbol": zod.string().nullish()
 })
 export const GetDashboardActivityResponse = zod.array(GetDashboardActivityResponseItem)

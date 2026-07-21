@@ -25,6 +25,55 @@ export function esc(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
+// ─── Auto-close (thesis invalidation) ────────────────────────────────────────
+
+export function formatAutoCloseMessage(
+  signal: Signal,
+  exitPrice: number,
+  prevRow: number,
+  newRow: number,
+): string {
+  const pnlAmt = signal.finalPnlAmt;
+  const pnlPct = exitPrice > 0 && signal.entry > 0
+    ? (signal.direction === 'LONG'
+        ? (exitPrice - signal.entry) / signal.entry * 100
+        : (signal.entry - exitPrice) / signal.entry * 100)
+    : 0;
+  const pnlAmtStr = pnlAmt != null
+    ? `  (${pnlAmt >= 0 ? '+' : ''}${pnlAmt.toFixed(4)})`
+    : '';
+  return (
+    `🔄 <b>AUTO-CLOSE — ${esc(signal.symbol)}</b>\n` +
+    `Direction: ${signal.direction}\n` +
+    `Reason: Thesis invalidated — Row #${prevRow} → #${newRow}\n` +
+    `Exit: <code>${fmtPrice(exitPrice)}</code>\n` +
+    `P&L: <b>${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%</b>${pnlAmtStr}\n` +
+    `ID: <code>${signal.id}</code>`
+  );
+}
+
+// ─── Partial TP + breakeven ───────────────────────────────────────────────────
+
+export function formatPartialTpMessage(
+  signal: Signal,
+  exitPrice: number,
+  pnlAmt: number,
+): string {
+  const pnlPct = exitPrice > 0 && signal.entry > 0
+    ? (signal.direction === 'LONG'
+        ? (exitPrice - signal.entry) / signal.entry * 100
+        : (signal.entry - exitPrice) / signal.entry * 100)
+    : 0;
+  return (
+    `⚡ <b>PARTIAL TP — ${esc(signal.symbol)}</b>\n` +
+    `Direction: ${signal.direction}\n` +
+    `50% closed at: <code>${fmtPrice(exitPrice)}</code>  (+${pnlPct.toFixed(2)}%)\n` +
+    `Banked: <b>+${pnlAmt.toFixed(4)}</b>\n` +
+    `SL moved to breakeven: <code>${fmtPrice(signal.entry)}</code>\n` +
+    `<i>Remaining 50% tracking with free ride (SL = entry).</i>`
+  );
+}
+
 // ─── Tier label ───────────────────────────────────────────────────────────────
 
 function tierLabel(signal: Signal): string {

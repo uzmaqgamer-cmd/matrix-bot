@@ -16,4 +16,5 @@ export const LiveSignalStatus = {
   tp_hit: 'tp_hit',
   sl_hit: 'sl_hit',
   expired: 'expired',
+  auto_closed: 'auto_closed',
 } as const;

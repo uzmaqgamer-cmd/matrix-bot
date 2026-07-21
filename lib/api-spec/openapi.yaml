@@ -117,7 +117,7 @@ components:
           enum: [HIGH, MEDIUM]
         status:
           type: string
-          enum: [pending, accepted, ignored, tp_hit, sl_hit, expired]
+          enum: [pending, accepted, ignored, tp_hit, sl_hit, expired, auto_closed]
         createdAt:
           type: number
         resolvedAt:
@@ -132,6 +132,33 @@ components:
         tpProgressPct:
           type: ["number", "null"]
           description: 0-100% progress toward TP (can be negative = moving toward SL)
+        balanceAtEntry:
+          type: ["number", "null"]
+          description: Paper balance at the moment the signal was accepted (Test 2)
+        riskAmt:
+          type: ["number", "null"]
+          description: 1% of balanceAtEntry — dollar risk on this trade (Test 2)
+        finalPnlAmt:
+          type: ["number", "null"]
+          description: Total $ P&L from this trade including partial close, set at resolution
+        partialTpFired:
+          type: ["boolean", "null"]
+        partialTpAt:
+          type: ["number", "null"]
+        partialTpPrice:
+          type: ["number", "null"]
+        partialTpPnlAmt:
+          type: ["number", "null"]
+        breakevenMoved:
+          type: ["boolean", "null"]
+        currentMatrixRow:
+          type: ["integer", "null"]
+        autoClosedAt:
+          type: ["number", "null"]
+        autoCloseReason:
+          type: ["string", "null"]
+        autoClosePrice:
+          type: ["number", "null"]
 
     WatchlistItem:
       type: object
@@ -189,7 +216,7 @@ components:
           type: string
         kind:
           type: string
-          enum: [signal, tp, sl, watch, drop, scan]
+          enum: [signal, tp, sl, watch, drop, scan, auto_close, partial_tp, adjust]
         symbol:
           type: ["string", "null"]
 
@@ -260,6 +287,82 @@ components:
         medTotal:
           type: integer
 
+    DirectionStats:
+      type: object
+      properties:
+        trades:
+          type: integer
+        wins:
+          type: integer
+        pnlAmt:
+          type: number
+        winRate:
+          type: ["number", "null"]
+
+    TierStats:
+      type: object
+      properties:
+        trades:
+          type: integer
+        wins:
+          type: integer
+        winRate:
+          type: ["number", "null"]
+
+    Test2Stats:
+      type: object
+      description: Paper trading stats for Test 2 (post-fix, compounding 1% risk from $100 baseline)
+      properties:
+        balance:
+          type: number
+        tradeCount:
+          type: integer
+        winCount:
+          type: integer
+        lossCount:
+          type: integer
+        autoClosedCount:
+          type: integer
+        partialTpCount:
+          type: integer
+        winRate:
+          type: ["number", "null"]
+          description: Win rate as percentage (0-100)
+        profitFactor:
+          type: ["number", "null"]
+        expectancyR:
+          type: ["number", "null"]
+          description: Average R earned per trade
+        byDirection:
+          type: object
+          properties:
+            LONG:
+              $ref: "#/components/schemas/DirectionStats"
+            SHORT:
+              $ref: "#/components/schemas/DirectionStats"
+        byTier:
+          type: object
+          properties:
+            "2.0":
+              $ref: "#/components/schemas/TierStats"
+            "2.5":
+              $ref: "#/components/schemas/TierStats"
+            "3.5":
+              $ref: "#/components/schemas/TierStats"
+
+    Test1Stats:
+      type: object
+      description: Baseline stats for Test 1 (pre-reset history, no compounding)
+      properties:
+        tpHit:
+          type: integer
+        slHit:
+          type: integer
+        total:
+          type: integer
+        winRate:
+          type: ["number", "null"]
+
     DashboardSnapshot:
       type: object
       required:
@@ -315,7 +418,14 @@ components:
           type: array
           items:
             type: number
-          description: Running paper balance after each trade (last 50)
+          description: Running paper balance after each Test 2 trade close (starts at 100)
+        test2Stats:
+          $ref: "#/components/schemas/Test2Stats"
+        test1Stats:
+          $ref: "#/components/schemas/Test1Stats"
+        test2StartedAt:
+          type: number
+          description: Unix timestamp when Test 2 was activated
         rowFrequency:
           type: object
           additionalProperties:

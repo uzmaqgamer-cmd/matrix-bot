@@ -43,4 +43,37 @@ export interface LiveSignal {
      * @nullable
      */
   tpProgressPct?: number | null;
+  /**
+     * Paper balance at the moment the signal was accepted (Test 2)
+     * @nullable
+     */
+  balanceAtEntry?: number | null;
+  /**
+     * 1% of balanceAtEntry — dollar risk on this trade (Test 2)
+     * @nullable
+     */
+  riskAmt?: number | null;
+  /**
+     * Total $ P&L from this trade including partial close, set at resolution
+     * @nullable
+     */
+  finalPnlAmt?: number | null;
+  /** @nullable */
+  partialTpFired?: boolean | null;
+  /** @nullable */
+  partialTpAt?: number | null;
+  /** @nullable */
+  partialTpPrice?: number | null;
+  /** @nullable */
+  partialTpPnlAmt?: number | null;
+  /** @nullable */
+  breakevenMoved?: boolean | null;
+  /** @nullable */
+  currentMatrixRow?: number | null;
+  /** @nullable */
+  autoClosedAt?: number | null;
+  /** @nullable */
+  autoCloseReason?: string | null;
+  /** @nullable */
+  autoClosePrice?: number | null;
 }

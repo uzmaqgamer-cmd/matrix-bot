@@ -1,0 +1,22 @@
+My mistake, no good reason — leftover from copying the earlier draft, I should've cut it cleanly. Here's it removed:
+
+---
+
+**Prompt for Replit:**
+
+> Update the matrix signal bot with the following. Everything stays scoped to the existing paper trading account — no exchange API keys, no real order placement.
+
+> **1. Minimum ATR filter (pre-signal gate)**
+> Before any signal is sent/auto-tracked, check `ATR / entryPrice * 100`. Only allow the signal through if this value is ≥ `config.minAtrPercentOfPrice` (default 1.1, tunable). Signals below the floor should be computed and logged (`[SKIP] pair -> ATR 0.85% below 1.1% floor`) but not sent or auto-tracked.
+
+> **2. Post-entry position monitoring (auto-execution on paper)**
+> For every open/auto-tracked position, store: pair, direction (LONG/SHORT), entry price, original matrix row, SL, TP, size, timestamp opened.
+>
+> Re-scan every open position every `config.positionMonitoring.rescanIntervalMs` (default 60s) — re-run the classifier and get its current matrix row, separate from the normal watchlist scan.
+>
+> - **Auto-close on thesis invalidation**: if a LONG's current outlook becomes DUMP (or bearish divergence row 10/16/21), or a SHORT's becomes PUMP (or bullish divergence row 19), automatically close the paper position at current price. Log `[AUTO-CLOSE] pair, reason: thesis invalidated, row #X -> #Y, P&L: $Z`.
+> - **Auto breakeven-stop**: once unrealized P&L reaches `config.positionMonitoring.breakevenTriggerPct` (default 50%) of the distance from entry to TP, automatically move the paper SL to breakeven (entry price). Log `[AUTO-ADJUST] pair, SL moved to breakeven at $X`.
+> - **Auto-close stale positions**: if open longer than `config.positionMonitoring.maxHoldMs` (default 6h) without hitting SL/TP or an auto-close, automatically close at current price. Log `[AUTO-CLOSE] pair, reason: stale position timeout, P&L: $Z`.
+
+> **3. Measurement — required**
+> Track escalation accuracy, TP/SL count, and paper balance segmented by before vs after this deployment, so it's possible to confirm whether these changes actually improve win rate rather than just changing which signals fire. Keep existing matrix/watchlist/escalation core logic untouched — this is additive only.
