@@ -108,4 +108,7 @@ export interface BotState {
   test2StartedAt: number;       // timestamp when Test 2 was activated (first boot after this code)
   test2TradeCount: number;      // number of closed trades in Test 2
   balanceLog: BalanceLogEntry[]; // running balance after each Test 2 close event (last 100)
+
+  // ── Activity log persistence ────────────────────────────────────────────────
+  activityLog?: import('./eventLog.js').ActivityEntry[]; // persisted so restarts don't wipe history
 }

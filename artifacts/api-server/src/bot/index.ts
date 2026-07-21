@@ -409,8 +409,9 @@ export async function startBot() {
   // TP/SL price monitor every 30 seconds
   setInterval(() => checkActiveSignals().catch(console.error), 30 * 1000);
 
-  // Full scan every 5 minutes
+  // Full scan every 5 minutes — also fire immediately on startup so the log isn't blank
   setInterval(() => runFullScan().catch(console.error), 5 * 60 * 1000);
+  setImmediate(() => runFullScan().catch(console.error));
 
   // Watchlist tight scan every 60 seconds
   setInterval(() => runWatchlistScan().catch(console.error), 60 * 1000);

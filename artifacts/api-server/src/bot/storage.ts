@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import type { BotState, BalanceLogEntry } from './types.js';
+import { activityLog } from './eventLog.js';
 
 const STATE_FILE = '/home/runner/workspace/data/bot-state.json';
 
@@ -53,6 +54,12 @@ export function loadState(): BotState {
     // Back-compat: ensure balanceLog is always an array
     if (!Array.isArray(state.balanceLog)) state.balanceLog = [];
 
+    // Restore persisted activity log into the in-memory ring buffer
+    if (Array.isArray(state.activityLog) && state.activityLog.length > 0) {
+      activityLog.length = 0;
+      activityLog.push(...state.activityLog);
+    }
+
     return state;
   } catch {
     return { ...DEFAULT_STATE, test2StartedAt: Date.now() };
@@ -63,6 +70,8 @@ export function saveState(state: BotState): void {
   try {
     const dir = dirname(STATE_FILE);
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    // Snapshot the in-memory activity log so it survives restarts
+    state.activityLog = activityLog.slice(0, 60);
     writeFileSync(STATE_FILE, JSON.stringify(state, null, 2), 'utf-8');
   } catch (err) {
     console.error('[storage] Failed to save state:', err);
