@@ -272,6 +272,16 @@ export async function monitorPositionTheses() {
         state.test2TradeCount++;
       }
 
+      // Count auto-closes toward the same TP/SL totals used by the center stats
+      const acIsWin = (signal.finalPnlAmt ?? 0) >= 0;
+      if (acIsWin) {
+        state.totalTpHit++;
+        getOrCreateDailyStats(state).tpHit++;
+      } else {
+        state.totalSlHit++;
+        getOrCreateDailyStats(state).slHit++;
+      }
+
       toRemove.push(signal.id);
       state.completedSignals.push({ ...signal });
       if (state.completedSignals.length > 100) {
