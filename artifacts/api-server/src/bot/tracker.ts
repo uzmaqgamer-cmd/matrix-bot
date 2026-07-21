@@ -288,6 +288,26 @@ export async function monitorPositionTheses() {
         state.completedSignals = state.completedSignals.slice(-100);
       }
 
+      // ── Reversal injection ────────────────────────────────────────────────
+      // The matrix just flipped to the opposite outlook. Inject the symbol
+      // into the watchlist using its original divergence row as the stored
+      // entry. The next 1-min watchlist scan will fetch the current (PUMP/DUMP)
+      // row, hit the ESCALATED branch, and fire a reversal signal automatically.
+      const reversalDirection = signal.direction === 'LONG' ? 'SHORT' : 'LONG';
+      state.watchlist[signal.symbol] = {
+        row: signal.matrixRow,   // original divergence row (used as originRow in the escalation)
+        priority: 'HIGH',        // was already a real signal — treat as top priority
+        addedAt: Date.now(),
+        cyclesWatched: 0,
+      };
+      logActivity({
+        ts: Date.now(),
+        text: `REVERSAL QUEUED: ${signal.symbol} → ${reversalDirection} (will fire on next watchlist scan)`,
+        kind: 'watch',
+        symbol: signal.symbol,
+      });
+      console.log(`[tracker] Reversal queued: ${signal.symbol} ${reversalDirection} — injected into watchlist`);
+
       await sendAlert(formatAutoCloseMessage(signal, exitPrice, prevRow, matrixRow.row));
 
       const pnlPct = exitPrice > 0 && signal.entry > 0
