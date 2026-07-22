@@ -1,5 +1,6 @@
 import { LiveSignal } from '@workspace/api-client-react';
 import React, { useState } from 'react';
+import { NeuralNerveCanvas } from './NeuralNerveCanvas';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 // ─── Active Targets panel (full-width, scrollable, sortable) ─────────────────
@@ -161,7 +162,9 @@ export function PendingSignals({ signals }: { signals: LiveSignal[] }) {
       </div>
       <div className="overflow-y-auto p-2 flex flex-col gap-1.5 min-h-0 flex-1">
         {signals.length === 0 ? (
-          <div className="text-[#55636f]/50 text-center py-4 font-mono text-xs flex items-center justify-center h-full">NO PENDING SIGNALS</div>
+          <div className="relative w-full h-full min-h-[120px]">
+            <NeuralNerveCanvas />
+          </div>
         ) : (
           signals.map(s => (
             <div key={s.id} className="border border-[rgba(245,180,87,0.2)] bg-[rgba(245,180,87,0.05)] p-2 font-mono text-[10px] flex justify-between items-center opacity-80 hover:opacity-100 transition-opacity rounded">
