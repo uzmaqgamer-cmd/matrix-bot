@@ -1,0 +1,23 @@
+Fix the Test 2 stats calculation — the current dashboard numbers are wrong because they treat every "sl_hit" trade as a full loss and lump "auto_closed" trades together, when the actual outcomes are more nuanced. Recalculate using these corrected rules:
+
+1. CLASSIFY EVERY COMPLETED SIGNAL INTO ONE OF THESE BUCKETS (not by raw status field alone):
+   - FULL_LOSS: status = "sl_hit" AND partialTpFired = false → count as -1.0R
+   - BREAKEVEN_WIN: status = "sl_hit" AND partialTpFired = true → this is NOT a loss, it closed at breakeven after banking partial profit. Count actual finalPnlAmt (will be positive).
+   - AUTO_CLOSE_WIN: status = "auto_closed" AND finalPnlAmt > 0
+   - AUTO_CLOSE_LOSS: status = "auto_closed" AND finalPnlAmt <= 0
+   - FULL_TP_WIN: status = "tp_hit"
+
+2. FLAG AND SEPARATE BUGGED TRADES: any completed signal where sl === entry at creation (zero-distance stop-loss) is a known bug from a bot restart after downtime, not a valid strategy outcome. Tag these with a "dataQualityFlag: bugged_sl" field. Do NOT silently include them in the main stats.
+
+3. DASHBOARD MUST SHOW TWO PARALLEL STAT SETS:
+   - "All completed trades" (includes bugged trades, current behavior)
+   - "Clean trades only" (excludes any trade flagged bugged_sl)
+   Show win rate, profit factor, expectancy(R), and $ P&L for BOTH sets side by side.
+
+4. WIN RATE must count BREAKEVEN_WIN and AUTO_CLOSE_WIN as wins (positive finalPnlAmt = win, regardless of status label). Currently it looks like only tp_hit is being counted as a win and everything else (including profitable sl_hit/auto_closed trades) is being counted as a loss — that's why win rate shows 38.5% when the actual profitable-trade count is higher.
+
+5. BY DIRECTION and BY R/R TIER breakdowns must use the same corrected win/loss classification from step 1, not raw status.
+
+6. Add a bucket count row to the dashboard: FULL_LOSS / BREAKEVEN_WIN / AUTO_CLOSE_WIN / AUTO_CLOSE_LOSS / FULL_TP_WIN, with trade count and total $ P&L for each.
+
+Keep all existing matrix/tracking/monitoring logic untouched — this is a stats/display calculation fix only.

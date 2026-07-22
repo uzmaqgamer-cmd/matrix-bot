@@ -115,21 +115,15 @@ export function BalanceChart({ history, paperBalance, paperBalanceDelta }: { his
 // ─── Trade Stats (Test 2 comprehensive + Test 1 baseline) ─────────────────────
 
 export function TradeStats({ test2, test1 }: { test2: Test2Stats; test1: Test1Stats }) {
-  const wr = test2.winRate;
-  const wrColor = wr == null ? 'text-[#55636f]' : wr >= 55 ? 'text-[#5DCAA5]' : wr >= 40 ? 'text-[#F5B457]' : 'text-[#F0716E]';
-
-  const pf = test2.profitFactor;
-  const pfColor = pf == null ? 'text-[#55636f]' : pf >= 1.5 ? 'text-[#5DCAA5]' : pf >= 1.0 ? 'text-[#F5B457]' : 'text-[#F0716E]';
-
-  const er = test2.expectancyR;
-  const erColor = er == null ? 'text-[#55636f]' : er > 0 ? 'text-[#5DCAA5]' : 'text-[#F0716E]';
-
-  const longStats = test2.byDirection?.LONG;
+  const longStats  = test2.byDirection?.LONG;
   const shortStats = test2.byDirection?.SHORT;
-
   const tier20 = test2.byTier?.['2.0'];
   const tier25 = test2.byTier?.['2.5'];
   const tier35 = test2.byTier?.['3.5'];
+
+  const all   = test2.allStats;
+  const clean = test2.cleanStats;
+  const bkts  = test2.buckets;
 
   function WR({ val }: { val?: number | null }) {
     if (val == null) return <span className="text-[#55636f]">—</span>;
@@ -137,29 +131,99 @@ export function TradeStats({ test2, test1 }: { test2: Test2Stats; test1: Test1St
     return <span className={c}>{val.toFixed(0)}%</span>;
   }
 
+  function StatCol({ label, s, highlight }: { label: string; s?: typeof all; highlight?: boolean }) {
+    const wr = s?.winRate ?? null;
+    const pf = s?.profitFactor ?? null;
+    const er = s?.expectancyR ?? null;
+    const wrC = wr == null ? 'text-[#55636f]' : wr >= 55 ? 'text-[#5DCAA5]' : wr >= 40 ? 'text-[#F5B457]' : 'text-[#F0716E]';
+    const pfC = pf == null ? 'text-[#55636f]' : pf >= 1.5 ? 'text-[#5DCAA5]' : pf >= 1.0 ? 'text-[#F5B457]' : 'text-[#F0716E]';
+    const erC = er == null ? 'text-[#55636f]' : er > 0 ? 'text-[#5DCAA5]' : 'text-[#F0716E]';
+    const pnlC = (s?.pnlAmt ?? 0) >= 0 ? 'text-[#5DCAA5]' : 'text-[#F0716E]';
+    return (
+      <div className={`bg-[#0c1119] rounded p-1.5 flex flex-col gap-0.5 ${highlight ? 'border border-[rgba(93,202,165,0.2)]' : ''}`}>
+        <div className={`text-[8.5px] uppercase tracking-[0.5px] mb-0.5 ${highlight ? 'text-[#5DCAA5]' : 'text-[#55636f]'}`}>{label}</div>
+        <div className="flex justify-between text-[9px]">
+          <span className="text-[#4a565f]">WR</span>
+          <span className={wrC}>{wr != null ? `${wr.toFixed(1)}%` : '—'}</span>
+        </div>
+        <div className="flex justify-between text-[9px]">
+          <span className="text-[#4a565f]">PF</span>
+          <span className={pfC}>{pf != null ? pf.toFixed(2) : '—'}</span>
+        </div>
+        <div className="flex justify-between text-[9px]">
+          <span className="text-[#4a565f]">E(R)</span>
+          <span className={erC}>{er != null ? (er >= 0 ? '+' : '') + er.toFixed(3) : '—'}</span>
+        </div>
+        <div className="flex justify-between text-[9px]">
+          <span className="text-[#4a565f]">P&amp;L</span>
+          <span className={pnlC}>
+            {s?.pnlAmt != null ? `${s.pnlAmt >= 0 ? '+' : ''}$${s.pnlAmt.toFixed(3)}` : '—'}
+          </span>
+        </div>
+        <div className="flex justify-between text-[9px]">
+          <span className="text-[#4a565f]">W/L</span>
+          <span className="text-[#e8ecf0]">{s?.winCount ?? 0}/{s?.lossCount ?? 0}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Bucket config: label, key, colour
+  const BUCKETS: { label: string; key: keyof NonNullable<typeof bkts>; color: string }[] = [
+    { label: 'TP WIN',  key: 'FULL_TP_WIN',    color: 'text-[#5DCAA5]' },
+    { label: 'BE WIN',  key: 'BREAKEVEN_WIN',  color: 'text-[#5DCAA5]' },
+    { label: 'AC WIN',  key: 'AUTO_CLOSE_WIN', color: 'text-[#5DCAA5]' },
+    { label: 'AC LOSS', key: 'AUTO_CLOSE_LOSS',color: 'text-[#F0716E]' },
+    { label: 'SL LOSS', key: 'FULL_LOSS',      color: 'text-[#F0716E]' },
+  ];
+
   return (
     <div className="matrix-card p-3 shrink-0 flex flex-col gap-2.5 font-mono text-[10px]">
       <div className="text-[9.5px] font-medium text-[#55636f] tracking-[0.9px] uppercase font-sans">TEST 2 PERFORMANCE</div>
 
-      {/* Top metrics */}
-      <div className="grid grid-cols-3 gap-2">
-        <MetricCell label="WIN RATE" value={wr != null ? `${wr.toFixed(1)}%` : '—'} color={wrColor} />
-        <MetricCell label="PROFIT FACTOR" value={pf != null ? pf.toFixed(2) : '—'} color={pfColor} />
-        <MetricCell label="EXPECT (R)" value={er != null ? (er >= 0 ? '+' : '') + er.toFixed(3) : '—'} color={erColor} />
+      {/* ── Parallel stat sets: All vs Clean ── */}
+      <div className="grid grid-cols-2 gap-2">
+        <StatCol label={`All (${all?.tradeCount ?? 0})`} s={all} />
+        <StatCol label={`Clean (${clean?.tradeCount ?? 0})`} s={clean} highlight />
       </div>
+      {(test2.buggedCount ?? 0) > 0 && (
+        <div className="text-[8.5px] text-[#F5B457]/70 -mt-1">
+          ⚠ {test2.buggedCount} bugged trade{test2.buggedCount === 1 ? '' : 's'} excluded from Clean (sl = entry at creation)
+        </div>
+      )}
 
-      {/* Trades breakdown */}
-      <div className="flex justify-between text-[9px] text-[#4a565f] border-t border-[#1c2530] pt-2">
-        <span>Trades: <span className="text-[#e8ecf0]">{test2.tradeCount ?? 0}</span></span>
-        <span className="text-[#5DCAA5]">W: {test2.winCount ?? 0}</span>
-        <span className="text-[#F0716E]">L: {test2.lossCount ?? 0}</span>
-        <span className="text-[#A29BF0]">AC: {test2.autoClosedCount ?? 0}</span>
-        <span className="text-[#F5B457]">½TP: {test2.partialTpCount ?? 0}</span>
-      </div>
-
-      {/* Direction breakdown */}
+      {/* ── Outcome buckets (clean) ── */}
       <div className="border-t border-[#1c2530] pt-2">
-        <div className="text-[9px] text-[#4a565f] mb-1.5 uppercase tracking-[0.5px]">By Direction</div>
+        <div className="text-[9px] text-[#4a565f] mb-1.5 uppercase tracking-[0.5px]">Outcome Buckets <span className="normal-case text-[#2a3540]">(clean only)</span></div>
+        <table className="w-full text-[9.5px] border-collapse">
+          <thead>
+            <tr className="text-[#4a565f] text-[9px]">
+              <th className="text-left py-0.5">BUCKET</th>
+              <th className="text-right py-0.5">N</th>
+              <th className="text-right py-0.5">P&amp;L</th>
+            </tr>
+          </thead>
+          <tbody>
+            {BUCKETS.map(({ label, key, color }) => {
+              const b = bkts?.[key];
+              const pnlC = (b?.pnlAmt ?? 0) >= 0 ? 'text-[#5DCAA5]' : 'text-[#F0716E]';
+              return (
+                <tr key={key} className="border-t border-[#12171f]">
+                  <td className={`py-0.5 ${color}`}>{label}</td>
+                  <td className="py-0.5 text-right text-[#55636f]">{b?.count ?? 0}</td>
+                  <td className={`py-0.5 text-right ${b?.count ? pnlC : 'text-[#2a3540]'}`}>
+                    {b?.count ? `${(b.pnlAmt ?? 0) >= 0 ? '+' : ''}$${(b.pnlAmt ?? 0).toFixed(3)}` : '—'}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ── Direction breakdown (clean) ── */}
+      <div className="border-t border-[#1c2530] pt-2">
+        <div className="text-[9px] text-[#4a565f] mb-1.5 uppercase tracking-[0.5px]">By Direction <span className="normal-case text-[#2a3540]">(clean)</span></div>
         <div className="grid grid-cols-2 gap-2 text-[9.5px]">
           <div className="bg-[#0c1119] rounded p-1.5">
             <div className="text-[#5DCAA5] font-bold mb-1">LONG ({longStats?.trades ?? 0})</div>
@@ -168,7 +232,7 @@ export function TradeStats({ test2, test1 }: { test2: Test2Stats; test1: Test1St
               <WR val={longStats?.winRate} />
             </div>
             <div className="flex justify-between text-[9px]">
-              <span className="text-[#4a565f]">P&L</span>
+              <span className="text-[#4a565f]">P&amp;L</span>
               <span className={longStats?.pnlAmt != null && longStats.pnlAmt >= 0 ? 'text-[#5DCAA5]' : 'text-[#F0716E]'}>
                 {longStats?.pnlAmt != null ? `${longStats.pnlAmt >= 0 ? '+' : ''}$${longStats.pnlAmt.toFixed(3)}` : '—'}
               </span>
@@ -181,7 +245,7 @@ export function TradeStats({ test2, test1 }: { test2: Test2Stats; test1: Test1St
               <WR val={shortStats?.winRate} />
             </div>
             <div className="flex justify-between text-[9px]">
-              <span className="text-[#4a565f]">P&L</span>
+              <span className="text-[#4a565f]">P&amp;L</span>
               <span className={shortStats?.pnlAmt != null && shortStats.pnlAmt >= 0 ? 'text-[#5DCAA5]' : 'text-[#F0716E]'}>
                 {shortStats?.pnlAmt != null ? `${shortStats.pnlAmt >= 0 ? '+' : ''}$${shortStats.pnlAmt.toFixed(3)}` : '—'}
               </span>
@@ -190,9 +254,9 @@ export function TradeStats({ test2, test1 }: { test2: Test2Stats; test1: Test1St
         </div>
       </div>
 
-      {/* R/R tier breakdown */}
+      {/* ── R/R tier breakdown (clean) ── */}
       <div className="border-t border-[#1c2530] pt-2">
-        <div className="text-[9px] text-[#4a565f] mb-1.5 uppercase tracking-[0.5px]">By R/R Tier</div>
+        <div className="text-[9px] text-[#4a565f] mb-1.5 uppercase tracking-[0.5px]">By R/R Tier <span className="normal-case text-[#2a3540]">(clean)</span></div>
         <table className="w-full text-[9.5px] border-collapse">
           <thead>
             <tr className="text-[#4a565f] text-[9px]">
@@ -215,7 +279,7 @@ export function TradeStats({ test2, test1 }: { test2: Test2Stats; test1: Test1St
         </table>
       </div>
 
-      {/* Test 1 vs Test 2 comparison */}
+      {/* ── Test 1 vs Test 2 comparison ── */}
       <div className="border-t border-[#1c2530] pt-2">
         <div className="text-[9px] text-[#4a565f] mb-1.5 uppercase tracking-[0.5px]">Baseline Comparison</div>
         <div className="grid grid-cols-2 gap-2 text-[9.5px]">
@@ -231,14 +295,14 @@ export function TradeStats({ test2, test1 }: { test2: Test2Stats; test1: Test1St
             </div>
           </div>
           <div className="bg-[#0c1119] rounded p-1.5 border border-[rgba(93,202,165,0.15)]">
-            <div className="text-[#5DCAA5] text-[9px] mb-0.5">TEST 2 (post-fix)</div>
+            <div className="text-[#5DCAA5] text-[9px] mb-0.5">TEST 2 (clean WR)</div>
             <div className="flex justify-between">
               <span className="text-[#4a565f]">W/L</span>
-              <span className="text-[#e8ecf0]">{test2.winCount ?? 0}/{test2.lossCount ?? 0}</span>
+              <span className="text-[#e8ecf0]">{clean?.winCount ?? 0}/{clean?.lossCount ?? 0}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-[#4a565f]">WR</span>
-              <WR val={test2.winRate} />
+              <WR val={clean?.winRate} />
             </div>
           </div>
         </div>

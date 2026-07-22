@@ -219,6 +219,43 @@ export type Test2StatsByTier = {
   '3.5'?: TierStats;
 };
 
+/** Win rate, profit factor, expectancy, and P&L for a set of trades */
+export interface StatSet {
+  tradeCount: number;
+  winCount: number;
+  lossCount: number;
+  pnlAmt: number;
+  /** @nullable */
+  winRate: number | null;
+  /** @nullable */
+  profitFactor: number | null;
+  /** @nullable */
+  expectancyR: number | null;
+}
+
+/** Trade count and total $ P&L for a single outcome bucket */
+export interface BucketEntry {
+  count: number;
+  pnlAmt: number;
+}
+
+/**
+ * Outcome buckets for completed Test 2 trades (clean trades only, bugged excluded).
+ * Classification rules:
+ *   FULL_TP_WIN    → tp_hit
+ *   BREAKEVEN_WIN  → sl_hit AND partialTpFired
+ *   FULL_LOSS      → sl_hit AND !partialTpFired
+ *   AUTO_CLOSE_WIN → auto_closed AND finalPnlAmt > 0
+ *   AUTO_CLOSE_LOSS→ auto_closed AND finalPnlAmt <= 0
+ */
+export type TradeBuckets = {
+  FULL_LOSS: BucketEntry;
+  BREAKEVEN_WIN: BucketEntry;
+  AUTO_CLOSE_WIN: BucketEntry;
+  AUTO_CLOSE_LOSS: BucketEntry;
+  FULL_TP_WIN: BucketEntry;
+};
+
 /**
  * Paper trading stats for Test 2 (post-fix, compounding 1% risk from $100 baseline)
  */
@@ -243,6 +280,14 @@ export interface Test2Stats {
   expectancyR?: number | null;
   byDirection?: Test2StatsByDirection;
   byTier?: Test2StatsByTier;
+  /** Trades with sl === entry at creation — bugged from bot restart, excluded from clean stats */
+  buggedCount?: number;
+  /** Per-bucket breakdown (clean trades only) */
+  buckets?: TradeBuckets;
+  /** Stats including ALL completed trades (including bugged) */
+  allStats?: StatSet;
+  /** Stats excluding bugged trades (sl === entry at creation) */
+  cleanStats?: StatSet;
 }
 
 /**

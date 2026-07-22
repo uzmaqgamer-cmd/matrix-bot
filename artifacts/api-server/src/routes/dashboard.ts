@@ -70,16 +70,70 @@ function computePriorityResolution(completed: Signal[]) {
 
 // ─── Test 2 stats ─────────────────────────────────────────────────────────────
 
+type TradeOutcome = 'FULL_LOSS' | 'BREAKEVEN_WIN' | 'AUTO_CLOSE_WIN' | 'AUTO_CLOSE_LOSS' | 'FULL_TP_WIN';
+const WIN_OUTCOMES = new Set<TradeOutcome>(['FULL_TP_WIN', 'BREAKEVEN_WIN', 'AUTO_CLOSE_WIN']);
+
+/**
+ * Classify a completed signal into one of five outcome buckets.
+ * Rules from spec — does NOT rely on raw status alone:
+ *   FULL_TP_WIN      → tp_hit
+ *   BREAKEVEN_WIN    → sl_hit AND partialTpFired (partial TP banked, SL moved to BE)
+ *   FULL_LOSS        → sl_hit AND !partialTpFired
+ *   AUTO_CLOSE_WIN   → auto_closed AND finalPnlAmt > 0
+ *   AUTO_CLOSE_LOSS  → auto_closed AND finalPnlAmt <= 0
+ */
+function classifyTrade(s: Signal): TradeOutcome {
+  if (s.status === 'tp_hit') return 'FULL_TP_WIN';
+  if (s.status === 'sl_hit') return s.partialTpFired ? 'BREAKEVEN_WIN' : 'FULL_LOSS';
+  return (s.finalPnlAmt ?? 0) > 0 ? 'AUTO_CLOSE_WIN' : 'AUTO_CLOSE_LOSS';
+}
+
+/**
+ * A "bugged" trade has sl === entry at creation — a known artefact of bot
+ * restart after downtime (SL was never set properly). Do NOT silently mix
+ * these into the main stats; surface them separately.
+ */
+function isBugged(s: Signal): boolean {
+  return s.sl != null && s.entry != null && s.sl === s.entry;
+}
+
+function emptyAcc() {
+  return { tradeCount: 0, winCount: 0, lossCount: 0, pnlAmt: 0, gainAmt: 0, lossAmt: 0, totalR: 0 };
+}
+
+function accToStatSet(acc: ReturnType<typeof emptyAcc>) {
+  const total = acc.winCount + acc.lossCount;
+  return {
+    tradeCount: acc.tradeCount,
+    winCount: acc.winCount,
+    lossCount: acc.lossCount,
+    pnlAmt: parseFloat(acc.pnlAmt.toFixed(4)),
+    winRate: total > 0 ? parseFloat((acc.winCount / total * 100).toFixed(1)) : null as number | null,
+    profitFactor: acc.lossAmt > 0 ? parseFloat((acc.gainAmt / acc.lossAmt).toFixed(2)) : null as number | null,
+    expectancyR: acc.tradeCount > 0 ? parseFloat((acc.totalR / acc.tradeCount).toFixed(3)) : null as number | null,
+  };
+}
+
 /** A trade is "Test 2" if it carries a riskAmt (stamped at acceptance after reset). */
 function computeTest2Stats(state: BotState) {
   const completed = state.completedSignals.filter(s => s.riskAmt != null);
 
-  let winCount = 0, lossCount = 0, autoClosedCount = 0, partialTpCount = 0;
-  let totalGainAmt = 0, totalLossAmt = 0;
-  let totalR = 0;
+  const emptyBucket = () => ({ count: 0, pnlAmt: 0 });
+  const buckets: Record<TradeOutcome, { count: number; pnlAmt: number }> = {
+    FULL_LOSS:       emptyBucket(),
+    BREAKEVEN_WIN:   emptyBucket(),
+    AUTO_CLOSE_WIN:  emptyBucket(),
+    AUTO_CLOSE_LOSS: emptyBucket(),
+    FULL_TP_WIN:     emptyBucket(),
+  };
+
+  const all   = emptyAcc();
+  const clean = emptyAcc();
+
+  let buggedCount = 0, autoClosedCount = 0, partialTpCount = 0;
 
   const byDir = {
-    LONG: { trades: 0, wins: 0, pnlAmt: 0 },
+    LONG:  { trades: 0, wins: 0, pnlAmt: 0 },
     SHORT: { trades: 0, wins: 0, pnlAmt: 0 },
   };
   const byTier: Record<string, { trades: number; wins: number }> = {
@@ -89,90 +143,84 @@ function computeTest2Stats(state: BotState) {
   };
 
   for (const s of completed) {
-    const pnl = s.finalPnlAmt ?? 0;
-    const isWin =
-      s.status === 'tp_hit' ||
-      (s.status === 'auto_closed' && pnl > 0) ||
-      (s.status === 'sl_hit' && pnl >= 0); // sl at breakeven = 0 P&L → counts as a saved trade
+    const pnl    = s.finalPnlAmt ?? 0;
+    const outcome = classifyTrade(s);
+    const isWin   = WIN_OUTCOMES.has(outcome);
+    const bugged  = isBugged(s);
 
+    if (bugged) buggedCount++;
     if (s.status === 'auto_closed') autoClosedCount++;
     if (s.partialTpFired) partialTpCount++;
 
-    if (isWin) { winCount++; totalGainAmt += pnl; }
-    else { lossCount++; totalLossAmt += Math.abs(pnl); }
+    // ── All-trades accumulator ────────────────────────────────────────────
+    all.tradeCount++;
+    all.pnlAmt += pnl;
+    if (isWin) { all.winCount++; all.gainAmt += pnl; }
+    else        { all.lossCount++; all.lossAmt += Math.abs(pnl); }
+    if (s.riskAmt && s.riskAmt > 0) all.totalR += pnl / s.riskAmt;
 
-    byDir[s.direction].trades++;
-    byDir[s.direction].pnlAmt += pnl;
-    if (isWin) byDir[s.direction].wins++;
+    // ── Clean-trades accumulator + breakdowns (bugged trades excluded) ────
+    if (!bugged) {
+      clean.tradeCount++;
+      clean.pnlAmt += pnl;
+      if (isWin) { clean.winCount++; clean.gainAmt += pnl; }
+      else        { clean.lossCount++; clean.lossAmt += Math.abs(pnl); }
+      if (s.riskAmt && s.riskAmt > 0) clean.totalR += pnl / s.riskAmt;
 
-    const tierKey = s.rr >= 3 ? '3.5' : s.rr >= 2.3 ? '2.5' : '2.0';
-    if (byTier[tierKey]) {
-      byTier[tierKey].trades++;
-      if (isWin) byTier[tierKey].wins++;
+      buckets[outcome].count++;
+      buckets[outcome].pnlAmt += pnl;
+
+      byDir[s.direction].trades++;
+      byDir[s.direction].pnlAmt += pnl;
+      if (isWin) byDir[s.direction].wins++;
+
+      const tierKey = s.rr >= 3 ? '3.5' : s.rr >= 2.3 ? '2.5' : '2.0';
+      if (byTier[tierKey]) {
+        byTier[tierKey].trades++;
+        if (isWin) byTier[tierKey].wins++;
+      }
     }
-
-    if (s.riskAmt && s.riskAmt > 0) totalR += pnl / s.riskAmt;
   }
 
-  const closedForRate = winCount + lossCount;
-  const winRate = closedForRate > 0
-    ? parseFloat((winCount / closedForRate * 100).toFixed(1))
-    : null;
-  const profitFactor = totalLossAmt > 0
-    ? parseFloat((totalGainAmt / totalLossAmt).toFixed(2))
-    : null;
-  const expectancyR = completed.length > 0
-    ? parseFloat((totalR / completed.length).toFixed(3))
-    : null;
+  // Round bucket pnlAmt values
+  for (const b of Object.values(buckets)) {
+    b.pnlAmt = parseFloat(b.pnlAmt.toFixed(4));
+  }
+
+  const allStats   = accToStatSet(all);
+  const cleanStats = accToStatSet(clean);
+
+  const tierStat = (k: string) => ({
+    ...byTier[k],
+    winRate: byTier[k].trades > 0
+      ? parseFloat((byTier[k].wins / byTier[k].trades * 100).toFixed(1)) : null as number | null,
+  });
+  const dirStat = (d: 'LONG' | 'SHORT') => ({
+    trades:  byDir[d].trades,
+    wins:    byDir[d].wins,
+    pnlAmt:  parseFloat(byDir[d].pnlAmt.toFixed(4)),
+    winRate: byDir[d].trades > 0
+      ? parseFloat((byDir[d].wins / byDir[d].trades * 100).toFixed(1)) : null as number | null,
+  });
 
   return {
     balance: state.paperBalance,
-    tradeCount: completed.length,
-    winCount,
-    lossCount,
+    // Legacy top-level fields (kept for backward-compat; derived from allStats)
+    tradeCount:      completed.length,
+    winCount:        allStats.winCount,
+    lossCount:       allStats.lossCount,
     autoClosedCount,
     partialTpCount,
-    winRate,
-    profitFactor,
-    expectancyR,
-    byDirection: {
-      LONG: {
-        trades: byDir.LONG.trades,
-        wins: byDir.LONG.wins,
-        pnlAmt: parseFloat(byDir.LONG.pnlAmt.toFixed(4)),
-        winRate: byDir.LONG.trades > 0
-          ? parseFloat((byDir.LONG.wins / byDir.LONG.trades * 100).toFixed(1))
-          : null,
-      },
-      SHORT: {
-        trades: byDir.SHORT.trades,
-        wins: byDir.SHORT.wins,
-        pnlAmt: parseFloat(byDir.SHORT.pnlAmt.toFixed(4)),
-        winRate: byDir.SHORT.trades > 0
-          ? parseFloat((byDir.SHORT.wins / byDir.SHORT.trades * 100).toFixed(1))
-          : null,
-      },
-    },
-    byTier: {
-      '2.0': {
-        ...byTier['2.0'],
-        winRate: byTier['2.0'].trades > 0
-          ? parseFloat((byTier['2.0'].wins / byTier['2.0'].trades * 100).toFixed(1))
-          : null,
-      },
-      '2.5': {
-        ...byTier['2.5'],
-        winRate: byTier['2.5'].trades > 0
-          ? parseFloat((byTier['2.5'].wins / byTier['2.5'].trades * 100).toFixed(1))
-          : null,
-      },
-      '3.5': {
-        ...byTier['3.5'],
-        winRate: byTier['3.5'].trades > 0
-          ? parseFloat((byTier['3.5'].wins / byTier['3.5'].trades * 100).toFixed(1))
-          : null,
-      },
-    },
+    winRate:         allStats.winRate,
+    profitFactor:    allStats.profitFactor,
+    expectancyR:     allStats.expectancyR,
+    // New fields
+    buggedCount,
+    buckets,
+    allStats,
+    cleanStats,
+    byDirection: { LONG: dirStat('LONG'), SHORT: dirStat('SHORT') },
+    byTier: { '2.0': tierStat('2.0'), '2.5': tierStat('2.5'), '3.5': tierStat('3.5') },
   };
 }
 
