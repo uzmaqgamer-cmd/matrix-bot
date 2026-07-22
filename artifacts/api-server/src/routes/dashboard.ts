@@ -1,8 +1,9 @@
 import { Router, type IRouter } from 'express';
-import { loadState } from '../bot/storage.js';
+import { loadState, saveState, getOrCreateDailyStats, addToBalanceLog } from '../bot/storage.js';
 import { lastScanSummary } from '../bot/scanner.js';
-import { activityLog, scanFeed } from '../bot/eventLog.js';
+import { activityLog, scanFeed, logActivity } from '../bot/eventLog.js';
 import { MATRIX, HIGH_PRIORITY_ROWS } from '../bot/matrix.js';
+import { getCurrentPrice } from '../bot/binance.js';
 import type { Signal, BotState } from '../bot/types.js';
 
 const router: IRouter = Router();
@@ -347,6 +348,95 @@ router.get('/dashboard', (_req, res) => {
 
 router.get('/dashboard/activity', (_req, res) => {
   res.json(activityLog.slice(0, 50));
+});
+
+// ─── POST /api/force-close/:symbol ───────────────────────────────────────────
+// Manually force-close an active signal as auto_closed (thesis_invalidated).
+
+router.post('/force-close/:symbol', async (req, res) => {
+  const symbol = req.params.symbol.toUpperCase();
+  const state = loadState();
+
+  const idx = state.activeSignals.findIndex(s => s.symbol === symbol);
+  if (idx === -1) {
+    res.status(404).json({ error: `No active signal found for ${symbol}` });
+    return;
+  }
+
+  const signal = state.activeSignals[idx];
+
+  // Fetch current price
+  let exitPrice = signal.currentPrice ?? 0;
+  if (exitPrice === 0) {
+    try { exitPrice = await getCurrentPrice(symbol); } catch { /* ignore */ }
+  }
+
+  // Compute P&L (same as tracker auto-close)
+  const positionFraction = signal.partialTpFired ? 0.5 : 1.0;
+  const closeAmt = signal.riskAmt
+    ? (() => {
+        const priceMoved = signal.direction === 'LONG'
+          ? exitPrice - signal.entry
+          : signal.entry - exitPrice;
+        return positionFraction * (priceMoved / signal.atr) * signal.riskAmt!;
+      })()
+    : 0;
+
+  signal.status = 'auto_closed';
+  signal.resolvedAt = Date.now();
+  signal.autoClosedAt = Date.now();
+  signal.autoCloseReason = 'thesis_invalidated';
+  signal.autoClosePrice = exitPrice;
+  signal.finalPnlAmt = parseFloat(((signal.partialTpPnlAmt ?? 0) + closeAmt).toFixed(4));
+
+  if (signal.riskAmt) {
+    state.paperBalance = Math.max(0, parseFloat((state.paperBalance + closeAmt).toFixed(4)));
+    addToBalanceLog(state);
+    state.test2TradeCount++;
+  }
+
+  const acIsWin = (signal.finalPnlAmt ?? 0) >= 0;
+  if (acIsWin) {
+    state.totalTpHit++;
+    getOrCreateDailyStats(state).tpHit++;
+  } else {
+    state.totalSlHit++;
+    getOrCreateDailyStats(state).slHit++;
+  }
+
+  state.activeSignals.splice(idx, 1);
+  state.completedSignals.push({ ...signal });
+  if (state.completedSignals.length > 100) {
+    state.completedSignals = state.completedSignals.slice(-100);
+  }
+
+  const pnlPct = exitPrice > 0 && signal.entry > 0
+    ? (signal.direction === 'LONG'
+        ? (exitPrice - signal.entry) / signal.entry * 100
+        : (signal.entry - exitPrice) / signal.entry * 100)
+    : 0;
+
+  const pnlStr = `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%` +
+    (signal.finalPnlAmt != null ? ` ($${signal.finalPnlAmt >= 0 ? '+' : ''}${signal.finalPnlAmt.toFixed(4)})` : '');
+
+  logActivity({
+    ts: Date.now(),
+    text: `[MANUAL AUTO-CLOSE] ${signal.symbol} ${signal.direction} | force-closed via dashboard | P&L: ${pnlStr}`,
+    kind: 'auto_close',
+    symbol: signal.symbol,
+  });
+
+  saveState(state);
+
+  res.json({
+    ok: true,
+    symbol,
+    direction: signal.direction,
+    entry: signal.entry,
+    exitPrice,
+    finalPnlAmt: signal.finalPnlAmt,
+    pnlPct: parseFloat(pnlPct.toFixed(4)),
+  });
 });
 
 export default router;
