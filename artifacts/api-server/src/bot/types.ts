@@ -57,6 +57,7 @@ export interface Signal {
   finalPnlAmt?: number;      // total $ P&L including partial close, set when trade closes
 
   // ── Partial TP + breakeven ─────────────────────────────────────────────────
+  originalSl?: number;       // SL at creation time — immutable; sl field changes when breakevenMoved fires
   partialTpFired?: boolean;  // true once the 50%-of-distance partial close has fired
   partialTpAt?: number;
   partialTpPrice?: number;

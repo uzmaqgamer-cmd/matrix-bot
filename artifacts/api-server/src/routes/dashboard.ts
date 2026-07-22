@@ -89,12 +89,23 @@ function classifyTrade(s: Signal): TradeOutcome {
 }
 
 /**
- * A "bugged" trade has sl === entry at creation — a known artefact of bot
- * restart after downtime (SL was never set properly). Do NOT silently mix
- * these into the main stats; surface them separately.
+ * A "bugged" trade had sl === entry at CREATION time — a known artefact of bot
+ * restart after downtime (SL was never set properly).
+ *
+ * Use `originalSl` (stamped at creation, immutable) when available.
+ * Fall back for older signals that pre-date the field: treat as bugged only when
+ * sl === entry AND neither breakevenMoved nor partialTpFired is true, because
+ * those flags indicate the SL legitimately moved to entry via the partial-TP
+ * breakeven feature — NOT a bug.
  */
 function isBugged(s: Signal): boolean {
-  return s.sl != null && s.entry != null && s.sl === s.entry;
+  const refSl = s.originalSl ?? s.sl;
+  if (refSl == null || s.entry == null) return false;
+  if (refSl !== s.entry) return false;
+  // originalSl present and equals entry → definitively bugged regardless of other flags
+  if (s.originalSl != null) return true;
+  // Legacy fallback: only flag if the breakeven feature never ran on this trade
+  return !s.breakevenMoved && !s.partialTpFired;
 }
 
 function emptyAcc() {

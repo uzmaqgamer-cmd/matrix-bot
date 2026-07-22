@@ -99,6 +99,7 @@ export async function buildSignal(params: {
       entry,
       tp: parseFloat(tp.toPrecision(6)),
       sl: parseFloat(sl.toPrecision(6)),
+      originalSl: parseFloat(sl.toPrecision(6)),
       rr,
       atr: parseFloat(atr.toPrecision(4)),
       tpMultiplier: multiplier,
