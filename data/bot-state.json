@@ -1,31 +1,7 @@
 {
   "signalsEnabled": true,
   "signalMode": "UNLIMITED",
-  "activeSignals": [
-    {
-      "id": "mruoyhmp3anq",
-      "symbol": "TRUTHUSDT",
-      "direction": "SHORT",
-      "entry": 0.013271,
-      "tp": 0.0123949,
-      "sl": 0.0136214,
-      "rr": 2.5,
-      "atr": 0.0003504,
-      "tpMultiplier": 2.5,
-      "tpTier": "MEDIUM_DIVERGENCE",
-      "matrixRow": 18,
-      "matrixMeaning": "quiet control by shorts",
-      "originRow": 27,
-      "originPriority": "MEDIUM",
-      "status": "accepted",
-      "createdAt": 1784640638401,
-      "balanceAtEntry": 97.1907,
-      "riskAmt": 0.9719,
-      "currentPrice": 0.013123,
-      "currentPriceAt": 1784781310827,
-      "currentMatrixRow": 26
-    }
-  ],
+  "activeSignals": [],
   "pendingSignals": [],
   "completedSignals": [
     {
@@ -2453,6 +2429,32 @@
       "resolvedAt": 1753264375238,
       "autoClosedAt": 1753264375238,
       "createdAt": 1753260775238
+    },
+    {
+      "id": "mruoyhmp3anq",
+      "symbol": "TRUTHUSDT",
+      "direction": "SHORT",
+      "entry": 0.013271,
+      "tp": 0.0123949,
+      "sl": 0.0136214,
+      "rr": 2.5,
+      "atr": 0.0003504,
+      "tpMultiplier": 2.5,
+      "tpTier": "MEDIUM_DIVERGENCE",
+      "matrixRow": 18,
+      "matrixMeaning": "quiet control by shorts",
+      "originRow": 27,
+      "originPriority": "MEDIUM",
+      "status": "tp_hit",
+      "createdAt": 1784640638401,
+      "balanceAtEntry": 97.1907,
+      "riskAmt": 0.9719,
+      "currentPrice": 0.013123,
+      "currentPriceAt": 1784781310827,
+      "currentMatrixRow": 26,
+      "resolvedAt": 1784804450617,
+      "finalPnlAmt": 2.4297,
+      "exitPrice": 0.0123949
     }
   ],
   "dailyStats": [
@@ -2477,7 +2479,7 @@
       "sent": 9,
       "accepted": 9,
       "ignored": 0,
-      "tpHit": 6,
+      "tpHit": 7,
       "slHit": 5
     }
   ],
@@ -2798,11 +2800,11 @@
   "totalSent": 90,
   "totalAccepted": 90,
   "totalIgnored": 0,
-  "totalTpHit": 39,
+  "totalTpHit": 40,
   "totalSlHit": 55,
-  "paperBalance": 107.28,
+  "paperBalance": 109.7097,
   "test2StartedAt": 1784624899316,
-  "test2TradeCount": 91,
+  "test2TradeCount": 92,
   "balanceLog": [
     {
       "ts": 1784637362809,
