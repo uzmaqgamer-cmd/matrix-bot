@@ -25,7 +25,18 @@ const DEFAULT_STATE: BotState = {
   balanceLog: [],
 };
 
+// ─── Shared in-memory state ────────────────────────────────────────────────────
+// Single source of truth. After the first disk read, loadState() ALWAYS returns
+// the same object reference. This eliminates the TOCTOU race where the scanner
+// and tracker each load their own disk copy, mutate it independently, then call
+// saveState() — the last writer used to overwrite the other's changes (e.g.
+// re-setting partialTpFired back to false). Now all mutations are visible to
+// every caller immediately, without any extra saves required.
+let _state: BotState | null = null;
+
 export function loadState(): BotState {
+  if (_state) return _state;
+
   try {
     let state: BotState;
     if (!existsSync(STATE_FILE)) {
@@ -36,13 +47,11 @@ export function loadState(): BotState {
     }
 
     // ── One-time Test 2 initialisation ──────────────────────────────────────
-    // If this is the first boot with the new code, stamp the baseline.
     if (!state.test2StartedAt || state.test2StartedAt === 0) {
       state.test2StartedAt = Date.now();
       state.paperBalance = 100;
       state.test2TradeCount = 0;
       state.balanceLog = [];
-      // Persist immediately so repeated loadState() calls don't re-initialise
       try {
         const dir = dirname(STATE_FILE);
         if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
@@ -55,24 +64,32 @@ export function loadState(): BotState {
     if (!Array.isArray(state.balanceLog)) state.balanceLog = [];
 
     // Restore persisted activity log into the in-memory ring buffer
-    if (Array.isArray(state.activityLog) && state.activityLog.length > 0) {
+    if (Array.isArray((state as any).activityLog) && (state as any).activityLog.length > 0) {
       activityLog.length = 0;
-      activityLog.push(...state.activityLog);
+      activityLog.push(...(state as any).activityLog);
     }
 
-    return state;
+    _state = state;
+    return _state;
   } catch {
-    return { ...DEFAULT_STATE, test2StartedAt: Date.now() };
+    _state = { ...DEFAULT_STATE, test2StartedAt: Date.now() };
+    return _state;
   }
 }
 
-export function saveState(state: BotState): void {
+export function saveState(state?: BotState): void {
+  // Accept the state param for call-site compatibility. Since loadState() always
+  // returns _state, state === _state in practice. If a caller somehow passes a
+  // different object, adopt it as the new canonical state.
+  if (state && state !== _state) _state = state;
+  if (!_state) return;
+
   try {
     const dir = dirname(STATE_FILE);
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
     // Snapshot the in-memory activity log so it survives restarts
-    state.activityLog = activityLog.slice(0, 60);
-    writeFileSync(STATE_FILE, JSON.stringify(state, null, 2), 'utf-8');
+    (_state as any).activityLog = activityLog.slice(0, 60);
+    writeFileSync(STATE_FILE, JSON.stringify(_state, null, 2), 'utf-8');
   } catch (err) {
     console.error('[storage] Failed to save state:', err);
   }

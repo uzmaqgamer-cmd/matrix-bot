@@ -71,12 +71,22 @@ export async function checkActiveSignals() {
   const state = loadState();
   if (state.activeSignals.length === 0) return;
 
+  // Fetch ALL prices concurrently — the old sequential await meant N × latency
+  // (e.g. 10 signals × 5 s slow Binance = 50 s per run, causing every 30-s
+  // interval tick to be skipped). Now the run completes in max(single latency).
+  const priceResults = await Promise.allSettled(
+    state.activeSignals.map(s => getCurrentPrice(s.symbol))
+  );
+
   const toRemove: string[] = [];
   let stateChanged = false;
 
-  for (const signal of state.activeSignals) {
+  for (let idx = 0; idx < state.activeSignals.length; idx++) {
+    const signal = state.activeSignals[idx];
+    const priceResult = priceResults[idx];
     try {
-      const price = await getCurrentPrice(signal.symbol);
+      if (priceResult.status === 'rejected') throw priceResult.reason;
+      const price = priceResult.value;
       signal.currentPrice = price;
       signal.currentPriceAt = Date.now();
       stateChanged = true;
@@ -218,16 +228,25 @@ export async function monitorPositionTheses() {
   const state = loadState();
   if (state.activeSignals.length === 0) return;
 
+  // Fetch all signals' OI/price/funding data concurrently — old sequential
+  // per-signal await caused N × 3 sequential Binance calls per run.
+  const seriesResults = await Promise.allSettled(
+    state.activeSignals.map(s => Promise.all([
+      getCloseSeries(s.symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES),
+      getOpenInterestSeries(s.symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES),
+      getFundingRateSeries(s.symbol, FUNDING_LOOKBACK + 1),
+    ]))
+  );
+
   const toRemove: string[] = [];
   let stateChanged = false;
 
-  for (const signal of state.activeSignals) {
+  for (let idx = 0; idx < state.activeSignals.length; idx++) {
+    const signal = state.activeSignals[idx];
+    const seriesResult = seriesResults[idx];
     try {
-      const [priceSeries, oiSeries, fundingSeries] = await Promise.all([
-        getCloseSeries(signal.symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES),
-        getOpenInterestSeries(signal.symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES),
-        getFundingRateSeries(signal.symbol, FUNDING_LOOKBACK + 1),
-      ]);
+      if (seriesResult.status === 'rejected') throw seriesResult.reason;
+      const [priceSeries, oiSeries, fundingSeries] = seriesResult.value;
 
       if (priceSeries.length < 2 || oiSeries.length < 2 || fundingSeries.length < 2) continue;
 
