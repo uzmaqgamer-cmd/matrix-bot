@@ -1,0 +1,1 @@
+- [PostgreSQL state migration](postgres-state.md) — bot state now lives in DB, not the JSON file; file is only a migration seed on first deploy.

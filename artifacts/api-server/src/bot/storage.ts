@@ -1,8 +1,12 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
+import pg from 'pg';
 import type { BotState, BalanceLogEntry } from './types.js';
 import { activityLog } from './eventLog.js';
 
+const { Pool } = pg;
+
+// ─── Constants ─────────────────────────────────────────────────────────────────
 const STATE_FILE = '/home/runner/workspace/data/bot-state.json';
 
 const DEFAULT_STATE: BotState = {
@@ -18,82 +22,183 @@ const DEFAULT_STATE: BotState = {
   totalIgnored: 0,
   totalTpHit: 0,
   totalSlHit: 0,
-  // Test 2 — set on first load
   paperBalance: 100,
   test2StartedAt: 0,
   test2TradeCount: 0,
   balanceLog: [],
 };
 
-// ─── Shared in-memory state ────────────────────────────────────────────────────
-// Single source of truth. After the first disk read, loadState() ALWAYS returns
-// the same object reference. This eliminates the TOCTOU race where the scanner
-// and tracker each load their own disk copy, mutate it independently, then call
-// saveState() — the last writer used to overwrite the other's changes (e.g.
-// re-setting partialTpFired back to false). Now all mutations are visible to
-// every caller immediately, without any extra saves required.
+// ─── Shared in-memory singleton ────────────────────────────────────────────────
+// All callers share the same object reference — no TOCTOU races.
 let _state: BotState | null = null;
 
-export function loadState(): BotState {
-  if (_state) return _state;
+// ─── PostgreSQL pool ───────────────────────────────────────────────────────────
+let _pool: InstanceType<typeof Pool> | null = null;
+let _dbAvailable = false;
 
+function getPool(): InstanceType<typeof Pool> | null {
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+  if (!_pool) {
+    _pool = new Pool({ connectionString: url });
+    _pool.on('error', (err) => console.error('[storage] pg pool error:', err.message));
+  }
+  return _pool;
+}
+
+// ─── DB helpers ────────────────────────────────────────────────────────────────
+
+async function ensureTable(): Promise<void> {
+  const pool = getPool();
+  if (!pool) return;
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS bot_state (
+      id      INTEGER PRIMARY KEY,
+      state   JSONB    NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+}
+
+async function dbLoad(): Promise<BotState | null> {
+  const pool = getPool();
+  if (!pool) return null;
+  const res = await pool.query('SELECT state FROM bot_state WHERE id = 1');
+  if (res.rows.length === 0) return null;
+  return { ...DEFAULT_STATE, ...(res.rows[0].state as Partial<BotState>) };
+}
+
+async function dbSave(state: BotState): Promise<void> {
+  const pool = getPool();
+  if (!pool) return;
+  // Snapshot in-memory activity log before persisting
+  (state as any).activityLog = activityLog.slice(0, 60);
+  await pool.query(
+    `INSERT INTO bot_state (id, state, updated_at)
+     VALUES (1, $1::jsonb, NOW())
+     ON CONFLICT (id) DO UPDATE
+       SET state      = EXCLUDED.state,
+           updated_at = NOW()`,
+    [JSON.stringify(state)]
+  );
+}
+
+// ─── File helpers (backup + migration source) ──────────────────────────────────
+
+function fileLoad(): BotState {
   try {
-    let state: BotState;
     if (!existsSync(STATE_FILE)) {
-      state = { ...DEFAULT_STATE };
-    } else {
-      const raw = readFileSync(STATE_FILE, 'utf-8');
-      state = { ...DEFAULT_STATE, ...JSON.parse(raw) };
+      return { ...DEFAULT_STATE, test2StartedAt: Date.now() };
     }
-
-    // ── One-time Test 2 initialisation ──────────────────────────────────────
+    const parsed = JSON.parse(readFileSync(STATE_FILE, 'utf-8'));
+    const state: BotState = { ...DEFAULT_STATE, ...parsed };
+    // One-time Test 2 initialisation guard
     if (!state.test2StartedAt || state.test2StartedAt === 0) {
       state.test2StartedAt = Date.now();
-      state.paperBalance = 100;
+      state.paperBalance   = 100;
       state.test2TradeCount = 0;
-      state.balanceLog = [];
-      try {
-        const dir = dirname(STATE_FILE);
-        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-        writeFileSync(STATE_FILE, JSON.stringify(state, null, 2), 'utf-8');
-      } catch { /* ignore write error here; saveState will retry */ }
-      console.log(`[storage] Test 2 baseline set. Paper balance reset to $100.00`);
+      state.balanceLog     = [];
     }
-
-    // Back-compat: ensure balanceLog is always an array
     if (!Array.isArray(state.balanceLog)) state.balanceLog = [];
-
-    // Restore persisted activity log into the in-memory ring buffer
-    if (Array.isArray((state as any).activityLog) && (state as any).activityLog.length > 0) {
-      activityLog.length = 0;
-      activityLog.push(...(state as any).activityLog);
-    }
-
-    _state = state;
-    return _state;
+    return state;
   } catch {
-    _state = { ...DEFAULT_STATE, test2StartedAt: Date.now() };
-    return _state;
+    return { ...DEFAULT_STATE, test2StartedAt: Date.now() };
   }
 }
 
-export function saveState(state?: BotState): void {
-  // Accept the state param for call-site compatibility. Since loadState() always
-  // returns _state, state === _state in practice. If a caller somehow passes a
-  // different object, adopt it as the new canonical state.
-  if (state && state !== _state) _state = state;
-  if (!_state) return;
-
+function fileSave(state: BotState): void {
   try {
     const dir = dirname(STATE_FILE);
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-    // Snapshot the in-memory activity log so it survives restarts
-    (_state as any).activityLog = activityLog.slice(0, 60);
-    writeFileSync(STATE_FILE, JSON.stringify(_state, null, 2), 'utf-8');
+    (state as any).activityLog = activityLog.slice(0, 60);
+    writeFileSync(STATE_FILE, JSON.stringify(state, null, 2), 'utf-8');
   } catch (err) {
-    console.error('[storage] Failed to save state:', err);
+    console.error('[storage] File write failed:', err);
   }
 }
+
+// ─── Public: initialisation (call once at startup, before loadState) ───────────
+
+/**
+ * Loads state from PostgreSQL. On the very first run the DB is empty, so it
+ * migrates from the JSON file and seeds the DB. After that the file is only
+ * used as a backup and is never read again.
+ *
+ * Must be awaited before loadState() is called.
+ */
+export async function initStorage(): Promise<void> {
+  if (_state) return; // idempotent
+
+  const pool = getPool();
+
+  if (pool) {
+    try {
+      await ensureTable();
+      const saved = await dbLoad();
+
+      if (saved) {
+        _state = saved;
+        _dbAvailable = true;
+        console.log(`[storage] ✓ Loaded from PostgreSQL — balance $${_state.paperBalance.toFixed(4)}`);
+      } else {
+        // First deploy: migrate file → DB so the live balance is preserved
+        const fromFile = fileLoad();
+        _state = fromFile;
+        _dbAvailable = true;
+        await dbSave(fromFile);
+        console.log(`[storage] ✓ Migrated file → PostgreSQL — balance $${_state.paperBalance.toFixed(4)}`);
+      }
+    } catch (err) {
+      console.error('[storage] DB unavailable, falling back to file:', err);
+      _state = fileLoad();
+      _dbAvailable = false;
+    }
+  } else {
+    console.warn('[storage] DATABASE_URL not set — using file storage (state will reset on publish)');
+    _state = fileLoad();
+    _dbAvailable = false;
+  }
+
+  // Back-compat guard
+  if (!Array.isArray(_state.balanceLog)) _state.balanceLog = [];
+
+  // Restore persisted activity log into the in-memory ring buffer
+  const persisted = (_state as any).activityLog;
+  if (Array.isArray(persisted) && persisted.length > 0) {
+    activityLog.length = 0;
+    activityLog.push(...persisted);
+  }
+}
+
+// ─── Public: read ──────────────────────────────────────────────────────────────
+
+export function loadState(): BotState {
+  if (!_state) {
+    // Sync fallback — should never happen if initStorage() was awaited at startup
+    console.warn('[storage] loadState() before initStorage() — using file fallback');
+    _state = fileLoad();
+    if (!Array.isArray(_state.balanceLog)) _state.balanceLog = [];
+  }
+  return _state;
+}
+
+// ─── Public: write ─────────────────────────────────────────────────────────────
+
+export function saveState(state?: BotState): void {
+  if (state && state !== _state) _state = state;
+  if (!_state) return;
+
+  // 1. Always write to file (fast, synchronous backup)
+  fileSave(_state);
+
+  // 2. Async DB write — primary persistence; fire-and-forget is intentional so
+  //    the hot path (tracker, scanner) isn't blocked on network I/O.
+  if (_dbAvailable) {
+    dbSave(_state).catch(err => console.error('[storage] DB save failed:', err));
+  }
+}
+
+// ─── Utilities (unchanged from original) ──────────────────────────────────────
 
 export function getTodayKey(): string {
   return new Date().toISOString().slice(0, 10);
@@ -112,9 +217,7 @@ export function getOrCreateDailyStats(state: BotState) {
   return stats;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Deduplication + balance recompute
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Deduplication + optional recalculation ────────────────────────────────────
 
 export interface DedupeReport {
   removedCount: number;
@@ -130,101 +233,106 @@ export interface DedupeReport {
 }
 
 /**
- * Remove duplicate completedSignals (same signal id processed multiple times
- * after a crash restart), then recompute paperBalance, totalTpHit, totalSlHit
- * and test2TradeCount from scratch.
- *
- * Safe to call at any time — mutates and saves state, returns a report.
+ * 1. Remove duplicate completedSignals (same id processed more than once).
+ * 2. Recalculate balance + counters from scratch — BUT ONLY when we have the
+ *    full trade history in memory. If completedSignals is a partial window
+ *    (e.g. after a manual state restore or a long-running deployment where old
+ *    trades rolled off), the stored balance is preserved as-is to avoid
+ *    incorrectly resetting it to a lower value.
  */
 export function deduplicateAndRecalculate(state: BotState): DedupeReport {
   const before = {
     balance: state.paperBalance,
-    tpHit: state.totalTpHit,
-    slHit: state.totalSlHit,
-    count: state.test2TradeCount,
-    completed: state.completedSignals.length,
+    tpHit:   state.totalTpHit,
+    slHit:   state.totalSlHit,
+    count:   state.test2TradeCount,
   };
 
-  // ── 1. Deduplicate by signal id (keep first occurrence) ──────────────────
+  // ── Step 1: deduplicate by id ──────────────────────────────────────────────
   const seen = new Set<string>();
   const removed: DedupeReport['removed'] = [];
-  const unique = state.completedSignals.filter((s) => {
+
+  state.completedSignals = state.completedSignals.filter(s => {
     if (seen.has(s.id)) {
-      removed.push({ id: s.id, symbol: s.symbol, direction: s.direction, status: s.status, resolvedAt: s.resolvedAt ?? 0 });
+      removed.push({
+        id: s.id, symbol: s.symbol, direction: s.direction,
+        status: s.status, resolvedAt: s.resolvedAt ?? 0,
+      });
       return false;
     }
     seen.add(s.id);
     return true;
   });
-  state.completedSignals = unique;
 
-  // ── 2. Recompute balance from $100 base ──────────────────────────────────
-  let balance = 100;
-  let tpHit = 0;
-  let slHit = 0;
-  let tradeCount = 0;
+  // ── Step 2: recalculate only when full history is present ─────────────────
+  // "Full history" = every trade that has a riskAmt (i.e. was a Test-2 trade)
+  // is still in completedSignals. If partial, we keep the stored balance.
+  const tradesWithRisk = state.completedSignals.filter(s => s.riskAmt).length;
+  const hasFullHistory  = tradesWithRisk >= state.test2TradeCount;
 
-  for (const s of state.completedSignals) {
-    const pnl = s.finalPnlAmt ?? 0;
-    if (s.riskAmt) {           // only count trades that had a risk amount set
-      balance += pnl;
-      tradeCount++;
-      if (pnl >= 0) tpHit++; else slHit++;
+  if (hasFullHistory) {
+    let balance = 100;
+    let tpHit = 0, slHit = 0, tradeCount = 0;
+
+    for (const s of state.completedSignals) {
+      const pnl = s.finalPnlAmt ?? 0;
+      if (s.riskAmt) {
+        balance += pnl;
+        tradeCount++;
+        if (pnl >= 0) tpHit++; else slHit++;
+      }
     }
-  }
-
-  // Add partial TP already banked on still-open positions
-  for (const s of state.activeSignals) {
-    if (s.partialTpFired && s.partialTpPnlAmt) {
-      balance += s.partialTpPnlAmt;
+    // Add partial TP already banked on still-open positions
+    for (const s of state.activeSignals) {
+      if (s.partialTpFired && s.partialTpPnlAmt) balance += s.partialTpPnlAmt;
     }
-  }
 
-  balance = parseFloat(Math.max(0, balance).toFixed(4));
+    balance = parseFloat(Math.max(0, balance).toFixed(4));
+    state.paperBalance    = balance;
+    state.totalTpHit      = tpHit;
+    state.totalSlHit      = slHit;
+    state.test2TradeCount = tradeCount;
 
-  state.paperBalance    = balance;
-  // Preserve counters if the cap caused the recomputed values to be lower than
-  // what was actually tracked in real time (i.e. older trades rolled off the
-  // completedSignals window). Use max so a crash-duplicate run (where counters
-  // were inflated) still gets corrected downward.
-  const capThreshold = 490; // warn when completedSignals is near the 500 limit
-  if (state.completedSignals.length >= capThreshold) {
-    console.warn('[storage] completedSignals near cap — lifetime counters may undercount oldest trades');
+    if (state.completedSignals.length >= 490) {
+      console.warn('[storage] completedSignals near 500-entry cap — lifetime counters may undercount');
+    }
+  } else {
+    // Partial history: only dedup was safe; keep stored balance + counters
+    console.log(
+      `[storage] Partial history (${tradesWithRisk} of ${state.test2TradeCount} trades in memory) ` +
+      `— keeping stored balance $${state.paperBalance.toFixed(4)}`
+    );
   }
-  state.totalTpHit      = tpHit;
-  state.totalSlHit      = slHit;
-  state.test2TradeCount = tradeCount;
 
   saveState(state);
 
   console.log(
-    `[storage] Deduplicate complete — removed ${removed.length} duplicate(s). ` +
-    `Balance: $${before.balance.toFixed(4)} → $${balance.toFixed(4)} | ` +
-    `Trades: ${before.count} → ${tradeCount}`
+    `[storage] Dedup complete — removed ${removed.length} duplicate(s). ` +
+    `Balance: $${before.balance.toFixed(4)} → $${state.paperBalance.toFixed(4)} | ` +
+    `Trades: ${before.count} → ${state.test2TradeCount}`
   );
 
   return {
-    removedCount: removed.length,
+    removedCount:      removed.length,
     removed,
-    balanceBefore: before.balance,
-    balanceAfter: balance,
-    totalTpHitBefore: before.tpHit,
-    totalTpHitAfter: tpHit,
-    totalSlHitBefore: before.slHit,
-    totalSlHitAfter: slHit,
-    tradeCountBefore: before.count,
-    tradeCountAfter: tradeCount,
+    balanceBefore:     before.balance,
+    balanceAfter:      state.paperBalance,
+    totalTpHitBefore:  before.tpHit,
+    totalTpHitAfter:   state.totalTpHit,
+    totalSlHitBefore:  before.slHit,
+    totalSlHitAfter:   state.totalSlHit,
+    tradeCountBefore:  before.count,
+    tradeCountAfter:   state.test2TradeCount,
   };
 }
 
 /**
  * Push the current paperBalance onto the running log.
- * Called every time the balance changes (partial TP, TP hit, SL hit, auto-close).
- * Keeps last 100 entries.
+ * Called every time the balance changes. Keeps last 100 entries.
  */
 export function addToBalanceLog(state: BotState): void {
   const entry: BalanceLogEntry = {
-    ts: Date.now(),
+    ts:      Date.now(),
     balance: parseFloat(state.paperBalance.toFixed(4)),
   };
   state.balanceLog.push(entry);

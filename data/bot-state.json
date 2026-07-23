@@ -600,16 +600,12 @@
   "totalSent": 90,
   "totalAccepted": 90,
   "totalIgnored": 0,
-  "totalTpHit": 34,
-  "totalSlHit": 53,
-  "paperBalance": 109.59,
+  "totalTpHit": 47,
+  "totalSlHit": 66,
+  "paperBalance": 118.5412,
   "test2StartedAt": 1784624899316,
-  "test2TradeCount": 87,
+  "test2TradeCount": 110,
   "balanceLog": [
-    {
-      "ts": 1784637362809,
-      "balance": 93.3213
-    },
     {
       "ts": 1784637961720,
       "balance": 93.9718
@@ -1005,6 +1001,10 @@
     {
       "ts": 1784781041119,
       "balance": 106.383
+    },
+    {
+      "ts": 1784831243216,
+      "balance": 118.5412
     }
   ],
   "activityLog": [
