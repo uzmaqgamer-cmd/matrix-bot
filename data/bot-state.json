@@ -1,26 +1,7 @@
 {
   "signalsEnabled": true,
   "signalMode": "UNLIMITED",
-  "activeSignals": [
-    {
-      "id": "mrxph1_active",
-      "symbol": "PHAROSUSDT",
-      "direction": "SHORT",
-      "entry": 0.3589,
-      "tp": 0.3453,
-      "sl": 0.3589,
-      "rr": 2.5,
-      "riskAmt": 1.24,
-      "status": "accepted",
-      "partialTpFired": true,
-      "partialTpPrice": 0.3521,
-      "partialTpPnlAmt": 0.7741,
-      "partialTpAt": 1784821920000,
-      "breakevenMoved": true,
-      "createdAt": 1784820600000,
-      "balanceAtEntry": 116
-    }
-  ],
+  "activeSignals": [],
   "pendingSignals": [],
   "completedSignals": [
     {
@@ -2707,6 +2688,25 @@
       "finalPnlAmt": -2,
       "resolvedAt": 1784821080000,
       "createdAt": 1784818800000
+    },
+    {
+      "id": "mrxph1_active",
+      "symbol": "PHAROSUSDT",
+      "direction": "SHORT",
+      "entry": 0.3589,
+      "tp": 0.3453,
+      "sl": 0.3589,
+      "rr": 2.5,
+      "riskAmt": 1.24,
+      "balanceAtEntry": 116,
+      "status": "sl_hit",
+      "breakevenMoved": true,
+      "partialTpFired": true,
+      "partialTpPrice": 0.3521,
+      "partialTpPnlAmt": 0.7741,
+      "finalPnlAmt": 0.7741,
+      "createdAt": 1784820600000,
+      "resolvedAt": 1784829840000
     }
   ],
   "dailyStats": [
@@ -3053,10 +3053,10 @@
   "totalAccepted": 90,
   "totalIgnored": 0,
   "totalTpHit": 47,
-  "totalSlHit": 65,
+  "totalSlHit": 66,
   "paperBalance": 118.5412,
   "test2StartedAt": 1784624899316,
-  "test2TradeCount": 109,
+  "test2TradeCount": 110,
   "balanceLog": [
     {
       "ts": 1784637362809,
