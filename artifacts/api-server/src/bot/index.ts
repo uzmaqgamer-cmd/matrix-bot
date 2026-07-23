@@ -406,10 +406,35 @@ export async function startBot() {
   initScanner(bot.telegram, ADMIN_ID);
   initTracker(bot.telegram, ADMIN_ID);
 
-  // TP/SL price monitor every 30 seconds
-  setInterval(() => checkActiveSignals().catch(console.error), 30 * 1000);
+  // ── Launch Telegram polling FIRST ──────────────────────────────────────────
+  // If this throws a 409 (another deployed instance owns the bot), we let the
+  // error propagate so index.ts can catch it and keep HTTP alive without
+  // starting any scanners. Scanners must only run in ONE instance.
+  await bot.launch({ dropPendingUpdates: true });
+  console.log('[bot] Matrix Signal Bot started. Scanning 600 pairs.');
 
-  // Full scan every 5 minutes — also fire immediately on startup so the log isn't blank
+  process.once('SIGINT',  () => bot.stop('SIGINT'));
+  process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+  // ── Start scanners ONLY after Telegram ownership is confirmed ──────────────
+
+  // Guard against concurrent checkActiveSignals runs: if a previous call is
+  // still awaiting Binance responses when the 30s interval fires again, skip
+  // the new call rather than letting two run in parallel (which causes the
+  // same signal to be logged as closed multiple times).
+  let checkInProgress = false;
+  setInterval(() => {
+    if (checkInProgress) {
+      console.log('[tracker] checkActiveSignals skipped — previous run still in progress');
+      return;
+    }
+    checkInProgress = true;
+    checkActiveSignals()
+      .catch(console.error)
+      .finally(() => { checkInProgress = false; });
+  }, 30 * 1000);
+
+  // Full scan every 5 minutes — also fire immediately on startup
   setInterval(() => runFullScan().catch(console.error), 5 * 60 * 1000);
   setImmediate(() => runFullScan().catch(console.error));
 
@@ -419,14 +444,8 @@ export async function startBot() {
   // Thesis invalidation monitor (re-classifies open positions)
   setInterval(
     () => monitorPositionTheses().catch(console.error),
-    60 * 1000 // configurable via config.positionMonitoring.rescanIntervalMs but 60s default
+    60 * 1000,
   );
-
-  await bot.launch({ dropPendingUpdates: true });
-  console.log('[bot] Matrix Signal Bot started. Scanning 600 pairs.');
-
-  process.once('SIGINT',  () => bot.stop('SIGINT'));
-  process.once('SIGTERM', () => bot.stop('SIGTERM'));
 }
 
 export { bot };
