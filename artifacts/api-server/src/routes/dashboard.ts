@@ -277,6 +277,11 @@ router.get('/dashboard', (_req, res) => {
     date: today, sent: 0, accepted: 0, ignored: 0, tpHit: 0, slHit: 0,
   };
 
+  // Count partial TPs fired today (from both active and completed signals)
+  const todayPartialTpHit = [...state.activeSignals, ...state.completedSignals].filter(
+    s => s.partialTpFired && s.partialTpAt && new Date(s.partialTpAt).toISOString().slice(0, 10) === today
+  ).length;
+
   const rowFrequency = computeRowFrequency(state.activeSignals, state.completedSignals);
   const priorityResolution = computePriorityResolution(state.completedSignals);
   const test2Stats = computeTest2Stats(state);
@@ -339,11 +344,11 @@ router.get('/dashboard', (_req, res) => {
     escalationAccuracyPct,
     activeSignals: state.activeSignals.map(enrichSignal),
     pendingSignals: state.pendingSignals.map(enrichSignal),
-    recentTrades: [...state.completedSignals].reverse().slice(0, 20).map(enrichSignal),
+    recentTrades: [...state.completedSignals].reverse().slice(0, 100).map(enrichSignal),
     watchlist: watchlistItems,
     scanFeed: scanFeed.slice(0, 30),
     activity: activityLog.slice(0, 20),
-    today: todayStats,
+    today: { ...todayStats, partialTpHit: todayPartialTpHit },
     scan: {
       inProgress: scan.inProgress,
       scanned: scan.scanned,

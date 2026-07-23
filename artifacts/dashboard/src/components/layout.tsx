@@ -64,12 +64,13 @@ export function TopStats({ dashboard }: { dashboard: DashboardSnapshot }) {
       <StatCard 
         label="TODAY: TP / SL" 
         value={`${dashboard.today.tpHit} / ${dashboard.today.slHit}`}
-        sub={`Sent: ${dashboard.today.sent} | Acc: ${dashboard.today.accepted}`}
+        sub={`½TP fired: ${(dashboard.today as any).partialTpHit ?? 0} · Sent: ${dashboard.today.sent}`}
         isHits={true}
       />
       <StatCard 
-        label="ESCALATION ACCURACY" 
+        label="WIN RATE (all-time)" 
         value={dashboard.escalationAccuracyPct !== null ? `${dashboard.escalationAccuracyPct.toFixed(1)}%` : '---'}
+        sub={`${dashboard.totalTpHit} TP / ${dashboard.totalSlHit} SL · ${dashboard.totalTpHit + dashboard.totalSlHit} closed`}
         color={dashboard.escalationAccuracyPct && dashboard.escalationAccuracyPct >= 50 ? 'emerald' : dashboard.escalationAccuracyPct !== null ? 'rose' : undefined}
       />
       <StatCard 

@@ -145,7 +145,7 @@ function ActiveTargetRow({ signal: s }: { signal: ActiveSignalFull }) {
           <span className="text-[8px] px-1 py-0.5 bg-[rgba(93,202,165,0.1)] text-[#5DCAA5] rounded font-bold">BE</span>
         )}
         {!isPartial && !isBE && (
-          <span className="text-[9px] text-[#4a565f]">—</span>
+          <span className="text-[8px] px-1 py-0.5 bg-[rgba(85,99,111,0.12)] text-[#55636f] rounded font-bold tracking-wide">OPEN</span>
         )}
       </div>
     </div>
