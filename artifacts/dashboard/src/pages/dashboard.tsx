@@ -140,7 +140,7 @@ export default function Dashboard() {
         {/* MIDDLE — top stats, pending, recent trades */}
         <div className="col-span-6 flex flex-col gap-1.5 min-h-0">
           <TopStats dashboard={dashboard} />
-          <div className="flex-1 min-h-0 grid grid-rows-2 gap-1.5">
+          <div className="flex-1 min-h-0 grid gap-1.5" style={{ gridTemplateRows: '1fr 2fr' }}>
             <PendingSignals signals={dashboard.pendingSignals} />
             <RecentTrades trades={dashboard.recentTrades} />
           </div>

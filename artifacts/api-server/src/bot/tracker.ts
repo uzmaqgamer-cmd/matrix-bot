@@ -102,6 +102,7 @@ export async function checkActiveSignals() {
       const price = priceResult.value;
       signal.currentPrice = price;
       signal.currentPriceAt = Date.now();
+      signal.fetchFailCount = 0; // reset consecutive failure counter on success
       stateChanged = true;
 
       // ── Partial TP: fires once when price reaches 50% of the way to TP ──────
@@ -222,7 +223,40 @@ export async function checkActiveSignals() {
         stateChanged = true;
       }
     } catch (err) {
-      console.warn(`[tracker] Error checking ${signal.symbol}:`, err);
+      signal.fetchFailCount = (signal.fetchFailCount ?? 0) + 1;
+      console.warn(`[tracker] Error checking ${signal.symbol} (fail #${signal.fetchFailCount}):`, err);
+
+      // After 5 consecutive failures (~2.5 min), force-close the zombie signal
+      if (signal.fetchFailCount >= 5) {
+        const exitPrice = signal.currentPrice ?? signal.entry;
+        let closeAmt = 0;
+        const positionFraction = signal.partialTpFired ? 0.5 : 1.0;
+        if (signal.riskAmt) {
+          closeAmt = computeCloseAmt(signal, exitPrice, positionFraction);
+          applyBalance(state, closeAmt);
+          state.test2TradeCount++;
+        }
+        signal.status = 'auto_closed';
+        signal.resolvedAt = Date.now();
+        signal.autoClosedAt = Date.now();
+        signal.autoCloseReason = 'price_data_unavailable';
+        signal.autoClosePrice = exitPrice;
+        signal.finalPnlAmt = parseFloat(((signal.partialTpPnlAmt ?? 0) + closeAmt).toFixed(4));
+
+        const acIsWin = (signal.finalPnlAmt ?? 0) >= 0;
+        if (acIsWin) { state.totalTpHit++; getOrCreateDailyStats(state).tpHit++; }
+        else          { state.totalSlHit++; getOrCreateDailyStats(state).slHit++; }
+
+        toRemove.push(signal.id);
+        state.completedSignals.push({ ...signal });
+        if (state.completedSignals.length > 500) state.completedSignals = state.completedSignals.slice(-500);
+
+        const pnlStr = `${signal.finalPnlAmt >= 0 ? '+' : ''}$${signal.finalPnlAmt.toFixed(4)}`;
+        await sendAlert(`⚠️ FORCE-CLOSED: ${signal.symbol} ${signal.direction}\nReason: price data unavailable (5 fetch failures)\nExit: last known ${exitPrice.toPrecision(6)} | P&L: ${pnlStr}`);
+        logActivity({ ts: Date.now(), text: `[FORCE-CLOSE] ${signal.symbol} — no price data after 5 retries | P&L: ${pnlStr}`, kind: 'auto_close', symbol: signal.symbol });
+        console.log(`[tracker] [ZOMBIE-CLOSE] ${signal.symbol} — closed after 5 consecutive price fetch failures | P&L: ${pnlStr}`);
+        stateChanged = true;
+      }
     }
   }
 

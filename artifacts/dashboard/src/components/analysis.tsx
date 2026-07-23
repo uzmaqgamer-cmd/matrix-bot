@@ -323,10 +323,18 @@ function MetricCell({ label, value, color }: { label: string; value: string; col
 // ─── Recent Trades ────────────────────────────────────────────────────────────
 
 export function RecentTrades({ trades }: { trades: LiveSignal[] }) {
+  const wins = trades.filter(t => t.status === 'tp_hit' || (t.status === 'auto_closed' && ((t as any).finalPnlAmt ?? 0) > 0)).length;
+  const losses = trades.filter(t => (t.status === 'sl_hit' && !(t as any).breakevenMoved) || (t.status === 'auto_closed' && ((t as any).finalPnlAmt ?? 0) <= 0)).length;
   return (
     <div className="matrix-card flex flex-col min-h-0 flex-1">
-      <div className="border-b border-[#1c2530] px-3 py-2 text-[9.5px] font-medium text-[#55636f] tracking-[0.9px] uppercase shrink-0">
-        TRADE RESULTS
+      <div className="border-b border-[#1c2530] px-3 py-2 text-[9.5px] font-medium text-[#55636f] tracking-[0.9px] uppercase shrink-0 flex items-center justify-between">
+        <span>TRADE RESULTS [{trades.length}]</span>
+        <span className="text-[9px] normal-case font-normal tracking-normal">
+          <span className="text-[#5DCAA5]">{wins}W</span>
+          <span className="text-[#4a565f] mx-1">/</span>
+          <span className="text-[#F0716E]">{losses}L</span>
+          <span className="text-[#4a565f] ml-1">↕ scroll</span>
+        </span>
       </div>
       <div className="overflow-y-auto min-h-0 flex-1 p-1">
         <table className="w-full text-[10px] font-mono text-left whitespace-nowrap border-collapse">

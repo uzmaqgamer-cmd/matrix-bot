@@ -67,8 +67,11 @@ export interface Signal {
   // ── Thesis / position monitoring ──────────────────────────────────────────
   currentMatrixRow?: number; // most recent matrix row from position re-scan
   autoClosedAt?: number;
-  autoCloseReason?: string;  // e.g. 'thesis_invalidated'
+  autoCloseReason?: string;  // e.g. 'thesis_invalidated' | 'price_data_unavailable'
   autoClosePrice?: number;
+
+  // ── Fetch failure tracking ─────────────────────────────────────────────────
+  fetchFailCount?: number;   // consecutive price-fetch failures; auto-close at threshold
 }
 
 export interface DailyStats {
