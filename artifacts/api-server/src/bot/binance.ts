@@ -1,7 +1,7 @@
 const BASE = 'https://fapi.binance.com';
 
-async function getJson(path: string): Promise<any> {
-  const res = await fetch(`${BASE}${path}`);
+async function getJson(path: string, signal?: AbortSignal): Promise<any> {
+  const res = await fetch(`${BASE}${path}`, signal ? { signal } : undefined);
   if (!res.ok) throw new Error(`Binance API ${res.status} on ${path}: ${await res.text()}`);
   return res.json();
 }
@@ -27,24 +27,37 @@ export async function getTopSymbolsByVolume(n: number): Promise<string[]> {
     .map((t: any) => t.symbol);
 }
 
-export async function getCloseSeries(symbol: string, interval = '15m', limit = 20): Promise<number[]> {
-  const data = await getJson(`/fapi/v1/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+export async function getCloseSeries(symbol: string, interval = '15m', limit = 20, signal?: AbortSignal): Promise<number[]> {
+  const data = await getJson(`/fapi/v1/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`, signal);
   return data.map((k: any) => parseFloat(k[4]));
 }
 
-export async function getOpenInterestSeries(symbol: string, period = '15m', limit = 20): Promise<number[]> {
-  const data = await getJson(`/futures/data/openInterestHist?symbol=${symbol}&period=${period}&limit=${limit}`);
+export async function getOpenInterestSeries(symbol: string, period = '15m', limit = 20, signal?: AbortSignal): Promise<number[]> {
+  const data = await getJson(`/futures/data/openInterestHist?symbol=${symbol}&period=${period}&limit=${limit}`, signal);
   return data.map((d: any) => parseFloat(d.sumOpenInterest));
 }
 
-export async function getFundingRateSeries(symbol: string, limit = 4): Promise<number[]> {
-  const data = await getJson(`/fapi/v1/fundingRate?symbol=${symbol}&limit=${limit}`);
+export async function getFundingRateSeries(symbol: string, limit = 4, signal?: AbortSignal): Promise<number[]> {
+  const data = await getJson(`/fapi/v1/fundingRate?symbol=${symbol}&limit=${limit}`, signal);
   return data.map((d: any) => parseFloat(d.fundingRate) * 100);
 }
 
-export async function getCurrentPrice(symbol: string): Promise<number> {
-  const data = await getJson(`/fapi/v1/ticker/price?symbol=${symbol}`);
+export async function getCurrentPrice(symbol: string, signal?: AbortSignal): Promise<number> {
+  const data = await getJson(`/fapi/v1/ticker/price?symbol=${symbol}`, signal);
   return parseFloat(data.price);
+}
+
+/**
+ * Fetch ALL perp futures prices in a single request.
+ * Returns a symbol → price map.
+ * Use this in the tracker instead of N individual getCurrentPrice calls
+ * to avoid rate-limiting timeouts when there are many active signals.
+ */
+export async function getAllCurrentPrices(signal?: AbortSignal): Promise<Map<string, number>> {
+  const data: Array<{ symbol: string; price: string }> = await getJson('/fapi/v1/ticker/price', signal);
+  const map = new Map<string, number>();
+  for (const item of data) map.set(item.symbol, parseFloat(item.price));
+  return map;
 }
 
 /** Get OHLC candles for ATR calculation. Returns array of {high, low, close}. */

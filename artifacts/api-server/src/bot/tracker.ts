@@ -1,4 +1,4 @@
-import { getCurrentPrice, getCloseSeries, getOpenInterestSeries, getFundingRateSeries } from './binance.js';
+import { getCurrentPrice, getAllCurrentPrices, getCloseSeries, getOpenInterestSeries, getFundingRateSeries } from './binance.js';
 import { classify } from './classifier.js';
 import { lookupRow } from './matrix.js';
 import { loadState, saveState, getOrCreateDailyStats, addToBalanceLog } from './storage.js';
@@ -67,39 +67,49 @@ function computeCloseAmt(signal: Signal, exitPrice: number, positionFraction: nu
 
 // ─── Main price-check loop ────────────────────────────────────────────────────
 
-/** Reject a promise after `ms` milliseconds — prevents a single slow Binance
- *  call from holding up the entire tracker run. */
-function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+/**
+ * Run `factory(abortSignal)` with a hard timeout.
+ * When the timeout fires the AbortSignal is triggered, which actually cancels
+ * the underlying fetch() — preventing connection-leak buildup on slow symbols.
+ */
+function withTimeout<T>(factory: (sig: AbortSignal) => Promise<T>, ms: number, label: string): Promise<T> {
+  const ctrl = new AbortController();
   return Promise.race([
-    p,
+    factory(ctrl.signal),
     new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`[tracker] ${label} timed out after ${ms}ms`)), ms)
+      setTimeout(() => {
+        ctrl.abort();
+        reject(new Error(`[tracker] ${label} timed out after ${ms}ms`));
+      }, ms)
     ),
   ]);
 }
+
+/** How long a signal can go without a successful price update before being force-closed. */
+const STALE_SIGNAL_MS = 30 * 60 * 1000; // 30 minutes
 
 export async function checkActiveSignals() {
   const state = loadState();
   if (state.activeSignals.length === 0) return;
 
-  // Fetch ALL prices concurrently with a 10s timeout per call.
-  // Old sequential loop: N × latency (e.g. 10 signals × 30s slow Binance = 300s).
-  // Now: max(single latency) capped at 10s → worst case ~10s total.
-  const priceResults = await Promise.allSettled(
-    state.activeSignals.map(s =>
-      withTimeout(getCurrentPrice(s.symbol), 10_000, `getCurrentPrice(${s.symbol})`)
-    )
-  );
+  // ONE bulk request for all perp prices — avoids N concurrent calls that
+  // trigger Binance rate-limits / connection timeouts on low-liquidity symbols.
+  let priceMap: Map<string, number> | null = null;
+  try {
+    priceMap = await withTimeout(sig => getAllCurrentPrices(sig), 15_000, 'getAllCurrentPrices');
+  } catch (err) {
+    console.warn('[tracker] Bulk price fetch failed — skipping this cycle:', err);
+    return; // entire cycle skipped; signals stay put, nothing force-closed
+  }
 
   const toRemove: string[] = [];
   let stateChanged = false;
 
   for (let idx = 0; idx < state.activeSignals.length; idx++) {
     const signal = state.activeSignals[idx];
-    const priceResult = priceResults[idx];
+    const price = priceMap.get(signal.symbol);
     try {
-      if (priceResult.status === 'rejected') throw priceResult.reason;
-      const price = priceResult.value;
+      if (price == null) throw new Error(`[tracker] ${signal.symbol} not found in bulk price response`);
       signal.currentPrice = price;
       signal.currentPriceAt = Date.now();
       signal.fetchFailCount = 0; // reset consecutive failure counter on success
@@ -226,8 +236,10 @@ export async function checkActiveSignals() {
       signal.fetchFailCount = (signal.fetchFailCount ?? 0) + 1;
       console.warn(`[tracker] Error checking ${signal.symbol} (fail #${signal.fetchFailCount}):`, err);
 
-      // After 5 consecutive failures (~2.5 min), force-close the zombie signal
-      if (signal.fetchFailCount >= 5) {
+      // Only force-close after 30 minutes with no successful price update.
+      // This tolerates brief Binance outages / rate-limit bursts without nuking positions.
+      const lastSeenMs = signal.currentPriceAt ?? signal.createdAt;
+      if (Date.now() - lastSeenMs > STALE_SIGNAL_MS) {
         const exitPrice = signal.currentPrice ?? signal.entry;
         let closeAmt = 0;
         const positionFraction = signal.partialTpFired ? 0.5 : 1.0;
@@ -252,9 +264,9 @@ export async function checkActiveSignals() {
         if (state.completedSignals.length > 500) state.completedSignals = state.completedSignals.slice(-500);
 
         const pnlStr = `${signal.finalPnlAmt >= 0 ? '+' : ''}$${signal.finalPnlAmt.toFixed(4)}`;
-        await sendAlert(`⚠️ FORCE-CLOSED: ${signal.symbol} ${signal.direction}\nReason: price data unavailable (5 fetch failures)\nExit: last known ${exitPrice.toPrecision(6)} | P&L: ${pnlStr}`);
-        logActivity({ ts: Date.now(), text: `[FORCE-CLOSE] ${signal.symbol} — no price data after 5 retries | P&L: ${pnlStr}`, kind: 'auto_close', symbol: signal.symbol });
-        console.log(`[tracker] [ZOMBIE-CLOSE] ${signal.symbol} — closed after 5 consecutive price fetch failures | P&L: ${pnlStr}`);
+        await sendAlert(`⚠️ FORCE-CLOSED: ${signal.symbol} ${signal.direction}\nReason: no price data for 30+ minutes\nExit: last known ${exitPrice.toPrecision(6)} | P&L: ${pnlStr}`);
+        logActivity({ ts: Date.now(), text: `[FORCE-CLOSE] ${signal.symbol} — no price data for 30+ min | P&L: ${pnlStr}`, kind: 'auto_close', symbol: signal.symbol });
+        console.log(`[tracker] [ZOMBIE-CLOSE] ${signal.symbol} — 30min without price data | P&L: ${pnlStr}`);
         stateChanged = true;
       }
     }
@@ -279,10 +291,10 @@ export async function monitorPositionTheses() {
   const seriesResults = await Promise.allSettled(
     state.activeSignals.map(s =>
       withTimeout(
-        Promise.all([
-          getCloseSeries(s.symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES),
-          getOpenInterestSeries(s.symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES),
-          getFundingRateSeries(s.symbol, FUNDING_LOOKBACK + 1),
+        sig => Promise.all([
+          getCloseSeries(s.symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES, sig),
+          getOpenInterestSeries(s.symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES, sig),
+          getFundingRateSeries(s.symbol, FUNDING_LOOKBACK + 1, sig),
         ]),
         10_000,
         `thesis series(${s.symbol})`
