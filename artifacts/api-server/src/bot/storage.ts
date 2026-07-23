@@ -95,6 +95,103 @@ export function getOrCreateDailyStats(state: BotState) {
   return stats;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Deduplication + balance recompute
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface DedupeReport {
+  removedCount: number;
+  removed: Array<{ id: string; symbol: string; direction: string; status: string; resolvedAt: number }>;
+  balanceBefore: number;
+  balanceAfter: number;
+  totalTpHitBefore: number;
+  totalTpHitAfter: number;
+  totalSlHitBefore: number;
+  totalSlHitAfter: number;
+  tradeCountBefore: number;
+  tradeCountAfter: number;
+}
+
+/**
+ * Remove duplicate completedSignals (same signal id processed multiple times
+ * after a crash restart), then recompute paperBalance, totalTpHit, totalSlHit
+ * and test2TradeCount from scratch.
+ *
+ * Safe to call at any time — mutates and saves state, returns a report.
+ */
+export function deduplicateAndRecalculate(state: BotState): DedupeReport {
+  const before = {
+    balance: state.paperBalance,
+    tpHit: state.totalTpHit,
+    slHit: state.totalSlHit,
+    count: state.test2TradeCount,
+    completed: state.completedSignals.length,
+  };
+
+  // ── 1. Deduplicate by signal id (keep first occurrence) ──────────────────
+  const seen = new Set<string>();
+  const removed: DedupeReport['removed'] = [];
+  const unique = state.completedSignals.filter((s) => {
+    if (seen.has(s.id)) {
+      removed.push({ id: s.id, symbol: s.symbol, direction: s.direction, status: s.status, resolvedAt: s.resolvedAt ?? 0 });
+      return false;
+    }
+    seen.add(s.id);
+    return true;
+  });
+  state.completedSignals = unique;
+
+  // ── 2. Recompute balance from $100 base ──────────────────────────────────
+  let balance = 100;
+  let tpHit = 0;
+  let slHit = 0;
+  let tradeCount = 0;
+
+  for (const s of state.completedSignals) {
+    const pnl = s.finalPnlAmt ?? 0;
+    if (s.riskAmt) {           // only count trades that had a risk amount set
+      balance += pnl;
+      tradeCount++;
+      if (pnl >= 0) tpHit++; else slHit++;
+    }
+  }
+
+  // Add partial TP already banked on still-open positions
+  for (const s of state.activeSignals) {
+    if (s.partialTpFired && s.partialTpPnlAmt) {
+      balance += s.partialTpPnlAmt;
+    }
+  }
+
+  balance = parseFloat(Math.max(0, balance).toFixed(4));
+
+  state.paperBalance   = balance;
+  state.totalTpHit     = tpHit;
+  state.totalSlHit     = slHit;
+  state.test2TradeCount = tradeCount;
+
+  saveState(state);
+
+  console.log(
+    `[storage] Deduplicate complete — removed ${removed.length} duplicate(s). ` +
+    `Balance: $${before.balance.toFixed(4)} → $${balance.toFixed(4)} | ` +
+    `Trades: ${before.count} → ${tradeCount}`
+  );
+
+  return {
+    removedCount: removed.length,
+    removed,
+    balanceBefore: before.balance,
+    balanceAfter: balance,
+    totalTpHitBefore: before.tpHit,
+    totalTpHitAfter: tpHit,
+    totalSlHitBefore: before.slHit,
+    totalSlHitAfter: slHit,
+    tradeCountBefore: before.count,
+    tradeCountAfter: tradeCount,
+  };
+}
+
 /**
  * Push the current paperBalance onto the running log.
  * Called every time the balance changes (partial TP, TP hit, SL hit, auto-close).

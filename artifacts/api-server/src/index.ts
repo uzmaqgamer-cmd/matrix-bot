@@ -1,6 +1,7 @@
 import app from "./app.js";
 import { logger } from "./lib/logger.js";
 import { startBot } from "./bot/index.js";
+import { loadState, deduplicateAndRecalculate } from "./bot/storage.js";
 
 const rawPort = process.env["PORT"];
 
@@ -30,6 +31,25 @@ app.listen(port, (err) => {
 // prevents the dev instance from fighting the deployed VM for the Telegram
 // connection and sending duplicate notifications / corrupting state.
 if (process.env.NODE_ENV === 'production') {
+  // ── Auto-deduplicate on every startup ──────────────────────────────────────
+  // Removes duplicate completedSignals that can accumulate when the server
+  // restarts after a crash mid-save. Recomputes balance + counters from
+  // scratch so the numbers are always accurate after a restart.
+  try {
+    const state = loadState();
+    const report = deduplicateAndRecalculate(state);
+    if (report.removedCount > 0) {
+      logger.warn(
+        { removed: report.removedCount, balanceBefore: report.balanceBefore, balanceAfter: report.balanceAfter },
+        'Startup dedup: removed duplicate trade entries and recomputed balance'
+      );
+    } else {
+      logger.info('Startup dedup: no duplicates found, state is clean');
+    }
+  } catch (err) {
+    logger.error({ err }, 'Startup dedup failed — continuing anyway');
+  }
+
   startBot().catch((err) => {
     logger.error({ err }, "Telegram bot crashed");
     process.exit(1);

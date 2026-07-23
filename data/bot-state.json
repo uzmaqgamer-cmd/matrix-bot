@@ -2810,9 +2810,9 @@
   "totalSent": 90,
   "totalAccepted": 90,
   "totalIgnored": 0,
-  "totalTpHit": 20,
-  "totalSlHit": 65,
-  "paperBalance": 106.383,
+  "totalTpHit": 33,
+  "totalSlHit": 52,
+  "paperBalance": 106.3829,
   "test2StartedAt": 1784624899316,
   "test2TradeCount": 85,
   "balanceLog": [

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from 'express';
-import { loadState, saveState, getOrCreateDailyStats, addToBalanceLog } from '../bot/storage.js';
+import { loadState, saveState, getOrCreateDailyStats, addToBalanceLog, deduplicateAndRecalculate } from '../bot/storage.js';
 import { lastScanSummary } from '../bot/scanner.js';
 import { activityLog, scanFeed, logActivity } from '../bot/eventLog.js';
 import { MATRIX, HIGH_PRIORITY_ROWS } from '../bot/matrix.js';
@@ -437,6 +437,16 @@ router.post('/force-close/:symbol', async (req, res) => {
     finalPnlAmt: signal.finalPnlAmt,
     pnlPct: parseFloat(pnlPct.toFixed(4)),
   });
+});
+
+// ─── POST /api/admin/deduplicate ──────────────────────────────────────────────
+// One-time cleanup: removes duplicate completedSignals that accumulated from
+// crash-restart cycles, then recomputes balance + counters from scratch.
+// Safe to call multiple times — idempotent after duplicates are gone.
+router.post('/admin/deduplicate', (_req, res) => {
+  const state = loadState();
+  const report = deduplicateAndRecalculate(state);
+  res.json({ ok: true, ...report });
 });
 
 export default router;
