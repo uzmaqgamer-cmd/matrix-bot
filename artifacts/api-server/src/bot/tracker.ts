@@ -67,15 +67,28 @@ function computeCloseAmt(signal: Signal, exitPrice: number, positionFraction: nu
 
 // ─── Main price-check loop ────────────────────────────────────────────────────
 
+/** Reject a promise after `ms` milliseconds — prevents a single slow Binance
+ *  call from holding up the entire tracker run. */
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`[tracker] ${label} timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+}
+
 export async function checkActiveSignals() {
   const state = loadState();
   if (state.activeSignals.length === 0) return;
 
-  // Fetch ALL prices concurrently — the old sequential await meant N × latency
-  // (e.g. 10 signals × 5 s slow Binance = 50 s per run, causing every 30-s
-  // interval tick to be skipped). Now the run completes in max(single latency).
+  // Fetch ALL prices concurrently with a 10s timeout per call.
+  // Old sequential loop: N × latency (e.g. 10 signals × 30s slow Binance = 300s).
+  // Now: max(single latency) capped at 10s → worst case ~10s total.
   const priceResults = await Promise.allSettled(
-    state.activeSignals.map(s => getCurrentPrice(s.symbol))
+    state.activeSignals.map(s =>
+      withTimeout(getCurrentPrice(s.symbol), 10_000, `getCurrentPrice(${s.symbol})`)
+    )
   );
 
   const toRemove: string[] = [];
@@ -228,14 +241,19 @@ export async function monitorPositionTheses() {
   const state = loadState();
   if (state.activeSignals.length === 0) return;
 
-  // Fetch all signals' OI/price/funding data concurrently — old sequential
-  // per-signal await caused N × 3 sequential Binance calls per run.
+  // Fetch all signals' OI/price/funding data concurrently with a 10s timeout.
   const seriesResults = await Promise.allSettled(
-    state.activeSignals.map(s => Promise.all([
-      getCloseSeries(s.symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES),
-      getOpenInterestSeries(s.symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES),
-      getFundingRateSeries(s.symbol, FUNDING_LOOKBACK + 1),
-    ]))
+    state.activeSignals.map(s =>
+      withTimeout(
+        Promise.all([
+          getCloseSeries(s.symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES),
+          getOpenInterestSeries(s.symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES),
+          getFundingRateSeries(s.symbol, FUNDING_LOOKBACK + 1),
+        ]),
+        10_000,
+        `thesis series(${s.symbol})`
+      )
+    )
   );
 
   const toRemove: string[] = [];

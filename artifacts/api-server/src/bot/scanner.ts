@@ -181,17 +181,24 @@ export async function runFullScan(silent = false) {
   }
 
   // ── Process results sequentially (safe: single writer on state) ──────────
+  // IMPORTANT: loadState() returns the shared in-memory singleton — same object
+  // as `state` above. We call saveState() only ONCE at the end, NOT after every
+  // symbol. The old per-symbol saveState() called writeFileSync 530 times per
+  // scan, blocking the Node.js event loop for 10+ seconds, which is why
+  // Telegram button presses took 15s to respond.
+  // `state` is already declared above — reuse it here.
+  let watchlistChanged = false;
+
   for (const { symbol, matrixRow } of scanResults) {
     if (!matrixRow) continue;
 
     // Feed scan entries to dashboard
     logScan({ symbol, row: matrixRow.row, outlook: matrixRow.outlook, ts: Date.now() });
 
-    const freshState = loadState();
-    const action = updateWatchlist(symbol, matrixRow, freshState);
-    saveState(freshState);
+    const action = updateWatchlist(symbol, matrixRow, state);
 
     if (action.type === 'ADDED') {
+      watchlistChanged = true;
       logActivity({
         ts: Date.now(),
         text: `WATCH: ${symbol} → Row #${matrixRow.row} (${action.priority}) — ${matrixRow.meaning}`,
@@ -199,6 +206,7 @@ export async function runFullScan(silent = false) {
         symbol,
       });
     } else if (action.type === 'DROPPED_STABLE') {
+      watchlistChanged = true;
       logActivity({
         ts: Date.now(),
         text: `DROP: ${symbol} — false alarm (timed out at Row #${matrixRow.row})`,
@@ -207,6 +215,8 @@ export async function runFullScan(silent = false) {
       });
     } else if (action.type === 'ESCALATED') {
       const direction = matrixRow.outlook === 'PUMP' ? 'LONG' : 'SHORT';
+      // sendSignal calls saveState() internally when a signal is accepted —
+      // that's a real event that must be persisted immediately.
       await sendSignal({
         symbol,
         direction,
@@ -216,8 +226,12 @@ export async function runFullScan(silent = false) {
         originPriority: action.originPriority,
       });
       signalsSent++;
+      watchlistChanged = false; // sendSignal already saved
     }
   }
+
+  // Persist watchlist mutations once at the end (1 write instead of 530)
+  if (watchlistChanged) saveState(state);
 
   const finalState = loadState();
   lastScanSummary.finishedAt = Date.now();
@@ -256,18 +270,19 @@ export async function runWatchlistScan() {
 
   console.log(`[scanner] Watchlist scan: ${symbols.length} pairs`);
 
+  let watchlistChanged = false;
+
   for (const symbol of symbols) {
     const matrixRow = await scanSymbol(symbol);
     if (!matrixRow) continue;
 
     logScan({ symbol, row: matrixRow.row, outlook: matrixRow.outlook, ts: Date.now() });
 
-    const freshState = loadState();
-    const action = updateWatchlist(symbol, matrixRow, freshState);
-    saveState(freshState);
+    const action = updateWatchlist(symbol, matrixRow, state);
 
     if (action.type === 'ESCALATED') {
       const direction = matrixRow.outlook === 'PUMP' ? 'LONG' : 'SHORT';
+      // sendSignal saves internally — no extra save needed
       await sendSignal({
         symbol,
         direction,
@@ -276,8 +291,14 @@ export async function runWatchlistScan() {
         originRow: action.originRow,
         originPriority: action.originPriority,
       });
+      watchlistChanged = false;
+    } else if (action.type !== 'unchanged') {
+      watchlistChanged = true;
     }
   }
+
+  // One write at the end instead of one per symbol
+  if (watchlistChanged) saveState(state);
 }
 
 export function getRadarData(state: ReturnType<typeof loadState>) {
