@@ -402,26 +402,15 @@ bot.catch((err: any) => {
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 
-export async function startBot() {
+export function startBot(): void {
   initScanner(bot.telegram, ADMIN_ID);
   initTracker(bot.telegram, ADMIN_ID);
 
-  // ── Launch Telegram polling FIRST ──────────────────────────────────────────
-  // If this throws a 409 (another deployed instance owns the bot), we let the
-  // error propagate so index.ts can catch it and keep HTTP alive without
-  // starting any scanners. Scanners must only run in ONE instance.
-  await bot.launch({ dropPendingUpdates: true });
-  console.log('[bot] Matrix Signal Bot started. Scanning 600 pairs.');
+  // ── Start scanners immediately — independent of Telegram ───────────────────
+  // Scanners run on their own schedule regardless of whether Telegram is
+  // connected. Telegram is only the notification channel; a slow or flaky
+  // Telegram API must never block TP/SL tracking.
 
-  process.once('SIGINT',  () => bot.stop('SIGINT'));
-  process.once('SIGTERM', () => bot.stop('SIGTERM'));
-
-  // ── Start scanners ONLY after Telegram ownership is confirmed ──────────────
-
-  // Guard against concurrent checkActiveSignals runs: if a previous call is
-  // still awaiting Binance responses when the 30s interval fires again, skip
-  // the new call rather than letting two run in parallel (which causes the
-  // same signal to be logged as closed multiple times).
   let checkInProgress = false;
   setInterval(() => {
     if (checkInProgress) {
@@ -441,11 +430,38 @@ export async function startBot() {
   // Watchlist tight scan every 60 seconds
   setInterval(() => runWatchlistScan().catch(console.error), 60 * 1000);
 
-  // Thesis invalidation monitor (re-classifies open positions)
-  setInterval(
-    () => monitorPositionTheses().catch(console.error),
-    60 * 1000,
-  );
+  // Thesis invalidation monitor
+  setInterval(() => monitorPositionTheses().catch(console.error), 60 * 1000);
+
+  // ── Connect Telegram separately with auto-retry ────────────────────────────
+  // bot.launch() can hang for minutes if Telegram's API is slow. We launch it
+  // asynchronously so it never blocks the scanners. If it gets a 409 it means
+  // two instances are running — that must never happen in production so we
+  // exit immediately. Any other error gets retried every 60 seconds.
+  process.once('SIGINT',  () => bot.stop('SIGINT'));
+  process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+  function launchTelegram(): void {
+    console.log('[bot] Connecting to Telegram…');
+    bot.launch({ dropPendingUpdates: true })
+      .then(() => {
+        console.log('[bot] Telegram connected. Matrix Signal Bot fully online.');
+      })
+      .catch((err: Error & { response?: { error_code?: number } }) => {
+        const is409 = err?.response?.error_code === 409 ||
+                      (err?.message ?? '').includes('409');
+        if (is409) {
+          console.error('[bot] 409 Conflict — two instances running simultaneously. Exiting.');
+          process.exit(1);
+        }
+        console.warn('[bot] Telegram launch failed, retrying in 60s:', err.message);
+        setTimeout(launchTelegram, 60_000);
+      });
+  }
+
+  launchTelegram();
+
+  console.log('[bot] Scanners started. Connecting to Telegram in background…');
 }
 
 export { bot };

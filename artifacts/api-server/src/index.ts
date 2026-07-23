@@ -50,10 +50,7 @@ if (process.env.NODE_ENV === 'production') {
     logger.error({ err }, 'Startup dedup failed — continuing anyway');
   }
 
-  startBot().catch((err) => {
-    logger.error({ err }, "Telegram bot crashed");
-    process.exit(1);
-  });
+  startBot();
 } else {
   logger.warn(
     'DEV mode — Telegram bot and scanners are disabled. ' +
