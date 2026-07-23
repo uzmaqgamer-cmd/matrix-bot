@@ -300,6 +300,7 @@ router.get('/dashboard', (_req, res) => {
   const scan = lastScanSummary;
 
   const response = {
+    devMode: process.env.NODE_ENV !== 'production',
     uptimeSeconds: parseFloat(process.uptime().toFixed(1)),
     signalsEnabled: state.signalsEnabled,
     signalMode: state.signalMode ?? 'LIMITED',
