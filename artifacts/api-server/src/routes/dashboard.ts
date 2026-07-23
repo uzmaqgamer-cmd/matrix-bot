@@ -1,4 +1,4 @@
-import { Router, type IRouter } from 'express';
+import { Router, type IRouter, type Request, type Response, type NextFunction } from 'express';
 import { loadState, saveState, getOrCreateDailyStats, addToBalanceLog, deduplicateAndRecalculate } from '../bot/storage.js';
 import { lastScanSummary } from '../bot/scanner.js';
 import { activityLog, scanFeed, logActivity } from '../bot/eventLog.js';
@@ -7,6 +7,24 @@ import { getCurrentPrice } from '../bot/binance.js';
 import type { Signal, BotState } from '../bot/types.js';
 
 const router: IRouter = Router();
+
+// ─── Admin auth middleware ────────────────────────────────────────────────────
+// Sensitive mutation endpoints require x-api-key matching SESSION_SECRET.
+// In development (no SESSION_SECRET set) the check is skipped so local testing
+// still works without config.
+function requireApiKey(req: Request, res: Response, next: NextFunction): void {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    next(); // dev environment — no secret configured
+    return;
+  }
+  const provided = req.headers['x-api-key'];
+  if (provided !== secret) {
+    res.status(401).json({ error: 'Unauthorized — valid x-api-key header required' });
+    return;
+  }
+  next();
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -354,7 +372,7 @@ router.get('/dashboard/activity', (_req, res) => {
 // ─── POST /api/force-close/:symbol ───────────────────────────────────────────
 // Manually force-close an active signal as auto_closed (thesis_invalidated).
 
-router.post('/force-close/:symbol', async (req, res) => {
+router.post('/force-close/:symbol', requireApiKey, async (req, res) => {
   const symbol = req.params.symbol.toUpperCase();
   const state = loadState();
 
@@ -407,8 +425,8 @@ router.post('/force-close/:symbol', async (req, res) => {
 
   state.activeSignals.splice(idx, 1);
   state.completedSignals.push({ ...signal });
-  if (state.completedSignals.length > 100) {
-    state.completedSignals = state.completedSignals.slice(-100);
+  if (state.completedSignals.length > 500) {
+    state.completedSignals = state.completedSignals.slice(-500);
   }
 
   const pnlPct = exitPrice > 0 && signal.entry > 0
@@ -444,7 +462,7 @@ router.post('/force-close/:symbol', async (req, res) => {
 // One-time cleanup: removes duplicate completedSignals that accumulated from
 // crash-restart cycles, then recomputes balance + counters from scratch.
 // Safe to call multiple times — idempotent after duplicates are gone.
-router.post('/admin/deduplicate', (_req, res) => {
+router.post('/admin/deduplicate', requireApiKey, (_req, res) => {
   const state = loadState();
   const report = deduplicateAndRecalculate(state);
   res.json({ ok: true, ...report });

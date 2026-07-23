@@ -165,9 +165,17 @@ export function deduplicateAndRecalculate(state: BotState): DedupeReport {
 
   balance = parseFloat(Math.max(0, balance).toFixed(4));
 
-  state.paperBalance   = balance;
-  state.totalTpHit     = tpHit;
-  state.totalSlHit     = slHit;
+  state.paperBalance    = balance;
+  // Preserve counters if the cap caused the recomputed values to be lower than
+  // what was actually tracked in real time (i.e. older trades rolled off the
+  // completedSignals window). Use max so a crash-duplicate run (where counters
+  // were inflated) still gets corrected downward.
+  const capThreshold = 490; // warn when completedSignals is near the 500 limit
+  if (state.completedSignals.length >= capThreshold) {
+    console.warn('[storage] completedSignals near cap — lifetime counters may undercount oldest trades');
+  }
+  state.totalTpHit      = tpHit;
+  state.totalSlHit      = slHit;
   state.test2TradeCount = tradeCount;
 
   saveState(state);

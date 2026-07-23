@@ -54,6 +54,20 @@ export async function sendSignal(params: {
   if (state.pendingSignals.some(s => s.symbol === params.symbol)) return;
   if (state.activeSignals.some(s => s.symbol === params.symbol)) return;
 
+  // ── Cooldown guard: prevent re-entry within 20 min of a closed position ──
+  // Protects against the reversal-injection loop where auto-close → watchlist
+  // re-inject → same matrix row still DUMP/PUMP → immediate re-escalation.
+  const COOLDOWN_MS = 20 * 60 * 1000;
+  const now = Date.now();
+  const recentClose = state.completedSignals.find(
+    s => s.symbol === params.symbol && s.resolvedAt && (now - s.resolvedAt) < COOLDOWN_MS
+  );
+  if (recentClose && !forceSend) {
+    const minsAgo = Math.round((now - (recentClose.resolvedAt ?? 0)) / 60000);
+    console.log(`[scanner] ${params.symbol} cooldown — closed ${minsAgo}m ago, skipping until ${COOLDOWN_MS / 60000}m elapsed`);
+    return;
+  }
+
   const signal = await buildSignal(params);
   if (!signal) return;
 
@@ -150,9 +164,24 @@ export async function runFullScan(silent = false) {
 
   let signalsSent = 0;
 
-  for (const symbol of symbols) {
-    const matrixRow = await scanSymbol(symbol);
-    lastScanSummary.scanned++;
+  // ── Scan symbols in parallel batches ────────────────────────────────────────
+  // Each batch fires up to SCAN_BATCH concurrent scanSymbol calls (3 Binance
+  // requests each), then state mutations happen sequentially after each batch.
+  // This reduces a 600-symbol sequential scan (~18 min) to ~30 batches.
+  const SCAN_BATCH = 20;
+  const scanResults: Array<{ symbol: string; matrixRow: Awaited<ReturnType<typeof scanSymbol>> }> = [];
+
+  for (let i = 0; i < symbols.length; i += SCAN_BATCH) {
+    const batch = symbols.slice(i, i + SCAN_BATCH);
+    const batchResults = await Promise.all(
+      batch.map(async (symbol) => ({ symbol, matrixRow: await scanSymbol(symbol) }))
+    );
+    scanResults.push(...batchResults);
+    lastScanSummary.scanned += batch.length;
+  }
+
+  // ── Process results sequentially (safe: single writer on state) ──────────
+  for (const { symbol, matrixRow } of scanResults) {
     if (!matrixRow) continue;
 
     // Feed scan entries to dashboard

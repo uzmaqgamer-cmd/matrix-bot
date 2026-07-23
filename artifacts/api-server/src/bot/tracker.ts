@@ -191,8 +191,8 @@ export async function checkActiveSignals() {
         }
 
         state.completedSignals.push({ ...signal });
-        if (state.completedSignals.length > 100) {
-          state.completedSignals = state.completedSignals.slice(-100);
+        if (state.completedSignals.length > 500) {
+          state.completedSignals = state.completedSignals.slice(-500);
         }
 
         console.log(`[tracker] ${signal.symbol} ${hit.toUpperCase()} hit @ ${price} | finalPnl: $${signal.finalPnlAmt?.toFixed(4)} | balance: $${state.paperBalance.toFixed(4)}`);
@@ -284,8 +284,8 @@ export async function monitorPositionTheses() {
 
       toRemove.push(signal.id);
       state.completedSignals.push({ ...signal });
-      if (state.completedSignals.length > 100) {
-        state.completedSignals = state.completedSignals.slice(-100);
+      if (state.completedSignals.length > 500) {
+        state.completedSignals = state.completedSignals.slice(-500);
       }
 
       // ── Reversal injection ────────────────────────────────────────────────

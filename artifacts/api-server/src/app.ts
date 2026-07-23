@@ -25,7 +25,23 @@ app.use(
     },
   }),
 );
-app.use(cors());
+// Restrict CORS to Replit domains and localhost only
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // server-to-server / curl
+    if (
+      origin.includes('.replit.dev') ||
+      origin.includes('.replit.app') ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1')
+    ) {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'x-api-key'],
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

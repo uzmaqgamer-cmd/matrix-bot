@@ -12,7 +12,7 @@ import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 // ─── Matrix Heatmap ───────────────────────────────────────────────────────────
 
 export function MatrixHeatmap({ rowFrequency }: { rowFrequency: Record<string, number> }) {
-  const maxFreq = Math.max(...Object.values(rowFrequency), 1);
+  const maxFreq = Math.max(0, ...Object.values(rowFrequency), 1);
 
   return (
     <div className="matrix-card p-3 shrink-0">
@@ -419,7 +419,7 @@ export function ActivityLog({ activity, devMode }: { activity: ActivityEntry[], 
             if (a.kind === 'partial_tp') color = 'text-[#F5B457] font-bold';
 
             return (
-              <div key={`${a.ts}-${i}`} className="flex gap-2 py-0.5 transition-colors">
+              <div key={`${a.ts}-${a.kind ?? ''}-${i}`} className="flex gap-2 py-0.5 transition-colors">
                 <span className="text-[#55636f] shrink-0">[{format(new Date(a.ts), 'HH:mm:ss')}]</span>
                 <span className={`${color} break-words`}>{a.text}</span>
               </div>

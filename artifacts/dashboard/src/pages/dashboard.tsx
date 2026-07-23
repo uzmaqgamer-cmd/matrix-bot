@@ -43,7 +43,7 @@ export default function Dashboard() {
   }
 
   // ── Build network node data ───────────────────────────────────────────────
-  const maxCycles = Math.max(...dashboard.watchlist.map((w: WatchlistItem) => w.cyclesWatched), 1);
+  const maxCycles = Math.max(0, ...dashboard.watchlist.map((w: WatchlistItem) => w.cyclesWatched), 1);
 
   const priceNodes: NetworkNode[] = [
     ...dashboard.activeSignals.slice(0, 5).map(s => ({
