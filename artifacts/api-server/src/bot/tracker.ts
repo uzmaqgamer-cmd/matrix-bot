@@ -1,4 +1,5 @@
 import { getCurrentPrice, getAllCurrentPrices, getCachedPrices, getCloseSeries, getOpenInterestSeries, getFundingRateSeries } from './binance.js';
+import { onTpSlHit, onPartialTp, onForceClose } from './trader.js';
 import { classify } from './classifier.js';
 import { lookupRow } from './matrix.js';
 import { loadState, saveState, getOrCreateDailyStats, addToBalanceLog } from './storage.js';
@@ -157,6 +158,8 @@ export async function checkActiveSignals() {
             symbol: signal.symbol,
           });
           console.log(`[tracker] [PARTIAL-TP] ${signal.symbol}, 50% closed at $${price.toPrecision(6)}, SL moved to breakeven. P&L: +$${partialChange.toFixed(4)}`);
+          // Live: close 50%, cancel old TP/SL, re-place for remaining half
+          await onPartialTp(signal);
         }
       }
 
@@ -174,6 +177,8 @@ export async function checkActiveSignals() {
         toRemove.push(signal.id);
         signal.status = hit === 'tp' ? 'tp_hit' : 'sl_hit';
         signal.resolvedAt = Date.now();
+        // Live: Binance already closed via standing TP/SL order — cancel the other one
+        await onTpSlHit(signal, hit);
 
         let finalCloseAmt = 0;
         if (signal.riskAmt != null && signal.riskAmt > 0) {
@@ -261,6 +266,8 @@ export async function checkActiveSignals() {
         signal.autoCloseReason = 'price_data_unavailable';
         signal.autoClosePrice = exitPrice;
         signal.finalPnlAmt = parseFloat(((signal.partialTpPnlAmt ?? 0) + closeAmt).toFixed(4));
+        // Live: cancel TP/SL orders and market-close the position
+        await onForceClose(signal);
 
         const acIsWin = (signal.finalPnlAmt ?? 0) >= 0;
         if (acIsWin) { state.totalTpHit++; getOrCreateDailyStats(state).tpHit++; }
@@ -356,6 +363,8 @@ export async function monitorPositionTheses() {
       signal.finalPnlAmt = parseFloat(
         ((signal.partialTpPnlAmt ?? 0) + closeAmt).toFixed(4)
       );
+      // Live: cancel TP/SL orders and market-close the position
+      await onForceClose(signal);
 
       if (signal.riskAmt) {
         applyBalance(state, closeAmt);

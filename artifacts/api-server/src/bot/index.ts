@@ -1,5 +1,6 @@
 import { Telegraf, Markup } from 'telegraf';
 import { loadState, saveState, getOrCreateDailyStats } from './storage.js';
+import { openTrade } from './trader.js';
 import {
   formatWinRate, formatDailyResults, formatActiveSignals,
   formatTestResults, formatRadar, fmtPrice, esc,
@@ -352,6 +353,22 @@ bot.action(/^accept_(.+)$/, async (ctx) => {
   state.totalAccepted++;
   getOrCreateDailyStats(state).accepted++;
   saveState(state);
+
+  // Open a live Binance position if LIVE_TRADING=true on the VPS
+  openTrade(signal).then(result => {
+    if (result.ok) {
+      signal.liveEnabled    = true;
+      signal.liveQty        = result.quantity;
+      signal.liveOrderId    = result.orderId;
+      signal.liveTpOrderId  = result.tpOrderId;
+      signal.liveSlOrderId  = result.slOrderId;
+      signal.liveFillPrice  = result.fillPrice;
+      signal.liveRiskDollar = result.riskDollar;
+    } else {
+      signal.liveError = result.error;
+    }
+    saveState(state);
+  }).catch(err => console.error('[bot] openTrade unexpected error:', err));
 
   await ctx.answerCbQuery('✅ Signal accepted! Tracking started.');
   try {

@@ -72,6 +72,16 @@ export interface Signal {
 
   // ── Fetch failure tracking ─────────────────────────────────────────────────
   fetchFailCount?: number;   // consecutive price-fetch failures; auto-close at threshold
+
+  // ── Live trading (Binance Futures) ─────────────────────────────────────────
+  liveEnabled?:    boolean;  // true once a real position is open on Binance
+  liveQty?:        number;   // position size in base asset (coins)
+  liveOrderId?:    string;   // entry market order ID
+  liveTpOrderId?:  string;   // active TP order ID (updated after partial-TP)
+  liveSlOrderId?:  string;   // active SL order ID (updated after partial-TP)
+  liveFillPrice?:  number;   // actual entry fill price from Binance
+  liveRiskDollar?: number;   // dollar risk at entry (freeBalance × RISK_PCT)
+  liveError?:      string;   // order-placement error message (if open failed)
 }
 
 export interface DailyStats {

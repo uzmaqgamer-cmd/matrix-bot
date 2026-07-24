@@ -1,4 +1,5 @@
 import { getCloseSeries, getOpenInterestSeries, getFundingRateSeries, getTopSymbolsByVolume, getCachedSymbols } from './binance.js';
+import { openTrade } from './trader.js';
 import { classify } from './classifier.js';
 import { lookupRow, isDivergenceRow, MATRIX } from './matrix.js';
 import { updateWatchlist } from './watchlist.js';
@@ -89,6 +90,24 @@ export async function sendSignal(params: {
       ds.sent++;
       ds.accepted++;
       saveState(state);
+
+      // Open a live Binance position if LIVE_TRADING=true on the VPS
+      openTrade(signal).then(result => {
+        if (result.ok) {
+          signal.liveEnabled    = true;
+          signal.liveQty        = result.quantity;
+          signal.liveOrderId    = result.orderId;
+          signal.liveTpOrderId  = result.tpOrderId;
+          signal.liveSlOrderId  = result.slOrderId;
+          signal.liveFillPrice  = result.fillPrice;
+          signal.liveRiskDollar = result.riskDollar;
+          console.log(`[scanner] Live trade stamped on signal ${signal.id}`);
+        } else {
+          signal.liveError = result.error;
+          console.warn(`[scanner] Live trade skipped for ${signal.symbol}: ${result.error}`);
+        }
+        saveState(state);
+      }).catch(err => console.error('[scanner] openTrade unexpected error:', err));
 
       // Send informational notification (no buttons needed)
       const autoText =
