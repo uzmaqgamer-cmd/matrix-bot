@@ -170,6 +170,32 @@ export async function initStorage(): Promise<void> {
   }
 }
 
+// ─── Public: live DB sync ──────────────────────────────────────────────────────
+
+/**
+ * Pull fresh state from PostgreSQL and merge it into the in-memory singleton.
+ * Called on a timer so every server instance (dev workspace + deployed) stays
+ * in sync with whatever process last wrote to the shared DB.
+ * Safe to call concurrently — mutations are in-place so held references stay valid.
+ */
+export async function refreshStateFromDb(): Promise<void> {
+  if (!_dbAvailable || !_state) return;
+  try {
+    const fresh = await dbLoad();
+    if (!fresh) return;
+    Object.assign(_state, fresh);
+    if (!Array.isArray(_state.balanceLog)) _state.balanceLog = [];
+    // Restore activity log from the snapshot saved in DB
+    const persisted = (_state as any).activityLog;
+    if (Array.isArray(persisted) && persisted.length > 0) {
+      activityLog.length = 0;
+      activityLog.push(...persisted);
+    }
+  } catch (err) {
+    console.error('[storage] DB refresh failed:', err);
+  }
+}
+
 // ─── Public: read ──────────────────────────────────────────────────────────────
 
 export function loadState(): BotState {

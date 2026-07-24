@@ -1,6 +1,7 @@
 import app from "./app.js";
 import { logger } from "./lib/logger.js";
 import { startBot, startScanners } from "./bot/index.js";
+import { refreshStateFromDb } from "./bot/storage.js";
 import { initStorage, loadState, deduplicateAndRecalculate } from "./bot/storage.js";
 
 const rawPort = process.env["PORT"];
@@ -64,4 +65,10 @@ if (Number.isNaN(port) || port <= 0) {
     logger.info('DEV mode — scanners active, Telegram polling disabled.');
     startScanners();
   }
+
+  // Keep both server instances (dev + deployed) in sync with the shared DB.
+  // The deployed server's scanner may be idle, but this pull ensures its
+  // dashboard always reflects the latest state written by whichever process
+  // is actively scanning and saving trades.
+  setInterval(() => refreshStateFromDb().catch(console.error), 30_000);
 })();
