@@ -402,14 +402,15 @@ bot.catch((err: any) => {
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 
-export function startBot(): void {
+/**
+ * Start scanner + tracker loops only — no Telegram polling.
+ * Safe to call in any environment; Telegram alerts (sendMessage) still work
+ * because bot.telegram is an HTTP client that doesn't need bot.launch().
+ * Called in both dev and production so the dashboard always shows live data.
+ */
+export function startScanners(): void {
   initScanner(bot.telegram, ADMIN_ID);
   initTracker(bot.telegram, ADMIN_ID);
-
-  // ── Start scanners immediately — independent of Telegram ───────────────────
-  // Scanners run on their own schedule regardless of whether Telegram is
-  // connected. Telegram is only the notification channel; a slow or flaky
-  // Telegram API must never block TP/SL tracking.
 
   let checkInProgress = false;
   setInterval(() => {
@@ -423,7 +424,7 @@ export function startBot(): void {
       .finally(() => { checkInProgress = false; });
   }, 30 * 1000);
 
-  // Full scan every 5 minutes — also fire immediately on startup
+  // Full scan every 5 minutes — fire immediately on startup too
   setInterval(() => runFullScan().catch(console.error), 5 * 60 * 1000);
   setImmediate(() => runFullScan().catch(console.error));
 
@@ -433,11 +434,17 @@ export function startBot(): void {
   // Thesis invalidation monitor
   setInterval(() => monitorPositionTheses().catch(console.error), 60 * 1000);
 
+  console.log('[bot] Scanners and tracker started.');
+}
+
+/**
+ * Full production start: scanners + Telegram command polling.
+ * Only call this in production to avoid 409 Conflict with the deployed bot.
+ */
+export function startBot(): void {
+  startScanners();
+
   // ── Connect Telegram separately with auto-retry ────────────────────────────
-  // bot.launch() can hang for minutes if Telegram's API is slow. We launch it
-  // asynchronously so it never blocks the scanners. If it gets a 409 it means
-  // two instances are running — that must never happen in production so we
-  // exit immediately. Any other error gets retried every 60 seconds.
   process.once('SIGINT',  () => bot.stop('SIGINT'));
   process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
@@ -460,8 +467,7 @@ export function startBot(): void {
   }
 
   launchTelegram();
-
-  console.log('[bot] Scanners started. Connecting to Telegram in background…');
+  console.log('[bot] Connecting to Telegram in background…');
 }
 
 export { bot };

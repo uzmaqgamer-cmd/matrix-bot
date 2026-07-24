@@ -1,6 +1,6 @@
 import app from "./app.js";
 import { logger } from "./lib/logger.js";
-import { startBot } from "./bot/index.js";
+import { startBot, startScanners } from "./bot/index.js";
 import { initStorage, loadState, deduplicateAndRecalculate } from "./bot/storage.js";
 
 const rawPort = process.env["PORT"];
@@ -38,31 +38,30 @@ if (Number.isNaN(port) || port <= 0) {
     logger.info({ port }, "Server listening");
   });
 
-  // 3. Production-only: bot + scanners
-  if (process.env.NODE_ENV === 'production') {
-    // Auto-deduplicate on every startup: removes crash-duplicate entries.
-    // The new partial-history guard prevents this from overwriting a manually
-    // restored balance when completedSignals is a partial window.
-    try {
-      const state  = loadState();
-      const report = deduplicateAndRecalculate(state);
-      if (report.removedCount > 0) {
-        logger.warn(
-          { removed: report.removedCount, balanceBefore: report.balanceBefore, balanceAfter: report.balanceAfter },
-          'Startup dedup: removed duplicate trade entries and recomputed balance'
-        );
-      } else {
-        logger.info('Startup dedup: no duplicates found, state is clean');
-      }
-    } catch (err) {
-      logger.error({ err }, 'Startup dedup failed — continuing anyway');
+  // 3. Always: startup dedup + scanners
+  try {
+    const state  = loadState();
+    const report = deduplicateAndRecalculate(state);
+    if (report.removedCount > 0) {
+      logger.warn(
+        { removed: report.removedCount, balanceBefore: report.balanceBefore, balanceAfter: report.balanceAfter },
+        'Startup dedup: removed duplicate trade entries and recomputed balance'
+      );
+    } else {
+      logger.info('Startup dedup: no duplicates found, state is clean');
     }
+  } catch (err) {
+    logger.error({ err }, 'Startup dedup failed — continuing anyway');
+  }
 
+  if (process.env.NODE_ENV === 'production') {
+    // Production: full bot — scanners + Telegram command polling
     startBot();
   } else {
-    logger.warn(
-      'DEV mode — Telegram bot and scanners are disabled. ' +
-      'Only the HTTP API is active. Deploy to production to run the full bot.'
-    );
+    // Dev: scanners + tracker run so the dashboard shows live data.
+    // Telegram sendMessage still works (HTTP client), but no command polling
+    // so there's no 409 conflict with the deployed production bot.
+    logger.info('DEV mode — scanners active, Telegram polling disabled.');
+    startScanners();
   }
 })();
