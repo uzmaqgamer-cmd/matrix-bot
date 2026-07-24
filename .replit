@@ -24,6 +24,7 @@ timeoutMs = 20000
 [userenv.shared]
 TELEGRAM_ADMIN_ID = "5629038273"
 TELEGRAM_CHAT_ID = "5629038273"
+BINANCE_PROXY_URL = "https://summer-bird-4b1f.uzmaqgamer.workers.dev/"
 
 [[ports]]
 localPort = 8080
