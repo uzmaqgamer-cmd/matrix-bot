@@ -1,4 +1,4 @@
-import { getCloseSeries, getOpenInterestSeries, getFundingRateSeries, getTopSymbolsByVolume } from './binance.js';
+import { getCloseSeries, getOpenInterestSeries, getFundingRateSeries, getTopSymbolsByVolume, getCachedSymbols } from './binance.js';
 import { classify } from './classifier.js';
 import { lookupRow, isDivergenceRow, MATRIX } from './matrix.js';
 import { updateWatchlist } from './watchlist.js';
@@ -146,8 +146,15 @@ export async function runFullScan(silent = false) {
   try {
     symbols = await getTopSymbolsByVolume(TOP_N);
   } catch (err) {
-    console.warn('[scanner] Failed to get symbols:', err);
-    return;
+    // Fall back to the last cached symbol list so the scanner never goes dark
+    const cached = getCachedSymbols();
+    if (cached) {
+      console.warn(`[scanner] Symbol fetch failed (using cached ${cached.length}):`, (err as Error).message);
+      symbols = cached;
+    } else {
+      console.warn('[scanner] Symbol fetch failed (no cache — skipping scan):', err);
+      return;
+    }
   }
 
   console.log(`[scanner] Full scan: ${symbols.length} pairs @ ${new Date().toISOString()}`);

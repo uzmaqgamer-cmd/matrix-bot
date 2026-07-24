@@ -1,4 +1,4 @@
-import { getCurrentPrice, getAllCurrentPrices, getCloseSeries, getOpenInterestSeries, getFundingRateSeries } from './binance.js';
+import { getCurrentPrice, getAllCurrentPrices, getCachedPrices, getCloseSeries, getOpenInterestSeries, getFundingRateSeries } from './binance.js';
 import { classify } from './classifier.js';
 import { lookupRow } from './matrix.js';
 import { loadState, saveState, getOrCreateDailyStats, addToBalanceLog } from './storage.js';
@@ -98,8 +98,15 @@ export async function checkActiveSignals() {
   try {
     priceMap = await withTimeout(sig => getAllCurrentPrices(sig), 15_000, 'getAllCurrentPrices');
   } catch (err) {
-    console.warn('[tracker] Bulk price fetch failed — skipping this cycle:', err);
-    return; // entire cycle skipped; signals stay put, nothing force-closed
+    // Fall back to cached prices (≤2 min stale) so signals keep being monitored
+    const cached = getCachedPrices(2 * 60 * 1000);
+    if (cached) {
+      console.warn('[tracker] Bulk price fetch failed — using cached prices (<2 min stale):', (err as Error).message);
+      priceMap = cached;
+    } else {
+      console.warn('[tracker] Bulk price fetch failed — skipping cycle (cache too stale or empty):', (err as Error).message);
+      return;
+    }
   }
 
   const toRemove: string[] = [];
