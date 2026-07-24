@@ -393,24 +393,12 @@ export function RecentTrades({ trades }: { trades: LiveSignal[] }) {
 
 // ─── Activity Log ─────────────────────────────────────────────────────────────
 
-export function ActivityLog({ activity, devMode }: { activity: ActivityEntry[], devMode?: boolean }) {
+export function ActivityLog({ activity }: { activity: ActivityEntry[] }) {
   return (
     <div className="matrix-card flex flex-col min-h-0 flex-1">
       <div className="border-b border-[#1c2530] px-3 py-2 text-[9.5px] font-medium text-[#55636f] tracking-[0.9px] uppercase shrink-0 flex items-center justify-between">
         <span>ESCALATION LOG</span>
-        {devMode && (
-          <span className="text-[8px] tracking-[0.5px] text-[#F5B457]/70 normal-case font-normal">
-            ● PREVIEW — live log on published URL
-          </span>
-        )}
       </div>
-      {devMode && (
-        <div className="border-b border-[#1c2530] px-3 py-1.5 bg-[#F5B457]/5 shrink-0">
-          <p className="text-[9px] text-[#F5B457]/80 font-mono leading-relaxed">
-            This is the editor preview. The bot scanner runs on the <strong>deployed server</strong> — open your published URL to see the live escalation log and real-time trades.
-          </p>
-        </div>
-      )}
       <div className="overflow-y-auto p-2 flex flex-col min-h-0 flex-1 font-mono text-[10px]">
         {activity.length === 0 ? (
           <div className="text-[#55636f]/30 text-center py-4 flex items-center justify-center h-full">NO ACTIVITY</div>

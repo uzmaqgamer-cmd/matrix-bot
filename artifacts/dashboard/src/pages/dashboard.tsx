@@ -134,7 +134,7 @@ export default function Dashboard() {
           <ScanStatus scan={dashboard.scan} />
           <ScanFeed feed={dashboard.scanFeed} />
           <MatrixHeatmap rowFrequency={dashboard.rowFrequency} />
-          <ActivityLog activity={dashboard.activity} devMode={dashboard.devMode} />
+          <ActivityLog activity={dashboard.activity} />
         </div>
 
         {/* MIDDLE — top stats, pending, recent trades */}
