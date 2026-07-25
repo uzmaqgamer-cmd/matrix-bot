@@ -1,0 +1,52 @@
+remote: Enumerating objects: 142, done.
+remote: Counting objects: 100% (142/142), done.
+remote: Compressing objects: 100% (36/36), done.
+remote: Total 127 (delta 71), reused 124 (delta 68), pack-reused 0 (from 0)
+Receiving objects: 100% (127/127), 6.77 MiB | 25.03 MiB/s, done.
+Resolving deltas: 100% (71/71), completed with 12 local objects.
+From https://github.com/uzmaqgamer-cmd/matrix-bot
+   59e5de5..75d443c  main       -> origin/main
+Updating 59e5de5..75d443c
+Fast-forward
+ artifacts/api-server/src/bot/index.ts                               |   32 +-
+ artifacts/api-server/src/bot/scanner.ts                             |   22 +-
+ artifacts/api-server/src/bot/storage.ts                             |    4 +-
+ artifacts/api-server/src/bot/tracker.ts                             |   39 +-
+ artifacts/api-server/src/routes/dashboard.ts                        |   24 +
+ attached_assets/Screenshot_2026-07-25_at_13.39.14_1784968762055.png |  Bin 0 -> 865553 bytes
+ attached_assets/Screenshot_2026-07-25_at_14.19.25_1784971176535.png |  Bin 0 -> 1246019 bytes
+ attached_assets/Screenshot_2026-07-25_at_15.20.49_1784974859193.png |  Bin 0 -> 3586254 bytes
+ attached_assets/Screenshot_2026-07-25_at_15.51.41_1784976712085.png |  Bin 0 -> 1397125 bytes
+ data/bot-state.json                                                 | 5771 +++++++++++++++++++++++++++----------------
+ 10 files changed, 3803 insertions(+), 2089 deletions(-)
+ create mode 100644 attached_assets/Screenshot_2026-07-25_at_13.39.14_1784968762055.png
+ create mode 100644 attached_assets/Screenshot_2026-07-25_at_14.19.25_1784971176535.png
+ create mode 100644 attached_assets/Screenshot_2026-07-25_at_15.20.49_1784974859193.png
+ create mode 100644 attached_assets/Screenshot_2026-07-25_at_15.51.41_1784976712085.png
+
+> @workspace/api-server@0.0.0 build /opt/matrix-bot/artifacts/api-server
+> node ./build.mjs
+
+
+  dist/index.mjs                       2.3mb ⚠️
+  dist/pino-worker.mjs               153.4kb
+  dist/pino-file.mjs                 142.0kb
+  dist/pino-pretty.mjs               114.4kb
+  dist/thread-stream-worker.mjs        7.3kb
+  dist/index.mjs.map                   3.8mb
+  dist/pino-worker.mjs.map           256.9kb
+  dist/pino-file.mjs.map             229.0kb
+  dist/pino-pretty.mjs.map           203.6kb
+  dist/thread-stream-worker.mjs.map   12.0kb
+
+⚡ Done in 1314ms
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [matrix-bot](ids: [ 0 ])
+[PM2] [matrix-bot](0) ✓
+┌────┬───────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name          │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼───────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ matrix-bot    │ fork     │ 27   │ online    │ 0%       │ 24.9mb   │
+└────┴───────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+host metrics | cpu: 4.6% | ram usage: 54.9% | lo: ⇓ 0.001mb/s ⇑ 0.001mb/s | eth0: ⇓ 0.134mb/s ⇑ 0.006mb/s |
+root@cryptomatrix-app:/opt/matrix-bot# 
