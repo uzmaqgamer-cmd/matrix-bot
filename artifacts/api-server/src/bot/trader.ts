@@ -77,6 +77,23 @@ async function fapi(
   return data;
 }
 
+// ─── Position mode cache (One-Way vs Hedge) ───────────────────────────────────
+// Checked once per session. Hedge mode requires positionSide on every order.
+
+let _positionMode: 'oneway' | 'hedge' | null = null;
+
+async function getPositionMode(): Promise<'oneway' | 'hedge'> {
+  if (_positionMode) return _positionMode;
+  try {
+    const res = await fapi('GET', '/fapi/v1/positionSide/dual');
+    _positionMode = res.dualSidePosition ? 'hedge' : 'oneway';
+  } catch {
+    _positionMode = 'oneway'; // safe default
+  }
+  console.log(`[trader] Position mode: ${_positionMode}`);
+  return _positionMode;
+}
+
 // ─── Exchange info cache (LOT_SIZE + PRICE_FILTER per symbol) ─────────────────
 // Refreshed once per hour — avoids hitting exchangeInfo on every trade.
 
@@ -139,40 +156,61 @@ async function placeMarket(
 }
 
 async function placeTpOrder(
-  symbol: string, side: 'BUY' | 'SELL', quantity: number | null, stopPrice: number, tick: number,
+  symbol: string,
+  side: 'BUY' | 'SELL',
+  positionSide: 'LONG' | 'SHORT',
+  quantity: number | null,
+  stopPrice: number,
+  tick: number,
 ): Promise<number> {
+  const mode   = await getPositionMode();
   const params: Record<string, string | number> = {
     symbol, side,
     type:      'TAKE_PROFIT_MARKET',
     stopPrice: String(roundTick(stopPrice, tick)),
+    workingType: 'MARK_PRICE',
   };
-  if (quantity !== null) {
-    // Partial-TP replacement — close specific qty
-    params['quantity']   = String(quantity);
-    params['reduceOnly'] = 'true';
+  if (mode === 'hedge') {
+    params['positionSide'] = positionSide;
+    if (quantity !== null) params['quantity'] = String(quantity);
+    // In hedge mode closePosition is not used; full qty auto-closes when positionSide matches
   } else {
-    // Initial order — close entire position
-    params['closePosition'] = 'true';
+    if (quantity !== null) {
+      params['quantity']   = String(quantity);
+      params['reduceOnly'] = 'true';
+    } else {
+      params['closePosition'] = 'true';
+    }
   }
   const res = await fapi('POST', '/fapi/v1/order', params);
   return res.orderId;
 }
 
 async function placeSlOrder(
-  symbol: string, side: 'BUY' | 'SELL', quantity: number | null, stopPrice: number, tick: number,
+  symbol: string,
+  side: 'BUY' | 'SELL',
+  positionSide: 'LONG' | 'SHORT',
+  quantity: number | null,
+  stopPrice: number,
+  tick: number,
 ): Promise<number> {
+  const mode   = await getPositionMode();
   const params: Record<string, string | number> = {
     symbol, side,
     type:      'STOP_MARKET',
     stopPrice: String(roundTick(stopPrice, tick)),
+    workingType: 'MARK_PRICE',
   };
-  if (quantity !== null) {
-    // Partial-TP replacement — protect specific qty
-    params['quantity']   = String(quantity);
-    params['reduceOnly'] = 'true';
+  if (mode === 'hedge') {
+    params['positionSide'] = positionSide;
+    if (quantity !== null) params['quantity'] = String(quantity);
   } else {
-    // Initial order — close entire position
-    params['closePosition'] = 'true';
+    if (quantity !== null) {
+      params['quantity']   = String(quantity);
+      params['reduceOnly'] = 'true';
+    } else {
+      params['closePosition'] = 'true';
+    }
   }
   const res = await fapi('POST', '/fapi/v1/order', params);
   return res.orderId;
@@ -241,9 +279,10 @@ export async function openTrade(signal: Signal): Promise<OpenTradeOutcome> {
     const { orderId, avgPrice } = await placeMarket(signal.symbol, entrySide, qty);
     const fillPrice = avgPrice > 0 ? avgPrice : signal.entry;
 
-    // TP + SL — closePosition=true so entire position closes on trigger
-    const tpOrderId = await placeTpOrder(signal.symbol, closeSide, null, signal.tp, meta.tickSize);
-    const slOrderId = await placeSlOrder(signal.symbol, closeSide, null, signal.sl, meta.tickSize);
+    const posSide: 'LONG' | 'SHORT' = signal.direction === 'LONG' ? 'LONG' : 'SHORT';
+    // TP + SL — null qty = closePosition (one-way) or full position (hedge)
+    const tpOrderId = await placeTpOrder(signal.symbol, closeSide, posSide, null, signal.tp, meta.tickSize);
+    const slOrderId = await placeSlOrder(signal.symbol, closeSide, posSide, null, signal.sl, meta.tickSize);
 
     console.log(
       `[trader] ✅ LIVE OPEN  ${signal.direction} ${signal.symbol} | ` +
@@ -291,9 +330,10 @@ export async function onPartialTp(signal: Signal): Promise<void> {
     // Close 50% at market
     await placeMarket(signal.symbol, closeSide, halfQty);
 
+    const posSide: 'LONG' | 'SHORT' = signal.direction === 'LONG' ? 'LONG' : 'SHORT';
     // Re-place for remaining 50% — specific qty, SL at entry (breakeven)
-    const newTpId = await placeTpOrder(signal.symbol, closeSide, halfQty, signal.tp, meta.tickSize);
-    const newSlId = await placeSlOrder(signal.symbol, closeSide, halfQty, signal.entry, meta.tickSize);
+    const newTpId = await placeTpOrder(signal.symbol, closeSide, posSide, halfQty, signal.tp, meta.tickSize);
+    const newSlId = await placeSlOrder(signal.symbol, closeSide, posSide, halfQty, signal.entry, meta.tickSize);
 
     signal.liveTpOrderId = String(newTpId);
     signal.liveSlOrderId = String(newSlId);
