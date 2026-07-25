@@ -89,6 +89,28 @@ bot.command('status', async (ctx) => {
   });
 });
 
+bot.command('reset', async (ctx) => {
+  if (!isAdmin(ctx)) return void ctx.reply('⛔ Unauthorized.');
+  const state = loadState();
+  // Wipe all paper stats — keep signals on/off and mode setting
+  state.activeSignals    = [];
+  state.pendingSignals   = [];
+  state.completedSignals = [];
+  state.dailyStats       = [];
+  state.balanceLog       = [];
+  state.watchlist        = {};
+  state.paperBalance     = 100;
+  state.totalSent        = 0;
+  state.totalAccepted    = 0;
+  state.totalIgnored     = 0;
+  state.totalTpHit       = 0;
+  state.totalSlHit       = 0;
+  state.test2StartedAt   = 0;
+  state.test2TradeCount  = 0;
+  saveState(state);
+  await ctx.reply('✅ Reset complete. Paper balance restarted at $100.00. All trade history cleared.');
+});
+
 bot.command('winrate', async (ctx) => {
   if (!isAdmin(ctx)) return;
   const state = loadState();
