@@ -19,9 +19,19 @@ const FUNDING_LOOKBACK = 4;
 let telegramRef: Telegram | null = null;
 let adminChatId: string = '';
 
+const CHANNEL_ID = process.env['TELEGRAM_CHANNEL_ID'] ?? '';
+
 export function initScanner(telegram: Telegram, chatId: string) {
   telegramRef = telegram;
   adminChatId = chatId;
+}
+
+async function broadcastSignal(text: string, options: object = {}) {
+  await telegramRef!.sendMessage(adminChatId, text, options);
+  if (CHANNEL_ID) {
+    try { await telegramRef!.sendMessage(CHANNEL_ID, text, { parse_mode: 'HTML' }); }
+    catch (e: any) { console.warn('[scanner] Channel send failed:', e.message); }
+  }
 }
 
 export async function scanSymbol(symbol: string) {
@@ -114,7 +124,7 @@ export async function sendSignal(params: {
         `⚡ <b>AUTO-TRACKED</b>\n` +
         text +
         `\n\n<i>Unlimited mode — tracking ${state.activeSignals.length} active signals.</i>`;
-      await telegramRef.sendMessage(adminChatId, autoText, { parse_mode: 'HTML' });
+      await broadcastSignal(autoText);
     } else {
       // ─── LIMITED MODE: send with Accept / Ignore buttons ─────────────────
       const keyboard = Markup.inlineKeyboard([
@@ -125,6 +135,10 @@ export async function sendSignal(params: {
         parse_mode: 'HTML',
         reply_markup: keyboard.reply_markup,
       });
+      if (CHANNEL_ID) {
+        try { await telegramRef.sendMessage(CHANNEL_ID, text, { parse_mode: 'HTML' }); }
+        catch (e: any) { console.warn('[scanner] Channel send failed:', e.message); }
+      }
       signal.messageId = msg.message_id;
       signal.status = 'pending';
       state.pendingSignals.push(signal);
