@@ -139,30 +139,42 @@ async function placeMarket(
 }
 
 async function placeTpOrder(
-  symbol: string, side: 'BUY' | 'SELL', quantity: number, stopPrice: number, tick: number,
+  symbol: string, side: 'BUY' | 'SELL', quantity: number | null, stopPrice: number, tick: number,
 ): Promise<number> {
-  const res = await fapi('POST', '/fapi/v1/order', {
+  const params: Record<string, string | number> = {
     symbol, side,
-    type:        'TAKE_PROFIT_MARKET',
-    quantity:    String(quantity),
-    stopPrice:   String(roundTick(stopPrice, tick)),
-    reduceOnly:  'true',
-    timeInForce: 'GTE_GTC',
-  });
+    type:      'TAKE_PROFIT_MARKET',
+    stopPrice: String(roundTick(stopPrice, tick)),
+  };
+  if (quantity !== null) {
+    // Partial-TP replacement — close specific qty
+    params['quantity']   = String(quantity);
+    params['reduceOnly'] = 'true';
+  } else {
+    // Initial order — close entire position
+    params['closePosition'] = 'true';
+  }
+  const res = await fapi('POST', '/fapi/v1/order', params);
   return res.orderId;
 }
 
 async function placeSlOrder(
-  symbol: string, side: 'BUY' | 'SELL', quantity: number, stopPrice: number, tick: number,
+  symbol: string, side: 'BUY' | 'SELL', quantity: number | null, stopPrice: number, tick: number,
 ): Promise<number> {
-  const res = await fapi('POST', '/fapi/v1/order', {
+  const params: Record<string, string | number> = {
     symbol, side,
-    type:        'STOP_MARKET',
-    quantity:    String(quantity),
-    stopPrice:   String(roundTick(stopPrice, tick)),
-    reduceOnly:  'true',
-    timeInForce: 'GTE_GTC',
-  });
+    type:      'STOP_MARKET',
+    stopPrice: String(roundTick(stopPrice, tick)),
+  };
+  if (quantity !== null) {
+    // Partial-TP replacement — protect specific qty
+    params['quantity']   = String(quantity);
+    params['reduceOnly'] = 'true';
+  } else {
+    // Initial order — close entire position
+    params['closePosition'] = 'true';
+  }
+  const res = await fapi('POST', '/fapi/v1/order', params);
   return res.orderId;
 }
 
@@ -229,9 +241,9 @@ export async function openTrade(signal: Signal): Promise<OpenTradeOutcome> {
     const { orderId, avgPrice } = await placeMarket(signal.symbol, entrySide, qty);
     const fillPrice = avgPrice > 0 ? avgPrice : signal.entry;
 
-    // TP + SL (both sized to full position quantity)
-    const tpOrderId = await placeTpOrder(signal.symbol, closeSide, qty, signal.tp, meta.tickSize);
-    const slOrderId = await placeSlOrder(signal.symbol, closeSide, qty, signal.sl, meta.tickSize);
+    // TP + SL — closePosition=true so entire position closes on trigger
+    const tpOrderId = await placeTpOrder(signal.symbol, closeSide, null, signal.tp, meta.tickSize);
+    const slOrderId = await placeSlOrder(signal.symbol, closeSide, null, signal.sl, meta.tickSize);
 
     console.log(
       `[trader] ✅ LIVE OPEN  ${signal.direction} ${signal.symbol} | ` +
@@ -279,7 +291,7 @@ export async function onPartialTp(signal: Signal): Promise<void> {
     // Close 50% at market
     await placeMarket(signal.symbol, closeSide, halfQty);
 
-    // Re-place for remaining 50% — SL at entry (breakeven)
+    // Re-place for remaining 50% — specific qty, SL at entry (breakeven)
     const newTpId = await placeTpOrder(signal.symbol, closeSide, halfQty, signal.tp, meta.tickSize);
     const newSlId = await placeSlOrder(signal.symbol, closeSide, halfQty, signal.entry, meta.tickSize);
 
