@@ -473,4 +473,28 @@ router.post('/admin/deduplicate', requireApiKey, (_req, res) => {
   res.json({ ok: true, ...report });
 });
 
+// ─── POST /api/admin/reset-state ─────────────────────────────────────────────
+// Set balance and close all signals except those in the keep list.
+router.post('/admin/reset-state', requireApiKey, (req, res) => {
+  const { balance, keepSymbols } = req.body as { balance: number; keepSymbols: string[] };
+  const state = loadState();
+  const keep = Array.isArray(keepSymbols) ? keepSymbols.map((s: string) => s.toUpperCase()) : [];
+  const toClose = state.activeSignals.filter(s => !keep.includes(s.symbol));
+  toClose.forEach(s => {
+    s.status = 'auto_closed';
+    s.resolvedAt = Date.now();
+    s.autoClosedAt = Date.now();
+    s.autoCloseReason = 'manual_close';
+    s.finalPnlAmt = s.finalPnlAmt ?? 0;
+    state.completedSignals.push(s);
+  });
+  state.activeSignals = state.activeSignals.filter(s => keep.includes(s.symbol));
+  if (typeof balance === 'number' && balance > 0) {
+    state.paperBalance = balance;
+    state.test2TradeCount = state.completedSignals.filter(s => s.riskAmt).length;
+  }
+  saveState(state);
+  res.json({ ok: true, balance: state.paperBalance, active: state.activeSignals.map(s => s.symbol) });
+});
+
 export default router;

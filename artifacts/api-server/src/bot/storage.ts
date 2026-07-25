@@ -323,10 +323,10 @@ export function deduplicateAndRecalculate(state: BotState): DedupeReport {
       console.warn('[storage] completedSignals near 500-entry cap — lifetime counters may undercount');
     }
   } else {
-    // Partial history: only dedup was safe; keep stored balance + counters
+    // Partial history — trust whatever balance is stored in the DB as-is
     console.log(
       `[storage] Partial history (${tradesWithRisk} of ${state.test2TradeCount} trades in memory) ` +
-      `— keeping stored balance $${state.paperBalance.toFixed(4)}`
+      `— using stored balance $${state.paperBalance.toFixed(4)}`
     );
   }
 
