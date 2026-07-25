@@ -20,12 +20,12 @@
       "originRow": 22,
       "originalSl": 0.0033755,
       "partialTpAt": 1784997950426,
-      "currentPrice": 0.00344,
+      "currentPrice": 0.003442,
       "tpMultiplier": 2.5,
       "matrixMeaning": "expensive, fragile",
       "balanceAtEntry": 124.3095,
       "breakevenMoved": true,
-      "currentPriceAt": 1785001275268,
+      "currentPriceAt": 1785001445391,
       "fetchFailCount": 0,
       "originPriority": "MEDIUM",
       "partialTpFired": true,
@@ -50,11 +50,11 @@
       "matrixRow": 18,
       "originRow": 27,
       "originalSl": 0.00331727,
-      "currentPrice": 0.0032573,
+      "currentPrice": 0.0032267,
       "tpMultiplier": 2.5,
       "matrixMeaning": "quiet control by shorts",
       "balanceAtEntry": 121.1008,
-      "currentPriceAt": 1785001275268,
+      "currentPriceAt": 1785001445391,
       "fetchFailCount": 0,
       "originPriority": "MEDIUM",
       "currentMatrixRow": 24
@@ -77,12 +77,12 @@
       "originRow": 16,
       "originalSl": 0.0267943,
       "partialTpAt": 1784997970115,
-      "currentPrice": 0.02562,
+      "currentPrice": 0.02564,
       "tpMultiplier": 3.5,
       "matrixMeaning": "weak, low conviction",
       "balanceAtEntry": 122.4767,
       "breakevenMoved": true,
-      "currentPriceAt": 1785001275268,
+      "currentPriceAt": 1785001445391,
       "fetchFailCount": 0,
       "originPriority": "HIGH",
       "partialTpFired": true,
@@ -107,11 +107,11 @@
       "matrixRow": 18,
       "originRow": 16,
       "originalSl": 0.00473621,
-      "currentPrice": 0.004689,
+      "currentPrice": 0.004684,
       "tpMultiplier": 3.5,
       "matrixMeaning": "quiet control by shorts",
       "balanceAtEntry": 122.4767,
-      "currentPriceAt": 1785001275268,
+      "currentPriceAt": 1785001445391,
       "fetchFailCount": 0,
       "originPriority": "HIGH",
       "currentMatrixRow": 15
@@ -133,11 +133,11 @@
       "matrixRow": 2,
       "originRow": 20,
       "originalSl": 0.0120816,
-      "currentPrice": 0.012428,
+      "currentPrice": 0.012411,
       "tpMultiplier": 2.5,
       "matrixMeaning": "healthy",
       "balanceAtEntry": 122.4767,
-      "currentPriceAt": 1785001275268,
+      "currentPriceAt": 1785001445391,
       "fetchFailCount": 0,
       "originPriority": "MEDIUM",
       "currentMatrixRow": 2
@@ -159,11 +159,11 @@
       "matrixRow": 4,
       "originRow": 22,
       "originalSl": 4.29114,
-      "currentPrice": 4.527,
+      "currentPrice": 4.51,
       "tpMultiplier": 2.5,
       "matrixMeaning": "expensive, fragile",
       "balanceAtEntry": 122.4767,
-      "currentPriceAt": 1785001275268,
+      "currentPriceAt": 1785001445391,
       "fetchFailCount": 0,
       "originPriority": "MEDIUM",
       "currentMatrixRow": 6
@@ -186,12 +186,12 @@
       "originRow": 22,
       "originalSl": 0.312019,
       "partialTpAt": 1784998620214,
-      "currentPrice": 0.34521,
+      "currentPrice": 0.34212,
       "tpMultiplier": 2.5,
       "matrixMeaning": "expensive, fragile",
       "balanceAtEntry": 122.4767,
       "breakevenMoved": true,
-      "currentPriceAt": 1785001275268,
+      "currentPriceAt": 1785001445391,
       "fetchFailCount": 0,
       "originPriority": "MEDIUM",
       "partialTpFired": true,
@@ -216,11 +216,11 @@
       "matrixRow": 18,
       "originRow": 12,
       "originalSl": 0.02387,
-      "currentPrice": 0.02323,
+      "currentPrice": 0.02314,
       "tpMultiplier": 3.5,
       "matrixMeaning": "quiet control by shorts",
       "balanceAtEntry": 123.602,
-      "currentPriceAt": 1785001275268,
+      "currentPriceAt": 1785001445391,
       "fetchFailCount": 0,
       "originPriority": "HIGH",
       "currentMatrixRow": 15
@@ -242,11 +242,11 @@
       "matrixRow": 11,
       "originRow": 20,
       "originalSl": 0.034665,
-      "currentPrice": 0.03429,
+      "currentPrice": 0.03416,
       "tpMultiplier": 2.5,
       "matrixMeaning": "healthy downtrend",
       "balanceAtEntry": 124.5717,
-      "currentPriceAt": 1785001275268,
+      "currentPriceAt": 1785001445391,
       "fetchFailCount": 0,
       "originPriority": "MEDIUM",
       "currentMatrixRow": 17
@@ -272,7 +272,7 @@
       "tpMultiplier": 2.5,
       "matrixMeaning": "expensive, fragile",
       "balanceAtEntry": 124.5717,
-      "currentPriceAt": 1785001275268,
+      "currentPriceAt": 1785001445391,
       "fetchFailCount": 0,
       "originPriority": "MEDIUM",
       "currentMatrixRow": 4
@@ -294,11 +294,11 @@
       "matrixRow": 2,
       "originRow": 20,
       "originalSl": 0.0759821,
-      "currentPrice": 0.07678,
+      "currentPrice": 0.07663,
       "tpMultiplier": 2.5,
       "matrixMeaning": "healthy",
       "balanceAtEntry": 129.5557,
-      "currentPriceAt": 1785001275268,
+      "currentPriceAt": 1785001445391,
       "fetchFailCount": 0,
       "originPriority": "MEDIUM",
       "currentMatrixRow": 2
@@ -320,14 +320,14 @@
       "matrixRow": 11,
       "originRow": 20,
       "originalSl": 0.819443,
-      "currentPrice": 0.8063,
+      "currentPrice": 0.8077,
       "tpMultiplier": 2.5,
       "matrixMeaning": "healthy downtrend",
       "balanceAtEntry": 131.093,
-      "currentPriceAt": 1785001275268,
+      "currentPriceAt": 1785001445391,
       "fetchFailCount": 0,
       "originPriority": "MEDIUM",
-      "currentMatrixRow": 17
+      "currentMatrixRow": 26
     }
   ],
   "pendingSignals": [],
@@ -5904,199 +5904,121 @@
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 12
+      "cyclesWatched": 13
     },
     "MUSDT": {
       "row": 16,
       "addedAt": 1785000864595,
       "priority": "HIGH",
-      "cyclesWatched": 7
+      "cyclesWatched": 9
     },
     "TUSDT": {
       "row": 16,
       "addedAt": 1785000864595,
       "priority": "HIGH",
-      "cyclesWatched": 8
+      "cyclesWatched": 10
     },
     "GSUSDT": {
       "row": 19,
       "addedAt": 1785000561642,
       "priority": "HIGH",
-      "cyclesWatched": 14
+      "cyclesWatched": 16
     },
     "ONUSDT": {
       "row": 19,
       "addedAt": 1785001162758,
       "priority": "HIGH",
-      "cyclesWatched": 2
-    },
-    "AKEUSDT": {
-      "row": 24,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
+      "cyclesWatched": 4
     },
     "ASPUSDT": {
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 13
-    },
-    "BBXUSDT": {
-      "row": 25,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
+      "cyclesWatched": 16
     },
     "BNCUSDT": {
       "row": 19,
       "addedAt": 1785001162758,
       "priority": "HIGH",
-      "cyclesWatched": 1
+      "cyclesWatched": 4
     },
     "BOTUSDT": {
       "row": 25,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
+      "cyclesWatched": 10
     },
     "BTRUSDT": {
       "row": 25,
       "addedAt": 1785001162759,
       "priority": "MEDIUM",
-      "cyclesWatched": 1
+      "cyclesWatched": 4
     },
     "CHRUSDT": {
       "row": 20,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
+      "cyclesWatched": 10
     },
     "CHZUSDT": {
       "row": 25,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
-    },
-    "CLOUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 18
+      "cyclesWatched": 10
     },
     "CRMUSDT": {
       "row": 20,
       "addedAt": 1785001162758,
       "priority": "MEDIUM",
-      "cyclesWatched": 1
-    },
-    "DYMUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
+      "cyclesWatched": 4
     },
     "ERAUSDT": {
       "row": 27,
       "addedAt": 1785001162758,
       "priority": "MEDIUM",
-      "cyclesWatched": 1
+      "cyclesWatched": 4
     },
     "EULUSDT": {
       "row": 10,
       "addedAt": 1785001162758,
       "priority": "HIGH",
-      "cyclesWatched": 1
-    },
-    "EWYUSDT": {
-      "row": 24,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
+      "cyclesWatched": 4
     },
     "FLYUSDT": {
       "row": 25,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
+      "cyclesWatched": 10
     },
     "GEVUSDT": {
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 13
-    },
-    "GLWUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
-    },
-    "GMTUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 18
-    },
-    "GMXUSDT": {
-      "row": 21,
-      "addedAt": 1785000282036,
-      "priority": "HIGH",
-      "cyclesWatched": 19
+      "cyclesWatched": 16
     },
     "HFTUSDT": {
       "row": 20,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
-    },
-    "HNTUSDT": {
-      "row": 25,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
-    },
-    "IBMUSDT": {
-      "row": 25,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
+      "cyclesWatched": 10
     },
     "JTOUSDT": {
       "row": 20,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 13
-    },
-    "MUUUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 18
-    },
-    "MYXUSDT": {
-      "row": 25,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
+      "cyclesWatched": 16
     },
     "NOMUSDT": {
       "row": 20,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
-    },
-    "NOWUSDT": {
-      "row": 25,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 18
+      "cyclesWatched": 10
     },
     "OKBUSDT": {
       "row": 20,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
+      "cyclesWatched": 10
     },
     "ONEUSDT": {
       "row": 25,
@@ -6104,17 +6026,11 @@
       "priority": "MEDIUM",
       "cyclesWatched": 0
     },
-    "QQQUSDT": {
-      "row": 20,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 17
-    },
     "RDWUSDT": {
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 11
+      "cyclesWatched": 14
     },
     "SCRUSDT": {
       "row": 20,
@@ -6126,223 +6042,139 @@
       "row": 27,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 5
+      "cyclesWatched": 8
     },
     "SMHUSDT": {
       "row": 19,
       "addedAt": 1785000561642,
       "priority": "HIGH",
-      "cyclesWatched": 11
+      "cyclesWatched": 13
     },
     "STXUSDT": {
-      "row": 27,
+      "row": 9,
       "addedAt": 1785000282036,
       "priority": "MEDIUM",
-      "cyclesWatched": 16
+      "cyclesWatched": 18
     },
     "TERUSDT": {
       "row": 27,
       "addedAt": 1785001165391,
       "priority": "MEDIUM",
-      "cyclesWatched": 0
+      "cyclesWatched": 2
     },
     "TZAUSDT": {
       "row": 21,
       "addedAt": 1785000282036,
       "priority": "HIGH",
-      "cyclesWatched": 17
+      "cyclesWatched": 19
     },
     "WDCUSDT": {
       "row": 27,
       "addedAt": 1785000282036,
       "priority": "MEDIUM",
-      "cyclesWatched": 14
+      "cyclesWatched": 17
     },
     "XBIUSDT": {
       "row": 22,
       "addedAt": 1785000282036,
       "priority": "MEDIUM",
-      "cyclesWatched": 13
+      "cyclesWatched": 16
     },
     "XLEUSDT": {
       "row": 20,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 6
+      "cyclesWatched": 9
     },
     "XLFUSDT": {
       "row": 25,
       "addedAt": 1785001162758,
       "priority": "MEDIUM",
-      "cyclesWatched": 1
+      "cyclesWatched": 4
     },
     "XLKUSDT": {
       "row": 21,
       "addedAt": 1785001162758,
       "priority": "HIGH",
-      "cyclesWatched": 1
+      "cyclesWatched": 4
     },
     "XLVUSDT": {
       "row": 21,
       "addedAt": 1785000864595,
       "priority": "HIGH",
-      "cyclesWatched": 6
-    },
-    "XPLUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
-    },
-    "ZECUSDT": {
-      "row": 20,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
+      "cyclesWatched": 8
     },
     "ZILUSDT": {
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 13
-    },
-    "AAOIUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
-    },
-    "AEHRUSDT": {
-      "row": 25,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 18
-    },
-    "ALABUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 18
+      "cyclesWatched": 15
     },
     "ALLOUSDT": {
       "row": 13,
       "addedAt": 1785001162758,
       "priority": "MEDIUM",
-      "cyclesWatched": 1
+      "cyclesWatched": 4
     },
     "APLDUSDT": {
       "row": 21,
       "addedAt": 1785000561642,
       "priority": "HIGH",
-      "cyclesWatched": 11
+      "cyclesWatched": 14
     },
     "ARKKUSDT": {
       "row": 25,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 11
-    },
-    "ASTSUSDT": {
-      "row": 25,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 17
-    },
-    "AVNTUSDT": {
-      "row": 20,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 17
-    },
-    "AXTIUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 18
+      "cyclesWatched": 14
     },
     "BARDUSDT": {
       "row": 24,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
-    },
-    "CATIUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
-    },
-    "CBRSUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
+      "cyclesWatched": 9
     },
     "CIENUSDT": {
       "row": 27,
       "addedAt": 1785000864596,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
+      "cyclesWatched": 10
     },
     "COINUSDT": {
       "row": 25,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
-    },
-    "CRCLUSDT": {
-      "row": 25,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 18
-    },
-    "CRDOUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
-    },
-    "DASHUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 18
-    },
-    "DELLUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
+      "cyclesWatched": 10
     },
     "DKNGUSDT": {
       "row": 20,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
+      "cyclesWatched": 10
     },
     "FLNCUSDT": {
       "row": 24,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
+      "cyclesWatched": 10
     },
     "GWEIUSDT": {
       "row": 15,
       "addedAt": 1785001188131,
       "priority": "MEDIUM",
-      "cyclesWatched": 0
+      "cyclesWatched": 4
     },
     "HANAUSDT": {
       "row": 13,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 13
+      "cyclesWatched": 16
     },
     "HIMSUSDT": {
       "row": 20,
       "addedAt": 1785001162759,
       "priority": "MEDIUM",
-      "cyclesWatched": 1
+      "cyclesWatched": 4
     },
     "IDOLUSDT": {
       "row": 9,
@@ -6354,121 +6186,109 @@
       "row": 24,
       "addedAt": 1785001162758,
       "priority": "MEDIUM",
-      "cyclesWatched": 1
+      "cyclesWatched": 4
     },
     "IONQUSDT": {
       "row": 27,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
+      "cyclesWatched": 10
     },
     "IRENUSDT": {
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 13
+      "cyclesWatched": 16
     },
     "KAIAUSDT": {
       "row": 20,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
+      "cyclesWatched": 10
     },
     "KLACUSDT": {
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 13
+      "cyclesWatched": 16
     },
     "KMNOUSDT": {
       "row": 9,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
+      "cyclesWatched": 10
     },
     "KSTRUSDT": {
       "row": 20,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
+      "cyclesWatched": 10
     },
     "LITEUSDT": {
       "row": 27,
       "addedAt": 1785000601860,
       "priority": "MEDIUM",
-      "cyclesWatched": 13
+      "cyclesWatched": 16
     },
     "LQTYUSDT": {
       "row": 20,
       "addedAt": 1785000602860,
       "priority": "MEDIUM",
-      "cyclesWatched": 13
+      "cyclesWatched": 16
     },
     "LRCXUSDT": {
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 13
-    },
-    "MARAUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 18
+      "cyclesWatched": 16
     },
     "MSTRUSDT": {
       "row": 25,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 13
+      "cyclesWatched": 16
     },
     "MVLLUSDT": {
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 12
+      "cyclesWatched": 15
     },
     "NBISUSDT": {
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 11
+      "cyclesWatched": 14
     },
     "NEWTUSDT": {
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 10
+      "cyclesWatched": 13
     },
     "NVDLUSDT": {
       "row": 21,
       "addedAt": 1785001162758,
       "priority": "HIGH",
-      "cyclesWatched": 1
-    },
-    "ONDOUSDT": {
-      "row": 22,
-      "addedAt": 1785001162758,
-      "priority": "MEDIUM",
-      "cyclesWatched": 1
+      "cyclesWatched": 4
     },
     "ONDSUSDT": {
       "row": 21,
       "addedAt": 1785001162758,
       "priority": "HIGH",
-      "cyclesWatched": 2
+      "cyclesWatched": 5
     },
     "PANWUSDT": {
       "row": 13,
       "addedAt": 1785000872376,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
+      "cyclesWatched": 10
     },
     "POETUSDT": {
       "row": 22,
       "addedAt": 1785001151029,
       "priority": "MEDIUM",
-      "cyclesWatched": 2
+      "cyclesWatched": 5
     },
     "PROMUSDT": {
       "row": 12,
@@ -6480,67 +6300,67 @@
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "HIGH",
-      "cyclesWatched": 13
+      "cyclesWatched": 16
+    },
+    "SNOWUSDT": {
+      "row": 19,
+      "addedAt": 1785001341625,
+      "priority": "HIGH",
+      "cyclesWatched": 1
     },
     "SOXLUSDT": {
       "row": 20,
       "addedAt": 1785000671072,
       "priority": "MEDIUM",
-      "cyclesWatched": 9
+      "cyclesWatched": 12
     },
     "SOXSUSDT": {
       "row": 25,
       "addedAt": 1785000300071,
       "priority": "MEDIUM",
-      "cyclesWatched": 16
+      "cyclesWatched": 18
     },
     "SOXXUSDT": {
       "row": 27,
       "addedAt": 1785000469412,
       "priority": "MEDIUM",
-      "cyclesWatched": 13
+      "cyclesWatched": 15
     },
     "SPCXUSDT": {
       "row": 20,
       "addedAt": 1785001162758,
       "priority": "MEDIUM",
-      "cyclesWatched": 1
+      "cyclesWatched": 3
     },
-    "TNSRUSDT": {
-      "row": 24,
-      "addedAt": 1785000282036,
+    "STXXUSDT": {
+      "row": 27,
+      "addedAt": 1785001277327,
       "priority": "MEDIUM",
-      "cyclesWatched": 18
-    },
-    "TSEMUSDT": {
-      "row": 22,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 18
+      "cyclesWatched": 0
     },
     "TSLLUSDT": {
       "row": 22,
       "addedAt": 1785001213695,
       "priority": "MEDIUM",
-      "cyclesWatched": 0
+      "cyclesWatched": 2
     },
     "USD1USDT": {
       "row": 20,
-      "addedAt": 1785000303926,
+      "addedAt": 1785001391059,
       "priority": "MEDIUM",
-      "cyclesWatched": 18
+      "cyclesWatched": 0
     },
     "VANAUSDT": {
       "row": 19,
       "addedAt": 1785001099056,
       "priority": "HIGH",
-      "cyclesWatched": 2
+      "cyclesWatched": 5
     },
     "XPINUSDT": {
       "row": 27,
-      "addedAt": 1785000282036,
+      "addedAt": 1785001392088,
       "priority": "MEDIUM",
-      "cyclesWatched": 18
+      "cyclesWatched": 0
     },
     "BULLAUSDT": {
       "row": 9,
@@ -6558,31 +6378,31 @@
       "row": 27,
       "addedAt": 1785001162758,
       "priority": "MEDIUM",
-      "cyclesWatched": 1
+      "cyclesWatched": 4
     },
     "LIGHTUSDT": {
       "row": 9,
-      "addedAt": 1785000282036,
+      "addedAt": 1785001353761,
       "priority": "MEDIUM",
-      "cyclesWatched": 19
+      "cyclesWatched": 0
     },
     "NOKIAUSDT": {
       "row": 27,
-      "addedAt": 1785000258831,
+      "addedAt": 1785001353833,
       "priority": "MEDIUM",
-      "cyclesWatched": 19
+      "cyclesWatched": 0
     },
     "ORDERUSDT": {
       "row": 25,
       "addedAt": 1785001040087,
       "priority": "MEDIUM",
-      "cyclesWatched": 3
+      "cyclesWatched": 6
     },
     "SIRENUSDT": {
       "row": 9,
       "addedAt": 1785000809534,
       "priority": "MEDIUM",
-      "cyclesWatched": 8
+      "cyclesWatched": 11
     },
     "SPELLUSDT": {
       "row": 27,
@@ -6600,31 +6420,19 @@
       "row": 3,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 6
+      "cyclesWatched": 8
     },
     "VANRYUSDT": {
       "row": 15,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
-    },
-    "WAVESUSDT": {
-      "row": 27,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
-    },
-    "PUFFERUSDT": {
-      "row": 9,
-      "addedAt": 1785000282036,
-      "priority": "MEDIUM",
-      "cyclesWatched": 19
+      "cyclesWatched": 9
     },
     "PUNDIXUSDT": {
       "row": 20,
       "addedAt": 1785001172520,
       "priority": "MEDIUM",
-      "cyclesWatched": 1
+      "cyclesWatched": 3
     },
     "SANTOSUSDT": {
       "row": 27,
@@ -6636,7 +6444,7 @@
       "row": 22,
       "addedAt": 1785001162759,
       "priority": "MEDIUM",
-      "cyclesWatched": 0
+      "cyclesWatched": 3
     },
     "龙虾USDT": {
       "row": 25,
@@ -6648,43 +6456,43 @@
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "MEDIUM",
-      "cyclesWatched": 10
+      "cyclesWatched": 12
     },
     "1000XECUSDT": {
       "row": 27,
       "addedAt": 1785000561642,
       "priority": "HIGH",
-      "cyclesWatched": 11
+      "cyclesWatched": 13
     },
     "SAMSUNGUSDT": {
       "row": 25,
-      "addedAt": 1785000144302,
+      "addedAt": 1785001410796,
       "priority": "MEDIUM",
-      "cyclesWatched": 19
+      "cyclesWatched": 0
     },
     "SKHYNIXUSDT": {
       "row": 25,
       "addedAt": 1785000206245,
       "priority": "MEDIUM",
-      "cyclesWatched": 17
+      "cyclesWatched": 19
     },
     "SOLAYERUSDT": {
       "row": 27,
       "addedAt": 1785000206319,
       "priority": "MEDIUM",
-      "cyclesWatched": 17
+      "cyclesWatched": 19
     },
     "VIRTUALUSDT": {
       "row": 20,
       "addedAt": 1785000279979,
       "priority": "MEDIUM",
-      "cyclesWatched": 15
+      "cyclesWatched": 17
     },
     "1000RATSUSDT": {
       "row": 25,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 5
+      "cyclesWatched": 7
     },
     "1000SHIBUSDT": {
       "row": 27,
@@ -6696,25 +6504,25 @@
       "row": 27,
       "addedAt": 1785000864595,
       "priority": "MEDIUM",
-      "cyclesWatched": 7
+      "cyclesWatched": 10
     },
     "APPSTOCKUSDT": {
       "row": 19,
       "addedAt": 1785001240101,
       "priority": "HIGH",
-      "cyclesWatched": 0
+      "cyclesWatched": 2
     },
     "WENSTOCKUSDT": {
       "row": 24,
       "addedAt": 1785000759577,
       "priority": "MEDIUM",
-      "cyclesWatched": 9
+      "cyclesWatched": 12
     },
     "PENGSTOCKUSDT": {
-      "row": 15,
+      "row": 24,
       "addedAt": 1785001240243,
       "priority": "MEDIUM",
-      "cyclesWatched": 0
+      "cyclesWatched": 2
     },
     "我踏马来了USDT": {
       "row": 25,
