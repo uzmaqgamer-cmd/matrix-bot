@@ -292,23 +292,19 @@ export async function openTrade(signal: Signal): Promise<OpenTradeOutcome> {
       }
     }
 
-    const entrySide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'BUY'  : 'SELL';
-    const closeSide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'SELL' : 'BUY';
+    const entrySide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'BUY' : 'SELL';
 
-    // Market entry
+    // Market entry — tracker monitors price and fires MARKET closes for TP/SL/partial
     const { orderId, avgPrice } = await placeMarket(signal.symbol, entrySide, qty);
     const fillPrice = avgPrice > 0 ? avgPrice : signal.entry;
 
-    const posSide: 'LONG' | 'SHORT' = signal.direction === 'LONG' ? 'LONG' : 'SHORT';
-    const tpOrderId = await placeTpOrder(signal.symbol, closeSide, posSide, qty, signal.tp, meta.tickSize);
-    const slOrderId = await placeSlOrder(signal.symbol, closeSide, posSide, qty, signal.sl, meta.tickSize);
-
     console.log(
       `[trader] ✅ LIVE OPEN  ${signal.direction} ${signal.symbol} | ` +
-      `qty=${qty} fill≈${fillPrice} TP=${signal.tp} SL=${signal.sl} risk=$${riskDollar.toFixed(2)}`,
+      `qty=${qty} fill≈${fillPrice} TP=${signal.tp} SL=${signal.sl} ` +
+      `lev=${usedLeverage}× risk=$${riskDollar.toFixed(2)} — tracker will close`,
     );
 
-    return { ok: true, orderId: String(orderId), tpOrderId: String(tpOrderId), slOrderId: String(slOrderId), quantity: qty, fillPrice, riskDollar };
+    return { ok: true, orderId: String(orderId), tpOrderId: '', slOrderId: '', quantity: qty, fillPrice, riskDollar };
   } catch (err: any) {
     const msg = err.message ?? String(err);
     // Suppress noisy logs for known non-error conditions
@@ -323,47 +319,37 @@ export async function openTrade(signal: Signal): Promise<OpenTradeOutcome> {
 
 /**
  * Called when the tracker detects TP or SL hit.
- * Binance already closed the position automatically via the standing order —
- * we just cancel the opposite order so it doesn't linger.
+ * No standing orders exist — fire a MARKET close for the remaining position.
  */
 export async function onTpSlHit(signal: Signal, hit: 'tp' | 'sl'): Promise<void> {
-  if (!isLiveTradingEnabled() || !signal.liveEnabled) return;
-  const cancelId = hit === 'tp' ? signal.liveSlOrderId : signal.liveTpOrderId;
-  if (cancelId) await cancelOrder(signal.symbol, cancelId);
-  console.log(`[trader] ${hit.toUpperCase()} confirmed — cancelled opposite order for ${signal.symbol}`);
+  if (!isLiveTradingEnabled() || !signal.liveEnabled || !signal.liveQty) return;
+  try {
+    const meta      = await getSymbolMeta(signal.symbol);
+    if (!meta) return;
+    const closeSide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'SELL' : 'BUY';
+    const fraction  = signal.partialTpFired ? 0.5 : 1.0;
+    const closeQty  = roundStep(signal.liveQty * fraction, meta.stepSize);
+    if (closeQty > 0) await placeMarket(signal.symbol, closeSide, closeQty);
+    console.log(`[trader] ${hit.toUpperCase()} CLOSE ${signal.symbol}: market ${closeSide} ${closeQty}`);
+  } catch (err: any) {
+    console.error(`[trader] onTpSlHit ${signal.symbol}: ${err.message}`);
+  }
 }
 
 /**
- * Called when the tracker fires the paper partial-TP (price reached 50% to TP).
- * 1. Cancels existing TP + SL (sized for full position).
- * 2. Market-closes 50% of the position.
- * 3. Re-places TP + SL sized for the remaining 50%, SL moved to entry (breakeven).
- * Mutates signal.liveTpOrderId and signal.liveSlOrderId in place.
+ * Called when tracker detects price reached 50% of TP.
+ * Market-closes 50% of the position. Tracker will monitor remaining half
+ * and fire onTpSlHit when full TP or breakeven SL is reached.
  */
 export async function onPartialTp(signal: Signal): Promise<void> {
   if (!isLiveTradingEnabled() || !signal.liveEnabled || !signal.liveQty) return;
-
   try {
-    const meta      = await getSymbolMeta(signal.symbol);
+    const meta     = await getSymbolMeta(signal.symbol);
+    if (!meta) return;
     const closeSide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'SELL' : 'BUY';
-    const halfQty   = roundStep(signal.liveQty * 0.5, meta.stepSize);
-
-    // Cancel full-position TP and SL
-    if (signal.liveTpOrderId) await cancelOrder(signal.symbol, signal.liveTpOrderId);
-    if (signal.liveSlOrderId) await cancelOrder(signal.symbol, signal.liveSlOrderId);
-
-    // Close 50% at market
-    await placeMarket(signal.symbol, closeSide, halfQty);
-
-    const posSide: 'LONG' | 'SHORT' = signal.direction === 'LONG' ? 'LONG' : 'SHORT';
-    // Re-place for remaining 50% — SL moved to entry (breakeven)
-    const newTpId = await placeTpOrder(signal.symbol, closeSide, posSide, halfQty, signal.tp, meta.tickSize);
-    const newSlId = await placeSlOrder(signal.symbol, closeSide, posSide, halfQty, signal.entry, meta.tickSize);
-
-    signal.liveTpOrderId = String(newTpId);
-    signal.liveSlOrderId = String(newSlId);
-
-    console.log(`[trader] PARTIAL-TP ${signal.symbol}: 50% closed, new TP/SL placed for remaining half`);
+    const halfQty  = roundStep(signal.liveQty * 0.5, meta.stepSize);
+    if (halfQty > 0) await placeMarket(signal.symbol, closeSide, halfQty);
+    console.log(`[trader] PARTIAL-TP ${signal.symbol}: market-closed 50% (${halfQty})`);
   } catch (err: any) {
     console.error(`[trader] onPartialTp ${signal.symbol}: ${err.message}`);
   }
@@ -371,21 +357,17 @@ export async function onPartialTp(signal: Signal): Promise<void> {
 
 /**
  * Force-closes a live position (thesis invalidation or zombie-close).
- * Cancels both TP and SL, then sends a market close for the remaining qty.
+ * Sends a MARKET close for the remaining quantity.
  */
 export async function onForceClose(signal: Signal): Promise<void> {
   if (!isLiveTradingEnabled() || !signal.liveEnabled || !signal.liveQty) return;
-
   try {
-    const meta      = await getSymbolMeta(signal.symbol);
+    const meta     = await getSymbolMeta(signal.symbol);
+    if (!meta) return;
     const closeSide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'SELL' : 'BUY';
-    const fraction  = signal.partialTpFired ? 0.5 : 1.0;
-    const closeQty  = roundStep(signal.liveQty * fraction, meta.stepSize);
-
-    if (signal.liveTpOrderId) await cancelOrder(signal.symbol, signal.liveTpOrderId);
-    if (signal.liveSlOrderId) await cancelOrder(signal.symbol, signal.liveSlOrderId);
+    const fraction = signal.partialTpFired ? 0.5 : 1.0;
+    const closeQty = roundStep(signal.liveQty * fraction, meta.stepSize);
     if (closeQty > 0) await placeMarket(signal.symbol, closeSide, closeQty);
-
     console.log(`[trader] FORCE-CLOSE ${signal.symbol}: market ${closeSide} ${closeQty}`);
   } catch (err: any) {
     console.error(`[trader] onForceClose ${signal.symbol}: ${err.message}`);
