@@ -461,7 +461,7 @@ export function startScanners(): void {
     checkActiveSignals()
       .catch(console.error)
       .finally(() => { checkInProgress = false; });
-  }, 30 * 1000);
+  }, 5 * 1000);
 
   // Full scan every 5 minutes — fire immediately on startup too
   setInterval(() => runFullScan().catch(console.error), 5 * 60 * 1000);
