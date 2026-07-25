@@ -101,7 +101,7 @@ interface SymbolMeta { stepSize: number; tickSize: number; minNotional: number }
 const _metaCache    = new Map<string, SymbolMeta>();
 let   _metaFetchedAt = 0;
 
-async function getSymbolMeta(symbol: string): Promise<SymbolMeta> {
+async function getSymbolMeta(symbol: string): Promise<SymbolMeta | null> {
   const STALE = 60 * 60_000; // 1 hour
   if (_metaCache.has(symbol) && Date.now() - _metaFetchedAt < STALE) {
     return _metaCache.get(symbol)!;
@@ -121,7 +121,8 @@ async function getSymbolMeta(symbol: string): Promise<SymbolMeta> {
       });
     }
   }
-  return _metaCache.get(symbol) ?? { stepSize: 0.001, tickSize: 0.01, minNotional: 5 };
+  // Return null if symbol doesn't exist on Binance Futures
+  return _metaCache.get(symbol) ?? null;
 }
 
 function roundStep(value: number, step: number): number {
@@ -261,6 +262,7 @@ export async function openTrade(signal: Signal): Promise<OpenTradeOutcome> {
 
   try {
     const meta    = await getSymbolMeta(signal.symbol);
+    if (!meta) return { ok: false, error: `${signal.symbol} not listed on Binance Futures — skipping` };
     const balance = await getUsdtBalance();
 
     // Position sizing — risk a fixed % of balance
@@ -297,8 +299,14 @@ export async function openTrade(signal: Signal): Promise<OpenTradeOutcome> {
 
     return { ok: true, orderId: String(orderId), tpOrderId: String(tpOrderId), slOrderId: String(slOrderId), quantity: qty, fillPrice, riskDollar };
   } catch (err: any) {
-    console.error(`[trader] ❌ openTrade ${signal.symbol}: ${err.message}`);
-    return { ok: false, error: err.message };
+    const msg = err.message ?? String(err);
+    // Suppress noisy logs for known non-error conditions
+    if (msg.includes('not listed on Binance Futures')) {
+      console.log(`[trader] ⏭ ${signal.symbol} not on Binance Futures — paper only`);
+    } else {
+      console.error(`[trader] ❌ openTrade ${signal.symbol}: ${msg}`);
+    }
+    return { ok: false, error: msg };
   }
 }
 
