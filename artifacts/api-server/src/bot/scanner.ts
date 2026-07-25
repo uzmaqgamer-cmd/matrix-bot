@@ -119,12 +119,16 @@ export async function sendSignal(params: {
         saveState(state);
       }).catch(err => console.error('[scanner] openTrade unexpected error:', err));
 
-      // Send informational notification (no buttons needed)
+      // Admin gets verbose info; channel gets clean signal only
       const autoText =
         `⚡ <b>AUTO-TRACKED</b>\n` +
         text +
         `\n\n<i>Unlimited mode — tracking ${state.activeSignals.length} active signals.</i>`;
-      await broadcastSignal(autoText);
+      await telegramRef!.sendMessage(adminChatId, autoText, { parse_mode: 'HTML' });
+      if (CHANNEL_ID) {
+        try { await telegramRef!.sendMessage(CHANNEL_ID, text, { parse_mode: 'HTML' }); }
+        catch (e: any) { console.warn('[scanner] Channel send failed:', e.message); }
+      }
     } else {
       // ─── LIMITED MODE: send with Accept / Ignore buttons ─────────────────
       const keyboard = Markup.inlineKeyboard([

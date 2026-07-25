@@ -6,7 +6,7 @@ import {
   formatTestResults, formatRadar, fmtPrice, esc,
 } from './formatter.js';
 import { runFullScan, runWatchlistScan, initScanner, sendSignal, scanSymbol, getRadarData, lastScanSummary } from './scanner.js';
-import { checkActiveSignals, initTracker, monitorPositionTheses } from './tracker.js';
+import { checkActiveSignals, initTracker, monitorPositionTheses, sendDailySummary } from './tracker.js';
 import { runOfflineTests } from './tests.js';
 import { MATRIX } from './matrix.js';
 
@@ -475,6 +475,19 @@ export function startScanners(): void {
 
   // Thesis invalidation monitor always runs
   setInterval(() => monitorPositionTheses().catch(console.error), 60 * 1000);
+
+  // Daily summary at midnight UTC
+  const scheduleDailySummary = () => {
+    const now = new Date();
+    const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    const msUntilMidnight = next.getTime() - now.getTime();
+    setTimeout(() => {
+      sendDailySummary().catch(console.error);
+      setInterval(() => sendDailySummary().catch(console.error), 24 * 60 * 60 * 1000);
+    }, msUntilMidnight);
+    console.log(`[bot] Daily summary scheduled in ${Math.round(msUntilMidnight / 60000)} minutes.`);
+  };
+  scheduleDailySummary();
 }
 
 /**

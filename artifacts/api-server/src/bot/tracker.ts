@@ -26,18 +26,45 @@ const FUNDING_LOOKBACK = 4;
 
 let telegramRef: Telegram | null = null;
 let adminChatId: string = '';
+const CHANNEL_ID = process.env['TELEGRAM_CHANNEL_ID'] ?? '';
 
 export function initTracker(telegram: Telegram, chatId: string) {
   telegramRef = telegram;
   adminChatId = chatId;
 }
 
-async function sendAlert(text: string) {
+async function sendAlert(text: string, toChannel = false) {
   if (!telegramRef || !adminChatId) return;
   try {
     await telegramRef.sendMessage(adminChatId, text, { parse_mode: 'HTML' });
+    if (toChannel && CHANNEL_ID) {
+      await telegramRef.sendMessage(CHANNEL_ID, text, { parse_mode: 'HTML' });
+    }
   } catch (err) {
     console.error('[tracker] sendAlert failed:', err);
+  }
+}
+
+export async function sendDailySummary() {
+  if (!telegramRef || !adminChatId) return;
+  const state = loadState();
+  const today = new Date().toISOString().slice(0, 10);
+  const ds = state.dailyStats.find(d => d.date === today);
+  const tp = ds?.tpHit ?? 0;
+  const sl = ds?.slHit ?? 0;
+  const total = tp + sl;
+  const wr = total > 0 ? ((tp / total) * 100).toFixed(0) : '0';
+  const text =
+    `📊 <b>Daily Summary — ${today}</b>\n\n` +
+    `✅ TP Hit: <b>${tp}</b>\n` +
+    `❌ SL Hit: <b>${sl}</b>\n` +
+    `📈 Win Rate: <b>${wr}%</b>\n` +
+    `💰 Balance: <b>$${state.paperBalance.toFixed(2)}</b>`;
+  try {
+    await telegramRef.sendMessage(adminChatId, text, { parse_mode: 'HTML' });
+    if (CHANNEL_ID) await telegramRef.sendMessage(CHANNEL_ID, text, { parse_mode: 'HTML' });
+  } catch (err) {
+    console.error('[tracker] sendDailySummary failed:', err);
   }
 }
 
@@ -150,7 +177,7 @@ export async function checkActiveSignals() {
 
           applyBalance(state, partialChange);
 
-          await sendAlert(formatPartialTpMessage(signal, price, partialChange));
+          await sendAlert(formatPartialTpMessage(signal, price, partialChange), true);
           logActivity({
             ts: Date.now(),
             text: `[PARTIAL-TP] ${signal.symbol} ${signal.direction} | 50% closed at ${price.toPrecision(6)} | +$${partialChange.toFixed(4)} banked | SL moved to breakeven (${signal.entry.toPrecision(6)})`,
@@ -206,7 +233,7 @@ export async function checkActiveSignals() {
         if (hit === 'tp') {
           state.totalTpHit++;
           getOrCreateDailyStats(state).tpHit++;
-          await sendAlert(formatTpHitMessage(signal, price));
+          await sendAlert(formatTpHitMessage(signal, price), true);
           const pnl = ((price - signal.entry) / signal.entry * 100);
           const pnlStr = signal.direction === 'LONG'
             ? ((price - signal.entry) / signal.entry * 100).toFixed(2)
@@ -222,7 +249,7 @@ export async function checkActiveSignals() {
         } else {
           state.totalSlHit++;
           getOrCreateDailyStats(state).slHit++;
-          await sendAlert(formatSlHitMessage(signal, price));
+          await sendAlert(formatSlHitMessage(signal, price), true);
           const label = signal.breakevenMoved ? 'BREAKEVEN' : 'SL HIT';
           const lossStr = signal.direction === 'LONG'
             ? ((signal.entry - price) / signal.entry * 100).toFixed(2)
@@ -278,7 +305,7 @@ export async function checkActiveSignals() {
         if (state.completedSignals.length > 500) state.completedSignals = state.completedSignals.slice(-500);
 
         const pnlStr = `${signal.finalPnlAmt >= 0 ? '+' : ''}$${signal.finalPnlAmt.toFixed(4)}`;
-        await sendAlert(`⚠️ FORCE-CLOSED: ${signal.symbol} ${signal.direction}\nReason: no price data for 30+ minutes\nExit: last known ${exitPrice.toPrecision(6)} | P&L: ${pnlStr}`);
+        await sendAlert(`⚠️ FORCE-CLOSED: ${signal.symbol} ${signal.direction}\nReason: no price data for 30+ minutes\nExit: last known ${exitPrice.toPrecision(6)} | P&L: ${pnlStr}`, true);
         logActivity({ ts: Date.now(), text: `[FORCE-CLOSE] ${signal.symbol} — no price data for 30+ min | P&L: ${pnlStr}`, kind: 'auto_close', symbol: signal.symbol });
         console.log(`[tracker] [ZOMBIE-CLOSE] ${signal.symbol} — 30min without price data | P&L: ${pnlStr}`);
         stateChanged = true;
@@ -407,7 +434,7 @@ export async function monitorPositionTheses() {
       });
       console.log(`[tracker] Reversal queued: ${signal.symbol} ${reversalDirection} — injected into watchlist`);
 
-      await sendAlert(formatAutoCloseMessage(signal, exitPrice, prevRow, matrixRow.row));
+      await sendAlert(formatAutoCloseMessage(signal, exitPrice, prevRow, matrixRow.row), true);
 
       const pnlPct = exitPrice > 0 && signal.entry > 0
         ? (signal.direction === 'LONG'
