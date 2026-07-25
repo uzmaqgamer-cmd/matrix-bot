@@ -463,17 +463,18 @@ export function startScanners(): void {
       .finally(() => { checkInProgress = false; });
   }, 5 * 1000);
 
-  // Full scan every 5 minutes — fire immediately on startup too
-  setInterval(() => runFullScan().catch(console.error), 5 * 60 * 1000);
-  setImmediate(() => runFullScan().catch(console.error));
+  // Skip scanner loops when running as dashboard-only (no new paper signals)
+  if (process.env.DASHBOARD_ONLY !== 'true') {
+    setInterval(() => runFullScan().catch(console.error), 5 * 60 * 1000);
+    setImmediate(() => runFullScan().catch(console.error));
+    setInterval(() => runWatchlistScan().catch(console.error), 60 * 1000);
+    console.log('[bot] Scanners and tracker started.');
+  } else {
+    console.log('[bot] DASHBOARD_ONLY mode — scanner disabled, tracker running.');
+  }
 
-  // Watchlist tight scan every 60 seconds
-  setInterval(() => runWatchlistScan().catch(console.error), 60 * 1000);
-
-  // Thesis invalidation monitor
+  // Thesis invalidation monitor always runs
   setInterval(() => monitorPositionTheses().catch(console.error), 60 * 1000);
-
-  console.log('[bot] Scanners and tracker started.');
 }
 
 /**
