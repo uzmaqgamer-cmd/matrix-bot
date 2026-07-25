@@ -278,8 +278,19 @@ export async function openTrade(signal: Signal): Promise<OpenTradeOutcome> {
       throw new Error(`Notional $${notional.toFixed(2)} < min $${meta.minNotional} — account balance too small for this SL distance`);
     }
 
-    // Set cross-margin leverage
-    await fapi('POST', '/fapi/v1/leverage', { symbol: signal.symbol, leverage: LEVERAGE });
+    // Set leverage — fall back to lower tiers if symbol cap is below requested
+    const LEVERAGE_TIERS = [LEVERAGE, 50, 20, 10, 5];
+    let usedLeverage = LEVERAGE;
+    for (const lev of LEVERAGE_TIERS) {
+      try {
+        await fapi('POST', '/fapi/v1/leverage', { symbol: signal.symbol, leverage: lev });
+        usedLeverage = lev;
+        break;
+      } catch (e: any) {
+        if (e.message?.includes('-4028') || e.message?.includes('leverage')) continue;
+        throw e; // unrelated error — rethrow
+      }
+    }
 
     const entrySide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'BUY'  : 'SELL';
     const closeSide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'SELL' : 'BUY';
