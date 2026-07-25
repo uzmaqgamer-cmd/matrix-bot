@@ -155,62 +155,69 @@ async function placeMarket(
   return { orderId: res.orderId, avgPrice: parseFloat(res.avgPrice ?? '0') };
 }
 
+/**
+ * TP order — plain LIMIT order in the close direction.
+ * Sits in the order book; fills when price reaches the TP level.
+ * Universally supported on all Binance Futures account types.
+ */
 async function placeTpOrder(
   symbol: string,
   side: 'BUY' | 'SELL',
   positionSide: 'LONG' | 'SHORT',
-  quantity: number | null,
-  stopPrice: number,
+  quantity: number,         // always required for LIMIT
+  tpPrice: number,
   tick: number,
 ): Promise<number> {
   const mode   = await getPositionMode();
+  const price  = String(roundTick(tpPrice, tick));
   const params: Record<string, string | number> = {
     symbol, side,
-    type:      'TAKE_PROFIT_MARKET',
-    stopPrice: String(roundTick(stopPrice, tick)),
-    workingType: 'MARK_PRICE',
+    type:        'LIMIT',
+    price,
+    quantity:    String(quantity),
+    timeInForce: 'GTC',
   };
   if (mode === 'hedge') {
     params['positionSide'] = positionSide;
-    if (quantity !== null) params['quantity'] = String(quantity);
-    // In hedge mode closePosition is not used; full qty auto-closes when positionSide matches
   } else {
-    if (quantity !== null) {
-      params['quantity']   = String(quantity);
-      params['reduceOnly'] = 'true';
-    } else {
-      params['closePosition'] = 'true';
-    }
+    params['reduceOnly'] = 'true';
   }
   const res = await fapi('POST', '/fapi/v1/order', params);
   return res.orderId;
 }
 
+/**
+ * SL order — STOP (stop-limit) order in the close direction.
+ * When mark price reaches stopPrice, a LIMIT order at price fires.
+ * price is set slightly beyond stopPrice to ensure fill in a fast move.
+ */
 async function placeSlOrder(
   symbol: string,
   side: 'BUY' | 'SELL',
   positionSide: 'LONG' | 'SHORT',
-  quantity: number | null,
-  stopPrice: number,
+  quantity: number,         // always required
+  slPrice: number,
   tick: number,
 ): Promise<number> {
-  const mode   = await getPositionMode();
+  const mode      = await getPositionMode();
+  const stopPrice = roundTick(slPrice, tick);
+  // Limit price: for a SELL SL move slightly below trigger; for BUY SL slightly above
+  const limitPrice = side === 'SELL'
+    ? roundTick(stopPrice * 0.997, tick)   // 0.3% slip buffer
+    : roundTick(stopPrice * 1.003, tick);
   const params: Record<string, string | number> = {
     symbol, side,
-    type:      'STOP_MARKET',
-    stopPrice: String(roundTick(stopPrice, tick)),
+    type:        'STOP',
+    stopPrice:   String(stopPrice),
+    price:       String(limitPrice),
+    quantity:    String(quantity),
+    timeInForce: 'GTC',
     workingType: 'MARK_PRICE',
   };
   if (mode === 'hedge') {
     params['positionSide'] = positionSide;
-    if (quantity !== null) params['quantity'] = String(quantity);
   } else {
-    if (quantity !== null) {
-      params['quantity']   = String(quantity);
-      params['reduceOnly'] = 'true';
-    } else {
-      params['closePosition'] = 'true';
-    }
+    params['reduceOnly'] = 'true';
   }
   const res = await fapi('POST', '/fapi/v1/order', params);
   return res.orderId;
@@ -280,9 +287,8 @@ export async function openTrade(signal: Signal): Promise<OpenTradeOutcome> {
     const fillPrice = avgPrice > 0 ? avgPrice : signal.entry;
 
     const posSide: 'LONG' | 'SHORT' = signal.direction === 'LONG' ? 'LONG' : 'SHORT';
-    // TP + SL — null qty = closePosition (one-way) or full position (hedge)
-    const tpOrderId = await placeTpOrder(signal.symbol, closeSide, posSide, null, signal.tp, meta.tickSize);
-    const slOrderId = await placeSlOrder(signal.symbol, closeSide, posSide, null, signal.sl, meta.tickSize);
+    const tpOrderId = await placeTpOrder(signal.symbol, closeSide, posSide, qty, signal.tp, meta.tickSize);
+    const slOrderId = await placeSlOrder(signal.symbol, closeSide, posSide, qty, signal.sl, meta.tickSize);
 
     console.log(
       `[trader] ✅ LIVE OPEN  ${signal.direction} ${signal.symbol} | ` +
@@ -331,7 +337,7 @@ export async function onPartialTp(signal: Signal): Promise<void> {
     await placeMarket(signal.symbol, closeSide, halfQty);
 
     const posSide: 'LONG' | 'SHORT' = signal.direction === 'LONG' ? 'LONG' : 'SHORT';
-    // Re-place for remaining 50% — specific qty, SL at entry (breakeven)
+    // Re-place for remaining 50% — SL moved to entry (breakeven)
     const newTpId = await placeTpOrder(signal.symbol, closeSide, posSide, halfQty, signal.tp, meta.tickSize);
     const newSlId = await placeSlOrder(signal.symbol, closeSide, posSide, halfQty, signal.entry, meta.tickSize);
 
