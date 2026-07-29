@@ -14,6 +14,7 @@
 
 import crypto from 'crypto';
 import type { Signal } from './types.js';
+import { config } from './config.js';
 
 const FAPI      = 'https://fapi.binance.com';
 const RISK_PCT  = parseFloat(process.env['TRADE_RISK_PCT']  ?? '2')  / 100; // e.g. 0.02
@@ -145,6 +146,15 @@ export async function getUsdtBalance(): Promise<number> {
   return parseFloat(usdt?.availableBalance ?? '0');
 }
 
+/**
+ * Count open positions on Binance (any symbol with non-zero positionAmt).
+ * Used as a hard exchange-side cap before opening new trades.
+ */
+async function countOpenBinancePositions(): Promise<number> {
+  const positions = await fapi('GET', '/fapi/v2/positionRisk') as any[];
+  return positions.filter((p: any) => parseFloat(p.positionAmt ?? '0') !== 0).length;
+}
+
 // ─── Order helpers ────────────────────────────────────────────────────────────
 
 async function placeMarket(
@@ -263,6 +273,14 @@ export async function openTrade(signal: Signal): Promise<OpenTradeOutcome> {
   try {
     const meta    = await getSymbolMeta(signal.symbol);
     if (!meta) return { ok: false, error: `${signal.symbol} not listed on Binance Futures — skipping` };
+
+    // Hard exchange-side cap: count actual open Binance positions, not just bot state.
+    // This catches cases where state is stale or positions were opened outside the bot.
+    const openCount = await countOpenBinancePositions();
+    if (openCount >= config.positionMonitoring.maxActivePositions) {
+      return { ok: false, error: `Exchange cap: ${openCount} positions already open (max ${config.positionMonitoring.maxActivePositions})` };
+    }
+
     const balance = await getUsdtBalance();
 
     // Position sizing — risk a fixed % of balance
