@@ -168,7 +168,7 @@ export function formatSignalMessage(signal: Signal): string {
     `TP multiplier: <b>${esc(tierLabel(signal))}</b>\n` +
     `Time:   ${esc(fmtTime(signal.createdAt))}\n` +
     `━━━━━━━━━━━━━━━━━━\n` +
-    `<i>Accept to track (max 5 active). Ignored signals don't count.</i>`
+    `<i>Accept to track (max 8 active). Ignored signals don't count.</i>`
   );
 }
 

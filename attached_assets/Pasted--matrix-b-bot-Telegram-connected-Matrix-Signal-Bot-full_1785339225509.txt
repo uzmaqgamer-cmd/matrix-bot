@@ -1,0 +1,33 @@
+|matrix-b | [bot] Telegram connected. Matrix Signal Bot fully online.
+0|matrix-b | [storage] Partial history (500 of 641 trades in memory) — using stored balance $115.6993
+0|matrix-b | [storage] Dedup complete — removed 0 duplicate(s). Balance: $115.6993 → $115.6993 | Trades: 641 → 641
+0|matrix-b | {"level":30,"time":1785338802693,"pid":307332,"hostname":"cryptomatrix-app","msg":"Startup dedup: no duplicates found, state is clean"}
+0|matrix-b | [bot] Scanners and tracker started.
+0|matrix-b | [bot] Daily summary scheduled in 513 minutes.
+0|matrix-b | [bot] Connecting to Telegram…
+0|matrix-b | [bot] Connecting to Telegram in background…
+0|matrix-b | {"level":30,"time":1785338802787,"pid":307332,"hostname":"cryptomatrix-app","port":8080,"msg":"Server listening"}
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-07-29T15:26:43.489Z
+0|matrix-b | [scanner] Full scan done: 600 pairs in 14.2s | watchlist: 145 | signals: 0
+0|matrix-b | [scanner] Watchlist scan: 145 pairs
+0|matrix-b | [scanner] Watchlist scan: 133 pairs
+0|matrix-b | [SKIP] 1000XECUSDT → ATR 0.69% below 1.1% floor
+0|matrix-b | [scanner] Watchlist scan: 132 pairs
+0|matrix-b | [scanner] Watchlist scan: 132 pairs
+0|matrix-b | [SKIP] BNCUSDT → ATR 0.81% below 1.1% floor
+0|matrix-b | [SKIP] SHIB1000USDT → ATR 1.07% below 1.1% floor
+0|matrix-b | [SKIP] EGLDUSDT → ATR 0.58% below 1.1% floor
+0|matrix-b | [scanner] Watchlist scan: 126 pairs
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-07-29T15:31:44.091Z
+0|matrix-b | [signalBuilder] ACHUSDT LONG | ATR=2.37% | tier=HIGH_DIVERGENCE | TP=3.5× | R/R=1:3.5
+0|matrix-b | [scanner] Signal sent: ACHUSDT LONG (auto-accepted)
+0|matrix-b | [scanner] Full scan done: 600 pairs in 14.1s | watchlist: 143 | signals: 1
+0|matrix-b | [trader] ✅ LIVE OPEN  LONG ACHUSDT | qty=4648 fill≈0.00491 TP=0.0053175 SL=0.00479357 lev=50× risk=$0.54 — tracker will close
+0|matrix-b | [scanner] Live trade stamped on signal ms68tbw32h1a
+0|matrix-b | [scanner] Watchlist scan: 143 pairs
+0|matrix-b | [SKIP] XRPUSDT → ATR 0.36% below 1.1% floor
+0|matrix-b | [signalBuilder] DIAUSDT LONG | ATR=1.58% | tier=MEDIUM_DIVERGENCE | TP=2.5× | R/R=1:2.5
+0|matrix-b | [scanner] Signal sent: DIAUSDT LONG (auto-accepted)
+0|matrix-b | [trader] ✅ LIVE OPEN  LONG DIAUSDT | qty=296 fill≈0.11428 TP=0.118791 SL=0.112476 lev=20× risk=$0.54 — tracker will close
+0|matrix-b | [scanner] Live trade stamped on signal ms68uwcykjhx
+
