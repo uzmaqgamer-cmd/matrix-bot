@@ -217,6 +217,17 @@ export async function checkActiveSignals() {
         }
       }
 
+      // ── Retroactive trail activation for pre-update positions ────────────────
+      // Positions that fired partial TP before this code was deployed have
+      // partialTpFired=true but trailActive undefined. Activate trail immediately
+      // so they benefit from the trailing stop going forward.
+      if (signal.partialTpFired && !signal.trailActive) {
+        signal.trailActive = true;
+        signal.trailStop   = signal.sl; // sl is already at entry (breakeven)
+        stateChanged = true;
+        console.log(`[tracker] [TRAIL-MIGRATE] ${signal.symbol} — retroactively activated trail at ${signal.trailStop}`);
+      }
+
       // ── ATR trailing stop update (every tick while trail is active) ─────────
       // Trail can only move in the profitable direction; never retreats past entry.
       if (signal.partialTpFired && signal.trailActive && signal.trailStop != null) {
