@@ -1,0 +1,51 @@
+ystem information as of Wed Jul 29 15:26:29 UTC 2026
+
+  System load:  0.1               Processes:             101
+  Usage of /:   65.5% of 8.65GB   Users logged in:       0
+  Memory usage: 62%               IPv4 address for eth0: 46.101.97.86
+  Swap usage:   6%                IPv4 address for eth0: 10.19.0.5
+
+Expanded Security Maintenance for Applications is not enabled.
+
+12 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+*** System restart required ***
+Last login: Sun Jul 26 13:42:02 2026 from 185.139.138.187
+root@cryptomatrix-app:~# sed -i 's/TRADE_RISK_PCT=2/TRADE_RISK_PCT=1/' /opt/matrix-bot/.env
+cd /opt/matrix-bot && git pull && pm2 restart matrix-bot
+remote: Enumerating objects: 116, done.
+remote: Counting objects: 100% (116/116), done.
+remote: Compressing objects: 100% (29/29), done.
+remote: Total 102 (delta 53), reused 100 (delta 51), pack-reused 0 (from 0)
+Receiving objects: 100% (102/102), 110.54 KiB | 4.25 MiB/s, done.
+Resolving deltas: 100% (53/53), completed with 11 local objects.
+From https://github.com/uzmaqgamer-cmd/matrix-bot
+   75d443c..429bdb6  main       -> origin/main
+Updating 75d443c..429bdb6
+Fast-forward
+ artifacts/api-server/src/bot/config.ts                                      |     7 +
+ artifacts/api-server/src/bot/scanner.ts                                     |     7 +
+ artifacts/api-server/src/bot/tracker.ts                                     |    58 +-
+ artifacts/api-server/src/bot/types.ts                                       |     4 +
+ ...version-6-indicator-Pump-Detector-Pro-v6-overlay-true-_1785314299095.txt |   390 ++
+ ...emote-Enumerating-objects-142-done-remote-Counting-obj_1785001674547.txt |    52 +
+ data/bot-state.json                                                         | 10528 +++++++++++++++++++++++++++++-----
+ deploy/.env.example                                                         |     2 +-
+ 8 files changed, 9752 insertions(+), 1296 deletions(-)
+ create mode 100644 attached_assets/Pasted--version-6-indicator-Pump-Detector-Pro-v6-overlay-true-_1785314299095.txt
+ create mode 100644 attached_assets/Pasted-remote-Enumerating-objects-142-done-remote-Counting-obj_1785001674547.txt
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [matrix-bot](ids: [ 0 ])
+[PM2] [matrix-bot](0) ✓
+┌────┬───────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name          │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼───────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ matrix-bot    │ fork     │ 28   │ online    │ 0%       │ 21.9mb   │
+└────┴───────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+host metrics | cpu: 3.6% | ram usage: 53.9% | eth0: ⇓ 0.128mb/s ⇑ 0.004mb/s |
+root@cryptomatrix-app:/opt/matrix-bot# 
