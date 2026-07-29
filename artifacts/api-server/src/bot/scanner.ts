@@ -50,6 +50,11 @@ export async function scanSymbol(symbol: string) {
   }
 }
 
+// Atomic in-memory counter — incremented synchronously before any `await` so
+// concurrent scan loops (full scan + watchlist scan running at the same time)
+// cannot both pass the cap check during the async gap in buildSignal().
+let pendingOpens = 0;
+
 export async function sendSignal(params: {
   symbol: string;
   direction: 'LONG' | 'SHORT';
@@ -66,13 +71,7 @@ export async function sendSignal(params: {
   if (state.pendingSignals.some(s => s.symbol === params.symbol)) return;
   if (state.activeSignals.some(s => s.symbol === params.symbol)) return;
 
-  // ── Max positions cap ────────────────────────────────────────────────────
-  if (state.activeSignals.length >= config.positionMonitoring.maxActivePositions) {
-    console.log(`[scanner] Max positions (${config.positionMonitoring.maxActivePositions}) reached — skipping ${params.symbol}`);
-    return;
-  }
-
-  // ── Cooldown guard: prevent re-entry within 20 min of a closed position ──
+  // ── Cooldown guard (before claiming a slot — cheap sync check, no await) ────
   // Protects against the reversal-injection loop where auto-close → watchlist
   // re-inject → same matrix row still DUMP/PUMP → immediate re-escalation.
   const COOLDOWN_MS = 20 * 60 * 1000;
@@ -86,12 +85,25 @@ export async function sendSignal(params: {
     return;
   }
 
-  const signal = await buildSignal(params);
-  if (!signal) return;
-
-  const isUnlimited = state.signalMode === 'UNLIMITED';
+  // ── Max positions cap (atomic — pendingOpens prevents concurrent scan race) ─
+  // Full scan + watchlist scan run concurrently. Both await sendSignal() inside
+  // their own for-loops, but the event loop can interleave them at any `await`.
+  // Without pendingOpens, both loops read the same activeSignals.length === 0
+  // before either has pushed a signal, so 20 can pass the check simultaneously.
+  // pendingOpens is incremented synchronously (no await between check and ++)
+  // so it is guaranteed to be visible to the next concurrent caller.
+  const maxPos = config.positionMonitoring.maxActivePositions;
+  if (state.activeSignals.length + pendingOpens >= maxPos) {
+    console.log(`[scanner] Cap hit (${state.activeSignals.length} active + ${pendingOpens} pending ≥ ${maxPos}) — skipping ${params.symbol}`);
+    return;
+  }
+  pendingOpens++; // claim slot — released in finally below
 
   try {
+    const signal = await buildSignal(params);
+    if (!signal) return;
+
+    const isUnlimited = state.signalMode === 'UNLIMITED';
     const text = formatSignalMessage(signal);
 
     if (isUnlimited) {
@@ -170,6 +182,8 @@ export async function sendSignal(params: {
     console.log(`[scanner] Signal sent: ${params.symbol} ${params.direction}${isUnlimited ? ' (auto-accepted)' : ''}`);
   } catch (err) {
     console.error('[scanner] Failed to send signal:', err);
+  } finally {
+    pendingOpens--; // always release the slot, success or failure
   }
 }
 
