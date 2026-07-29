@@ -559,8 +559,13 @@ export function startBot(): void {
           console.error('[bot] 409 Conflict — two instances running simultaneously. Exiting.');
           process.exit(1);
         }
-        console.warn('[bot] Telegram launch failed, retrying in 60s:', err.message);
-        setTimeout(launchTelegram, 60_000);
+        // "Expected signal to be an instanceof AbortSignal" is a known Telegraf/Node 18
+        // compat issue — polling restarts but bot.telegram (sender) is unaffected.
+        const isAbortCompat = (err.message ?? '').includes('AbortSignal');
+        if (!isAbortCompat) {
+          console.warn('[bot] Telegram launch failed, retrying in 60s:', err.message);
+        }
+        setTimeout(launchTelegram, isAbortCompat ? 5_000 : 60_000);
       });
   }
 
