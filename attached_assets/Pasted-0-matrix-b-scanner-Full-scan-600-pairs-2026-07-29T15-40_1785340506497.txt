@@ -1,0 +1,51 @@
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-07-29T15:40:40.638Z
+0|matrix-b | [scanner] Full scan done: 600 pairs in 11.6s | watchlist: 142 | signals: 0
+0|matrix-b | [scanner] Watchlist scan: 142 pairs
+0|matrix-b | [scanner] Watchlist scan: 142 pairs
+0|matrix-b | [scanner] Watchlist scan: 142 pairs
+0|matrix-b | [scanner] Watchlist scan: 142 pairs
+0|matrix-b | [signalBuilder] JCTUSDT SHORT | ATR=2.33% | tier=MEDIUM_DIVERGENCE | TP=2.5× | R/R=1:2.5
+0|matrix-b | [scanner] Signal sent: JCTUSDT SHORT (auto-accepted)
+0|matrix-b | [trader] ✅ LIVE OPEN  SHORT JCTUSDT | qty=5471 fill≈0.0040797 TP=0.00384256 SL=0.00417456 lev=20× risk=$0.52 — tracker will close
+0|matrix-b | [scanner] Live trade stamped on signal ms69adrin6tw
+0|matrix-b | [scanner] Watchlist scan: 141 pairs
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-07-29T15:45:40.566Z
+0|matrix-b | [signalBuilder] FLNCUSDT SHORT | ATR=1.73% | tier=MEDIUM_DIVERGENCE | TP=2.5× | R/R=1:2.5
+0|matrix-b | [scanner] Signal sent: FLNCUSDT SHORT (auto-accepted)
+0|matrix-b | [trader] ✅ LIVE OPEN  SHORT FLNCUSDT | qty=2.37 fill≈12.4 TP=11.8625 SL=12.615 lev=20× risk=$0.51 — tracker will close
+0|matrix-b | [scanner] Live trade stamped on signal ms69b4frq5pk
+0|matrix-b | [SKIP] REDUSDT → ATR 0.31% below 1.1% floor
+0|matrix-b | [SKIP] BIGTIMEUSDT → ATR 0.39% below 1.1% floor
+0|matrix-b | [scanner] Full scan done: 600 pairs in 12.5s | watchlist: 79 | signals: 2
+0|matrix-b | [scanner] Watchlist scan: 143 pairs
+0|matrix-b | [SKIP] TLMUSDT → ATR 0.75% below 1.1% floor
+0|matrix-b | [SKIP] SOLAYERUSDT → ATR 0.45% below 1.1% floor
+0|matrix-b | [scanner] Watchlist scan: 141 pairs
+0|matrix-b | [SKIP] HYUNDAIUSDT → ATR 0.32% below 1.1% floor
+0|matrix-b | [scanner] Watchlist scan: 139 pairs
+0|matrix-b | [scanner] Watchlist scan: 139 pairs
+0|matrix-b | [signalBuilder] OPENUSDT LONG | ATR=1.85% | tier=MEDIUM_DIVERGENCE | TP=2.5× | R/R=1:2.5
+0|matrix-b | [scanner] Signal sent: OPENUSDT LONG (auto-accepted)
+0|matrix-b | [trader] ✅ LIVE OPEN  LONG OPENUSDT | qty=149 fill≈0.17899 TP=0.187288 SL=0.175671 lev=75× risk=$0.50 — tracker will close
+0|matrix-b | [scanner] Live trade stamped on signal ms69g9jun65e
+0|matrix-b | [scanner] Watchlist scan: 125 pairs
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-07-29T15:50:40.672Z
+0|matrix-b | [scanner] Full scan done: 600 pairs in 13.4s | watchlist: 143 | signals: 0
+0|matrix-b | [scanner] Watchlist scan: 143 pairs
+0|matrix-b | [scanner] Watchlist scan: 143 pairs
+0|matrix-b | [bot] Telegram connected. Matrix Signal Bot fully online.
+0|matrix-b | [storage] Dedup complete — removed 0 duplicate(s). Balance: $100.0000 → $100.0000 | Trades: 0 → 0
+0|matrix-b | {"level":30,"time":1785340382900,"pid":307556,"hostname":"cryptomatrix-app","msg":"Startup dedup: no duplicates found, state is clean"}
+0|matrix-b | [bot] Scanners and tracker started.
+0|matrix-b | [bot] Daily summary scheduled in 487 minutes.
+0|matrix-b | [bot] Connecting to Telegram…
+0|matrix-b | [bot] Connecting to Telegram in background…
+0|matrix-b | {"level":30,"time":1785340382982,"pid":307556,"hostname":"cryptomatrix-app","port":8080,"msg":"Server listening"}
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-07-29T15:53:04.343Z
+0|matrix-b | [scanner] Full scan done: 600 pairs in 13.8s | watchlist: 144 | signals: 0
+0|matrix-b | [scanner] Watchlist scan: 144 pairs
+0|matrix-b | [SKIP] WENSTOCKUSDT → ATR 0.78% below 1.1% floor
+0|matrix-b | [SKIP] PNUTUSDT → ATR 0.47% below 1.1% floor
+0|matrix-b | [SKIP] SOLAYERUSDT → ATR 0.46% below 1.1% floor
+0|matrix-b | [SKIP] REDUSDT → ATR 0.32% below 1.1% floor
+
