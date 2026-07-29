@@ -70,6 +70,10 @@ export interface Signal {
   autoCloseReason?: string;  // e.g. 'thesis_invalidated' | 'price_data_unavailable'
   autoClosePrice?: number;
 
+  // ── ATR trailing stop (active after partial TP fires) ─────────────────────
+  trailActive?: boolean;     // true once partial TP fires and trail takes over from fixed TP
+  trailStop?:   number;      // current trail stop level; only moves in the favourable direction
+
   // ── Fetch failure tracking ─────────────────────────────────────────────────
   fetchFailCount?: number;   // consecutive price-fetch failures; auto-close at threshold
 

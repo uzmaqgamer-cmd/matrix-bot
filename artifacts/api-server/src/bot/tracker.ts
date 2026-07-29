@@ -174,6 +174,9 @@ export async function checkActiveSignals() {
           signal.partialTpPnlAmt = partialChange;
           signal.breakevenMoved = true;
           signal.sl = signal.entry; // move SL to breakeven
+          // Activate ATR trailing stop — starts at breakeven and only moves favourably
+          signal.trailActive = true;
+          signal.trailStop = signal.entry;
 
           applyBalance(state, partialChange);
 
@@ -190,33 +193,70 @@ export async function checkActiveSignals() {
         }
       }
 
+      // ── ATR trailing stop update (every tick while trail is active) ─────────
+      // Trail can only move in the profitable direction; never retreats past entry.
+      if (signal.partialTpFired && signal.trailActive && signal.trailStop != null) {
+        const rawTrail = signal.direction === 'LONG'
+          ? price - 2 * signal.atr
+          : price + 2 * signal.atr;
+        if (signal.direction === 'LONG') {
+          signal.trailStop = Math.max(signal.trailStop, Math.max(rawTrail, signal.entry));
+        } else {
+          signal.trailStop = Math.min(signal.trailStop, Math.min(rawTrail, signal.entry));
+        }
+        stateChanged = true;
+      }
+
       // ── TP / SL hit check ─────────────────────────────────────────────────
       let hit: 'tp' | 'sl' | null = null;
-      if (signal.direction === 'LONG') {
-        if (price >= signal.tp) hit = 'tp';
-        else if (price <= signal.sl) hit = 'sl'; // sl may now be at entry (breakeven)
+      if (signal.partialTpFired && signal.trailActive && signal.trailStop != null) {
+        // After partial TP: trailing stop replaces the fixed TP target.
+        // Trail exit is counted as 'tp' when above entry (profitable), 'sl' at breakeven.
+        if (signal.direction === 'LONG') {
+          if (price <= signal.trailStop)
+            hit = signal.trailStop > signal.entry ? 'tp' : 'sl';
+          // Safety: gap-down past original SL
+          else if (price <= signal.sl) hit = 'sl';
+        } else {
+          if (price >= signal.trailStop)
+            hit = signal.trailStop < signal.entry ? 'tp' : 'sl';
+          // Safety: gap-up past original SL
+          else if (price >= signal.sl) hit = 'sl';
+        }
       } else {
-        if (price <= signal.tp) hit = 'tp';
-        else if (price >= signal.sl) hit = 'sl';
+        if (signal.direction === 'LONG') {
+          if (price >= signal.tp) hit = 'tp';
+          else if (price <= signal.sl) hit = 'sl'; // sl may now be at entry (breakeven)
+        } else {
+          if (price <= signal.tp) hit = 'tp';
+          else if (price >= signal.sl) hit = 'sl';
+        }
       }
 
       if (hit) {
         toRemove.push(signal.id);
         signal.status = hit === 'tp' ? 'tp_hit' : 'sl_hit';
         signal.resolvedAt = Date.now();
-        // Live: Binance already closed via standing TP/SL order — cancel the other one
+        // MARKET close for remaining position (tracker-managed — no standing orders)
         await onTpSlHit(signal, hit);
 
         let finalCloseAmt = 0;
         if (signal.riskAmt != null && signal.riskAmt > 0) {
           if (hit === 'tp') {
-            // Remaining 50% (or full if no partial TP) hits the target
             const fraction = signal.partialTpFired ? 0.5 : 1.0;
-            finalCloseAmt = fraction * signal.rr * signal.riskAmt;
+            if (signal.trailActive) {
+              // Trail exit: actual price movement, not a fixed R multiple
+              finalCloseAmt = computeCloseAmt(signal, price, fraction);
+            } else {
+              finalCloseAmt = fraction * signal.rr * signal.riskAmt;
+            }
           } else {
             // SL hit
             if (signal.breakevenMoved) {
-              finalCloseAmt = 0; // SL is at entry — breakeven, no additional loss
+              // Trail or plain breakeven — compute from actual exit price
+              finalCloseAmt = signal.trailActive
+                ? computeCloseAmt(signal, price, 0.5)
+                : 0;
             } else {
               finalCloseAmt = -signal.riskAmt; // full loss
             }

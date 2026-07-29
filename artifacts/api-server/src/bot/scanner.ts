@@ -5,6 +5,7 @@ import { lookupRow, isDivergenceRow, MATRIX } from './matrix.js';
 import { updateWatchlist } from './watchlist.js';
 import { buildSignal } from './signalBuilder.js';
 import { loadState, saveState, getOrCreateDailyStats } from './storage.js';
+import { config } from './config.js';
 import { formatSignalMessage } from './formatter.js';
 import { logActivity, logScan } from './eventLog.js';
 import type { Telegram } from 'telegraf';
@@ -64,6 +65,12 @@ export async function sendSignal(params: {
 
   if (state.pendingSignals.some(s => s.symbol === params.symbol)) return;
   if (state.activeSignals.some(s => s.symbol === params.symbol)) return;
+
+  // ── Max positions cap ────────────────────────────────────────────────────
+  if (state.activeSignals.length >= config.positionMonitoring.maxActivePositions) {
+    console.log(`[scanner] Max positions (${config.positionMonitoring.maxActivePositions}) reached — skipping ${params.symbol}`);
+    return;
+  }
 
   // ── Cooldown guard: prevent re-entry within 20 min of a closed position ──
   // Protects against the reversal-injection loop where auto-close → watchlist

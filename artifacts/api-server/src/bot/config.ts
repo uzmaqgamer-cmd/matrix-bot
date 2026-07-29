@@ -30,5 +30,12 @@ export const config = {
      * Default: 6 hours.
      */
     maxHoldMs: 6 * 60 * 60 * 1000,
+
+    /**
+     * Maximum number of simultaneously open positions.
+     * New signals are silently skipped when this cap is reached.
+     * Default: 8.
+     */
+    maxActivePositions: 8,
   },
 } as const;
