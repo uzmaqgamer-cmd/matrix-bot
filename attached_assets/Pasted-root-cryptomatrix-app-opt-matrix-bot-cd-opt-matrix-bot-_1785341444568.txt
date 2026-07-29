@@ -1,0 +1,99 @@
+root@cryptomatrix-app:/opt/matrix-bot# cd /opt/matrix-bot
+git pull
+remote: Enumerating objects: 22, done.
+remote: Counting objects: 100% (22/22), done.
+remote: Compressing objects: 100% (6/6), done.
+remote: Total 15 (delta 9), reused 15 (delta 9), pack-reused 0 (from 0)
+Unpacking objects: 100% (15/15), 3.48 KiB | 222.00 KiB/s, done.
+From https://github.com/uzmaqgamer-cmd/matrix-bot
+   a4465fe..940c149  main       -> origin/main
+Updating 2ad4a95..940c149
+error: The following untracked working tree files would be removed by merge:
+	data/bot-state.json
+Please move or remove them before you merge.
+Aborting
+root@cryptomatrix-app:/opt/matrix-bot# cd /opt/matrix-bot && pm2 stop matrix-bot
+[PM2] Applying action stopProcessId on app [matrix-bot](ids: [ 0 ])
+[PM2] [matrix-bot](0) ✓
+┌────┬───────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name          │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼───────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ matrix-bot    │ fork     │ 31   │ stopped   │ 0%       │ 0b       │
+└────┴───────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+host metrics | cpu: 6.5% | ram usage: 54.7% | lo: ⇓ 0.002mb/s ⇑ 0.002mb/s | eth0: ⇓ 0.14mb/s ⇑ 0.01mb/s |
+root@cryptomatrix-app:/opt/matrix-bot# git pull
+Updating 2ad4a95..940c149
+error: The following untracked working tree files would be removed by merge:
+	data/bot-state.json
+Please move or remove them before you merge.
+Aborting
+root@cryptomatrix-app:/opt/matrix-bot# rm data/bot-state.json
+root@cryptomatrix-app:/opt/matrix-bot# rm data/bot-state.json
+rm: cannot remove 'data/bot-state.json': No such file or directory
+root@cryptomatrix-app:/opt/matrix-bot# pm2 start matrix-bot
+[PM2] Applying action restartProcessId on app [matrix-bot](ids: [ 0 ])
+[PM2] [matrix-bot](0) ✓
+[PM2] Process successfully started
+┌────┬───────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name          │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼───────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ matrix-bot    │ fork     │ 31   │ online    │ 0%       │ 18.0mb   │
+└────┴───────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+host metrics | cpu: 4% | ram usage: 34.1% | eth0: ⇓ 0.06mb/s ⇑ 0.003mb/s |
+root@cryptomatrix-app:/opt/matrix-bot# pm2 logs matrix-bot --lines 25
+[TAILING] Tailing last 25 lines for [matrix-bot] process (change the value with --lines option)
+/root/.pm2/logs/matrix-bot-error.log last 25 lines:
+0|matrix-b |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|matrix-b |     at async ensureTable (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:54:3)
+0|matrix-b |     at async initStorage (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:136:7)
+0|matrix-b |     at async <anonymous> (/opt/matrix-bot/artifacts/api-server/src/index.ts:28:5) {
+0|matrix-b |   errno: -3001,
+0|matrix-b |   code: 'EAI_AGAIN',
+0|matrix-b |   syscall: 'getaddrinfo',
+0|matrix-b |   hostname: 'helium'
+0|matrix-b | }
+0|matrix-b | [scanner] Live trade skipped for NVDLUSDT: NVDLUSDT not listed on Binance Futures — skipping
+0|matrix-b | [scanner] Live trade skipped for AEHRUSDT: AEHRUSDT not listed on Binance Futures — skipping
+0|matrix-b | [scanner] Live trade skipped for MARAUSDT: MARAUSDT not listed on Binance Futures — skipping
+0|matrix-b | [scanner] Live trade skipped for RDWUSDT: RDWUSDT not listed on Binance Futures — skipping
+0|matrix-b | [scanner] Live trade skipped for AMDSTOCKUSDT: AMDSTOCKUSDT not listed on Binance Futures — skipping
+0|matrix-b | [storage] DB unavailable, falling back to file: Error: getaddrinfo EAI_AGAIN helium
+0|matrix-b |     at <anonymous> (/opt/matrix-bot/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45:11)
+0|matrix-b |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|matrix-b |     at async ensureTable (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:54:3)
+0|matrix-b |     at async initStorage (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:136:7)
+0|matrix-b |     at async <anonymous> (/opt/matrix-bot/artifacts/api-server/src/index.ts:28:5) {
+0|matrix-b |   errno: -3001,
+0|matrix-b |   code: 'EAI_AGAIN',
+0|matrix-b |   syscall: 'getaddrinfo',
+0|matrix-b |   hostname: 'helium'
+0|matrix-b | }
+
+/root/.pm2/logs/matrix-bot-out.log last 25 lines:
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-07-29T16:02:54.536Z
+0|matrix-b | [scanner] Full scan done: 600 pairs in 13.0s | watchlist: 82 | signals: 0
+0|matrix-b | [scanner] Watchlist scan: 82 pairs
+0|matrix-b | [SKIP] SAFEUSDT → ATR 1.09% below 1.1% floor
+0|matrix-b | [SKIP] PNUTUSDT → ATR 0.48% below 1.1% floor
+0|matrix-b | [scanner] Watchlist scan: 71 pairs
+0|matrix-b | {"level":30,"time":1785341102768,"pid":307641,"hostname":"cryptomatrix-app","req":{"id":1,"method":"GET","url":"/SDK/webLanguage"},"res":{"statusCode":404},"responseTime":5,"msg":"request completed"}
+0|matrix-b | [scanner] Watchlist scan: 71 pairs
+0|matrix-b | [scanner] Watchlist scan: 71 pairs
+0|matrix-b | [scanner] Watchlist scan: 71 pairs
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-07-29T16:07:54.402Z
+0|matrix-b | [scanner] Full scan done: 600 pairs in 15.4s | watchlist: 126 | signals: 0
+0|matrix-b | [scanner] Watchlist scan: 126 pairs
+0|matrix-b | [SKIP] PNUTUSDT → ATR 0.48% below 1.1% floor
+0|matrix-b | [trader] SL CLOSE OPENUSDT: market SELL 149
+0|matrix-b | [tracker] OPENUSDT SL hit @ 0.17566 | finalPnl: $-1.0000 | balance: $98.4961
+0|matrix-b | [bot] Telegram connected. Matrix Signal Bot fully online.
+0|matrix-b | [storage] Dedup complete — removed 0 duplicate(s). Balance: $98.4961 → $98.4961 | Trades: 3 → 3
+0|matrix-b | {"level":30,"time":1785341401595,"pid":307844,"hostname":"cryptomatrix-app","msg":"Startup dedup: no duplicates found, state is clean"}
+0|matrix-b | [bot] Scanners and tracker started.
+0|matrix-b | [bot] Daily summary scheduled in 470 minutes.
+0|matrix-b | [bot] Connecting to Telegram…
+0|matrix-b | [bot] Connecting to Telegram in background…
+0|matrix-b | {"level":30,"time":1785341401691,"pid":307844,"hostname":"cryptomatrix-app","port":8080,"msg":"Server listening"}
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-07-29T16:10:02.266Z
+
+0|matrix-bot  | [scanner] Full scan done: 600 pairs in 16.7s | watchlist: 127 | signals: 0
