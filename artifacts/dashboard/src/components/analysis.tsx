@@ -84,7 +84,7 @@ export function BalanceChart({ history, paperBalance, paperBalanceDelta }: { his
   return (
     <div className="matrix-card flex flex-col shrink-0 h-32">
       <div className="px-3 py-2 text-[9.5px] font-medium text-[#55636f] flex justify-between tracking-[0.9px] uppercase shrink-0 z-10">
-        <span>TEST 2 BALANCE</span>
+        <span>BALANCE</span>
         <span className={`font-bold font-mono ${isProfit ? 'text-[#5DCAA5]' : 'text-[#F0716E]'}`}>
           ${paperBalance.toFixed(2)}
           <span className="ml-1 text-[9px] opacity-70">
@@ -179,7 +179,7 @@ export function TradeStats({ test2, test1 }: { test2: Test2Stats; test1: Test1St
 
   return (
     <div className="matrix-card p-3 shrink-0 flex flex-col gap-2.5 font-mono text-[10px]">
-      <div className="text-[9.5px] font-medium text-[#55636f] tracking-[0.9px] uppercase font-sans">TEST 2 PERFORMANCE</div>
+      <div className="text-[9.5px] font-medium text-[#55636f] tracking-[0.9px] uppercase font-sans">PERFORMANCE</div>
 
       {/* ── Parallel stat sets: All vs Clean ── */}
       <div className="grid grid-cols-2 gap-2">
@@ -284,7 +284,7 @@ export function TradeStats({ test2, test1 }: { test2: Test2Stats; test1: Test1St
         <div className="text-[9px] text-[#4a565f] mb-1.5 uppercase tracking-[0.5px]">Baseline Comparison</div>
         <div className="grid grid-cols-2 gap-2 text-[9.5px]">
           <div className="bg-[#0c1119] rounded p-1.5">
-            <div className="text-[#55636f] text-[9px] mb-0.5">TEST 1 (baseline)</div>
+            <div className="text-[#55636f] text-[9px] mb-0.5">BASELINE</div>
             <div className="flex justify-between">
               <span className="text-[#4a565f]">TP/SL</span>
               <span className="text-[#e8ecf0]">{test1.tpHit ?? 0}/{test1.slHit ?? 0}</span>
@@ -295,7 +295,7 @@ export function TradeStats({ test2, test1 }: { test2: Test2Stats; test1: Test1St
             </div>
           </div>
           <div className="bg-[#0c1119] rounded p-1.5 border border-[rgba(93,202,165,0.15)]">
-            <div className="text-[#5DCAA5] text-[9px] mb-0.5">TEST 2 (clean WR)</div>
+            <div className="text-[#5DCAA5] text-[9px] mb-0.5">CURRENT (clean WR)</div>
             <div className="flex justify-between">
               <span className="text-[#4a565f]">W/L</span>
               <span className="text-[#e8ecf0]">{clean?.winCount ?? 0}/{clean?.lossCount ?? 0}</span>

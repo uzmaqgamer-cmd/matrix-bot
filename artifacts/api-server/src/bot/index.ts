@@ -482,6 +482,27 @@ export function startScanners(): void {
   setInterval(() => syncRealBalance().catch(console.error), 60 * 1000);
   setImmediate(() => syncRealBalance().catch(console.error));
 
+  // Periodic VPS → Replit state push — keeps Replit dashboard showing real data
+  const REPLIT_SYNC_URL = process.env.REPLIT_SYNC_URL;
+  const BOT_TOKEN       = process.env.TELEGRAM_BOT_TOKEN;
+  if (REPLIT_SYNC_URL && BOT_TOKEN) {
+    const pushState = async () => {
+      try {
+        await fetch(`${REPLIT_SYNC_URL}/api/vps-sync`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${BOT_TOKEN}` },
+          body:    JSON.stringify(loadState()),
+          signal:  AbortSignal.timeout(8000),
+        });
+        console.log('[sync] VPS state pushed to Replit dashboard');
+      } catch (err) {
+        console.warn('[sync] Push to Replit failed:', (err as Error).message);
+      }
+    };
+    setInterval(pushState, 60 * 1000);
+    setImmediate(pushState);
+  }
+
   // Daily summary at midnight UTC
   const scheduleDailySummary = () => {
     const now = new Date();

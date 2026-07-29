@@ -28,7 +28,7 @@ export function Header({ dashboard }: { dashboard: DashboardSnapshot }) {
           </div>
         ) : (
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] tracking-[0.4px] font-medium border bg-[rgba(245,180,87,0.1)] text-[#F5B457] border-[rgba(245,180,87,0.3)]">
-            <span>LIMITED · 5 MAX</span>
+            <span>LIMITED · 8 MAX</span>
           </div>
         )}
         {/* Signals enabled/disabled badge */}
@@ -61,7 +61,7 @@ export function TopStats({ dashboard }: { dashboard: DashboardSnapshot }) {
         deltaFormat="money"
         sub={dashboard.realBalance != null
           ? `Live Binance USDT · synced ${dashboard.realBalanceAt ? Math.round((Date.now() - dashboard.realBalanceAt) / 1000) + 's ago' : '…'}`
-          : 'Paper trading baseline: $100.00'}
+          : 'Paper simulation'}
       />
       <StatCard 
         label="TODAY: TP / SL" 

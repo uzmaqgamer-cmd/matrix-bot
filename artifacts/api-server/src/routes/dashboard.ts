@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response, type NextFunction } from 'express';
 import { loadState, saveState, getOrCreateDailyStats, addToBalanceLog, deduplicateAndRecalculate } from '../bot/storage.js';
+import { getVpsState, vpsStateIsAlive } from './vps-sync.js';
 import { lastScanSummary } from '../bot/scanner.js';
 import { activityLog, scanFeed, logActivity } from '../bot/eventLog.js';
 import { MATRIX, HIGH_PRIORITY_ROWS } from '../bot/matrix.js';
@@ -271,7 +272,8 @@ function computeTest1Stats(state: BotState) {
 // ─── GET /api/dashboard ───────────────────────────────────────────────────────
 
 router.get('/dashboard', (_req, res) => {
-  const state = loadState();
+  // Use VPS live state when fresh (< 3 min since last push) — shows real balance & trades
+  const state = vpsStateIsAlive() ? (getVpsState()!) : loadState();
   const today = getTodayKey();
   const todayStats = state.dailyStats.find(d => d.date === today) ?? {
     date: today, sent: 0, accepted: 0, ignored: 0, tpHit: 0, slHit: 0,
