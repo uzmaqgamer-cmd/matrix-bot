@@ -6,7 +6,7 @@ import {
   formatTestResults, formatRadar, fmtPrice, esc,
 } from './formatter.js';
 import { runFullScan, runWatchlistScan, initScanner, sendSignal, scanSymbol, getRadarData, lastScanSummary } from './scanner.js';
-import { checkActiveSignals, initTracker, monitorPositionTheses, sendDailySummary } from './tracker.js';
+import { checkActiveSignals, initTracker, monitorPositionTheses, sendDailySummary, syncRealBalance } from './tracker.js';
 import { runOfflineTests } from './tests.js';
 import { MATRIX } from './matrix.js';
 
@@ -367,9 +367,10 @@ bot.action(/^accept_(.+)$/, async (ctx) => {
 
   const signal = state.pendingSignals[idx];
   signal.status = 'accepted';
-  // Stamp compounding risk amounts at the moment of acceptance (Test 2)
-  signal.balanceAtEntry = state.paperBalance;
-  signal.riskAmt = parseFloat((state.paperBalance * 0.01).toFixed(4));
+  // Use real exchange balance if available (VPS), otherwise paper balance (Replit)
+  const balanceForSizing = state.realBalance ?? state.paperBalance;
+  signal.balanceAtEntry = balanceForSizing;
+  signal.riskAmt = parseFloat((balanceForSizing * 0.01).toFixed(4));
   state.activeSignals.push(signal);
   state.pendingSignals.splice(idx, 1);
   state.totalAccepted++;
@@ -386,6 +387,7 @@ bot.action(/^accept_(.+)$/, async (ctx) => {
       signal.liveSlOrderId  = result.slOrderId;
       signal.liveFillPrice  = result.fillPrice;
       signal.liveRiskDollar = result.riskDollar;
+      signal.liveFeeEntry   = result.feeEntry;
     } else {
       signal.liveError = result.error;
     }
@@ -475,6 +477,10 @@ export function startScanners(): void {
 
   // Thesis invalidation monitor always runs
   setInterval(() => monitorPositionTheses().catch(console.error), 60 * 1000);
+
+  // Periodic real balance sync — runs every 60s on VPS, no-ops on Replit (no Binance keys)
+  setInterval(() => syncRealBalance().catch(console.error), 60 * 1000);
+  setImmediate(() => syncRealBalance().catch(console.error));
 
   // Daily summary at midnight UTC
   const scheduleDailySummary = () => {

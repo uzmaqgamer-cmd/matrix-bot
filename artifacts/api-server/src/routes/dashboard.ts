@@ -300,6 +300,16 @@ router.get('/dashboard', (_req, res) => {
   const paperBalanceDelta = parseFloat((state.paperBalance - 100).toFixed(4));
   const paperBalancePct = parseFloat(((state.paperBalance - 100) / 100 * 100).toFixed(2));
 
+  // Real exchange balance (populated on VPS; null on Replit paper trading)
+  const realBalance     = state.realBalance    != null ? parseFloat(state.realBalance.toFixed(2))    : null;
+  const realBalanceAt   = state.realBalanceAt  ?? null;
+  const realBalanceLog  = (state.realBalanceLog ?? []).map(e => e.balance);
+  // First logged value is the starting point for delta calculation
+  const realBalanceStart = realBalanceLog.length > 0 ? realBalanceLog[0] : realBalance;
+  const realBalanceDelta = realBalance != null && realBalanceStart != null
+    ? parseFloat((realBalance - realBalanceStart).toFixed(2))
+    : null;
+
   // Enrich watchlist with matrix meanings and expected TP multiplier
   const watchlistItems = Object.entries(state.watchlist).map(([symbol, entry]) => {
     const matRow = MATRIX.find(r => r.row === entry.row);
@@ -336,6 +346,10 @@ router.get('/dashboard', (_req, res) => {
     paperBalanceDelta,
     paperBalancePct,
     balanceHistory,
+    realBalance,
+    realBalanceDelta,
+    realBalanceAt,
+    realBalanceLog,
     test2Stats,
     test1Stats,
     test2StartedAt: state.test2StartedAt,

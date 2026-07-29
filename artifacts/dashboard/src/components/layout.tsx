@@ -54,12 +54,14 @@ export function TopStats({ dashboard }: { dashboard: DashboardSnapshot }) {
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 shrink-0">
-      <StatCard 
-        label="T2 BALANCE" 
-        value={`${dashboard.paperBalance.toFixed(2)}`} 
-        delta={dashboard.paperBalanceDelta}
+      <StatCard
+        label={dashboard.realBalance != null ? 'EXCHANGE BALANCE' : 'PAPER BALANCE'}
+        value={`$${(dashboard.realBalance ?? dashboard.paperBalance).toFixed(2)}`}
+        delta={dashboard.realBalance != null ? dashboard.realBalanceDelta : dashboard.paperBalanceDelta}
         deltaFormat="money"
-        sub={`Test 2 baseline: $100.00`}
+        sub={dashboard.realBalance != null
+          ? `Live Binance USDT · synced ${dashboard.realBalanceAt ? Math.round((Date.now() - dashboard.realBalanceAt) / 1000) + 's ago' : '…'}`
+          : 'Paper trading baseline: $100.00'}
       />
       <StatCard 
         label="TODAY: TP / SL" 

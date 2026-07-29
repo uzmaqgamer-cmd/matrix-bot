@@ -149,9 +149,9 @@ export default function Dashboard() {
         {/* RIGHT — balance chart, trade stats, priority, watchlist */}
         <div className="col-span-3 flex flex-col gap-1.5 min-h-0 overflow-y-auto">
           <BalanceChart
-            history={dashboard.balanceHistory}
-            paperBalance={dashboard.paperBalance}
-            paperBalanceDelta={dashboard.paperBalanceDelta}
+            history={dashboard.realBalance != null ? dashboard.realBalanceLog : dashboard.balanceHistory}
+            paperBalance={dashboard.realBalance ?? dashboard.paperBalance}
+            paperBalanceDelta={dashboard.realBalance != null ? (dashboard.realBalanceDelta ?? 0) : dashboard.paperBalanceDelta}
           />
           <TradeStats test2={test2Stats} test1={test1Stats} />
           <PriorityResolution resolution={dashboard.priorityResolution} />

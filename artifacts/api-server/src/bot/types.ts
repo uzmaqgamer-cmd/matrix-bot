@@ -70,6 +70,14 @@ export interface Signal {
   autoCloseReason?: string;  // e.g. 'thesis_invalidated' | 'price_data_unavailable'
   autoClosePrice?: number;
 
+  // ── Live fee + net P&L tracking ───────────────────────────────────────────
+  liveFeeEntry?:        number; // taker fee paid on entry (qty × fillPrice × 0.0004)
+  liveFeePartialExit?:  number; // taker fee paid on the 50% partial-TP close
+  liveFeeExit?:         number; // taker fee paid on final close
+  liveFeesTotal?:       number; // sum of all fees for this trade
+  livePnlGross?:        number; // raw P&L from price movement (no fees)
+  livePnlNet?:          number; // net P&L after all fees
+
   // ── ATR trailing stop (active after partial TP fires) ─────────────────────
   trailActive?: boolean;     // true once partial TP fires and trail takes over from fixed TP
   trailStop?:   number;      // current trail stop level; only moves in the favourable direction
@@ -126,6 +134,11 @@ export interface BotState {
   test2StartedAt: number;       // timestamp when Test 2 was activated (first boot after this code)
   test2TradeCount: number;      // number of closed trades in Test 2
   balanceLog: BalanceLogEntry[]; // running balance after each Test 2 close event (last 100)
+
+  // ── Real exchange balance (VPS / live trading only) ────────────────────────
+  realBalance?:    number;            // latest Binance USDT available balance
+  realBalanceAt?:  number;            // timestamp of last successful sync
+  realBalanceLog?: BalanceLogEntry[]; // sampled after each trade close (last 100)
 
   // ── Activity log persistence ────────────────────────────────────────────────
   activityLog?: import('./eventLog.js').ActivityEntry[]; // persisted so restarts don't wipe history

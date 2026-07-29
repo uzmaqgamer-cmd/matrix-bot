@@ -10,6 +10,13 @@ export const config = {
    */
   minAtrPercentOfPrice: 1.1,
 
+  /**
+   * Binance USDT-M Futures taker fee rate.
+   * Used to estimate fees on each trade entry and exit.
+   * Standard rate: 0.04% = 0.0004. VIP tiers are lower.
+   */
+  binanceTakerFee: 0.0004,
+
   positionMonitoring: {
     /**
      * How often to re-run the matrix classifier on every open position

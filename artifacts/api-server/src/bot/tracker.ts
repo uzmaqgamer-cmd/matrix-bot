@@ -1,8 +1,8 @@
 import { getCurrentPrice, getAllCurrentPrices, getCachedPrices, getCloseSeries, getOpenInterestSeries, getFundingRateSeries } from './binance.js';
-import { onTpSlHit, onPartialTp, onForceClose } from './trader.js';
+import { onTpSlHit, onPartialTp, onForceClose, getUsdtBalance, isLiveTradingEnabled } from './trader.js';
 import { classify } from './classifier.js';
 import { lookupRow } from './matrix.js';
-import { loadState, saveState, getOrCreateDailyStats, addToBalanceLog } from './storage.js';
+import { loadState, saveState, getOrCreateDailyStats, addToBalanceLog, addToRealBalanceLog } from './storage.js';
 import {
   formatTpHitMessage,
   formatSlHitMessage,
@@ -11,6 +11,23 @@ import {
 } from './formatter.js';
 import { logActivity } from './eventLog.js';
 import { config } from './config.js';
+
+// ─── Real balance sync ────────────────────────────────────────────────────────
+
+export async function syncRealBalance(): Promise<void> {
+  if (!isLiveTradingEnabled()) return;
+  try {
+    const state = loadState();
+    const balance = await getUsdtBalance();
+    state.realBalance   = balance;
+    state.realBalanceAt = Date.now();
+    addToRealBalanceLog(state, balance);
+    saveState(state);
+    console.log(`[tracker] Real balance synced: $${balance.toFixed(2)}`);
+  } catch (err) {
+    console.warn('[tracker] syncRealBalance failed:', (err as Error).message);
+  }
+}
 import type { Telegram } from 'telegraf';
 import type { Signal } from './types.js';
 
@@ -178,6 +195,13 @@ export async function checkActiveSignals() {
           signal.trailActive = true;
           signal.trailStop = signal.entry;
 
+          // Partial exit fee for live trades
+          if (signal.liveEnabled && signal.liveQty) {
+            signal.liveFeePartialExit = parseFloat(
+              (signal.liveQty * 0.5 * price * config.binanceTakerFee).toFixed(6)
+            );
+          }
+
           applyBalance(state, partialChange);
 
           await sendAlert(formatPartialTpMessage(signal, price, partialChange), true);
@@ -239,6 +263,28 @@ export async function checkActiveSignals() {
         signal.resolvedAt = Date.now();
         // MARKET close for remaining position (tracker-managed — no standing orders)
         await onTpSlHit(signal, hit);
+
+        // ── Live fee + net P&L tracking ──────────────────────────────────────
+        if (signal.liveEnabled && signal.liveQty) {
+          const fraction    = signal.partialTpFired ? 0.5 : 1.0;
+          const entryPrice  = signal.liveFillPrice ?? signal.entry;
+          const dir         = signal.direction === 'LONG' ? 1 : -1;
+
+          signal.liveFeeExit   = parseFloat((signal.liveQty * fraction * price * config.binanceTakerFee).toFixed(6));
+          signal.liveFeesTotal = parseFloat(
+            ((signal.liveFeeEntry ?? 0) + (signal.liveFeePartialExit ?? 0) + signal.liveFeeExit).toFixed(6)
+          );
+
+          const finalGross   = (price - entryPrice) * dir * signal.liveQty * fraction;
+          const partialGross = signal.partialTpPrice
+            ? (signal.partialTpPrice - entryPrice) * dir * signal.liveQty * 0.5
+            : 0;
+          signal.livePnlGross = parseFloat((finalGross + partialGross).toFixed(6));
+          signal.livePnlNet   = parseFloat((signal.livePnlGross - (signal.liveFeesTotal ?? 0)).toFixed(6));
+
+          // Sync real balance after close so dashboard reflects actual exchange balance
+          syncRealBalance().catch(console.error);
+        }
 
         let finalCloseAmt = 0;
         if (signal.riskAmt != null && signal.riskAmt > 0) {

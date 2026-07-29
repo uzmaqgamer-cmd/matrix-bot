@@ -159,8 +159,9 @@ export async function initStorage(): Promise<void> {
     _dbAvailable = false;
   }
 
-  // Back-compat guard
-  if (!Array.isArray(_state.balanceLog)) _state.balanceLog = [];
+  // Back-compat guards
+  if (!Array.isArray(_state.balanceLog))     _state.balanceLog     = [];
+  if (!Array.isArray(_state.realBalanceLog)) _state.realBalanceLog = [];
 
   // Restore persisted activity log into the in-memory ring buffer
   const persisted = (_state as any).activityLog;
@@ -184,7 +185,8 @@ export async function refreshStateFromDb(): Promise<void> {
     const fresh = await dbLoad();
     if (!fresh) return;
     Object.assign(_state, fresh);
-    if (!Array.isArray(_state.balanceLog)) _state.balanceLog = [];
+    if (!Array.isArray(_state.balanceLog))     _state.balanceLog     = [];
+    if (!Array.isArray(_state.realBalanceLog)) _state.realBalanceLog = [];
     // Restore activity log from the snapshot saved in DB
     const persisted = (_state as any).activityLog;
     if (Array.isArray(persisted) && persisted.length > 0) {
@@ -203,7 +205,8 @@ export function loadState(): BotState {
     // Sync fallback — should never happen if initStorage() was awaited at startup
     console.warn('[storage] loadState() before initStorage() — using file fallback');
     _state = fileLoad();
-    if (!Array.isArray(_state.balanceLog)) _state.balanceLog = [];
+    if (!Array.isArray(_state.balanceLog))     _state.balanceLog     = [];
+    if (!Array.isArray(_state.realBalanceLog)) _state.realBalanceLog = [];
   }
   return _state;
 }
@@ -364,5 +367,17 @@ export function addToBalanceLog(state: BotState): void {
   state.balanceLog.push(entry);
   if (state.balanceLog.length > 100) {
     state.balanceLog = state.balanceLog.slice(-100);
+  }
+}
+
+/**
+ * Push a real Binance balance snapshot onto the realBalanceLog.
+ * Called after each live trade close and on periodic balance sync.
+ */
+export function addToRealBalanceLog(state: BotState, balance: number): void {
+  if (!Array.isArray(state.realBalanceLog)) state.realBalanceLog = [];
+  state.realBalanceLog.push({ ts: Date.now(), balance: parseFloat(balance.toFixed(4)) });
+  if (state.realBalanceLog.length > 100) {
+    state.realBalanceLog = state.realBalanceLog.slice(-100);
   }
 }

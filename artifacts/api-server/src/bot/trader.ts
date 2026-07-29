@@ -253,6 +253,7 @@ export interface OpenTradeResult {
   quantity:   number;
   fillPrice:  number;
   riskDollar: number;
+  feeEntry:   number;  // taker fee paid at entry (qty × fillPrice × takerFee)
 }
 export interface OpenTradeError  { ok: false; error: string }
 export type OpenTradeOutcome = OpenTradeResult | OpenTradeError;
@@ -322,7 +323,12 @@ export async function openTrade(signal: Signal): Promise<OpenTradeOutcome> {
       `lev=${usedLeverage}× risk=$${riskDollar.toFixed(2)} — tracker will close`,
     );
 
-    return { ok: true, orderId: String(orderId), tpOrderId: '', slOrderId: '', quantity: qty, fillPrice, riskDollar };
+    const feeEntry = parseFloat((qty * fillPrice * config.binanceTakerFee).toFixed(6));
+    console.log(
+      `[trader] ✅ LIVE OPEN  ${signal.direction} ${signal.symbol} | ` +
+      `qty=${qty} fill≈${fillPrice} lev=${usedLeverage}× risk=$${riskDollar.toFixed(2)} fee≈$${feeEntry.toFixed(4)} — tracker will close`,
+    );
+    return { ok: true, orderId: String(orderId), tpOrderId: '', slOrderId: '', quantity: qty, fillPrice, riskDollar, feeEntry };
   } catch (err: any) {
     const msg = err.message ?? String(err);
     // Suppress noisy logs for known non-error conditions

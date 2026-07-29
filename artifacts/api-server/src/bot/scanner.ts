@@ -98,8 +98,9 @@ export async function sendSignal(params: {
       // ─── UNLIMITED MODE: auto-accept, no user prompt ─────────────────────
       signal.status = 'accepted';
       // Stamp compounding risk amounts at the moment of acceptance (Test 2)
-      signal.balanceAtEntry = state.paperBalance;
-      signal.riskAmt = parseFloat((state.paperBalance * 0.01).toFixed(4));
+      const balanceForSizing = state.realBalance ?? state.paperBalance;
+      signal.balanceAtEntry = balanceForSizing;
+      signal.riskAmt = parseFloat((balanceForSizing * 0.01).toFixed(4));
       state.activeSignals.push(signal);
       state.totalSent++;
       state.totalAccepted++;
@@ -118,6 +119,7 @@ export async function sendSignal(params: {
           signal.liveSlOrderId  = result.slOrderId;
           signal.liveFillPrice  = result.fillPrice;
           signal.liveRiskDollar = result.riskDollar;
+          signal.liveFeeEntry   = result.feeEntry;
           console.log(`[scanner] Live trade stamped on signal ${signal.id}`);
         } else {
           signal.liveError = result.error;
