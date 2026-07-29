@@ -175,30 +175,60 @@ export function formatSignalMessage(signal: Signal): string {
 // ─── TP / SL hit alerts ───────────────────────────────────────────────────────
 
 export function formatTpHitMessage(signal: Signal, exitPrice: number): string {
-  const pnl = signal.direction === 'LONG'
-    ? ((exitPrice - signal.entry) / signal.entry * 100).toFixed(2)
-    : ((signal.entry - exitPrice) / signal.entry * 100).toFixed(2);
-  const rr = (signal.rr ?? 2).toFixed(1);
+  const pnlPct = signal.direction === 'LONG'
+    ? ((exitPrice - signal.entry) / signal.entry * 100)
+    : ((signal.entry - exitPrice) / signal.entry * 100);
+
+  // Actual achieved R/R = how far price moved vs the original SL distance
+  const slDist  = Math.abs(signal.entry - signal.sl);
+  const moveDist = Math.abs(exitPrice - signal.entry);
+  const actualRR = slDist > 0 ? (moveDist / slDist).toFixed(2) : '?';
+
+  const isTrailExit = signal.trailActive && signal.partialTpFired;
+
+  if (isTrailExit) {
+    return (
+      `✅ <b>TRAIL EXIT — ${esc(signal.symbol)}</b>\n` +
+      `Direction: ${signal.direction}\n` +
+      `Entry: <code>${fmtPrice(signal.entry)}</code> → Trail stop: <code>${fmtPrice(exitPrice)}</code>\n` +
+      `PnL (remaining 50%): <b>+${pnlPct.toFixed(2)}%</b>\n` +
+      `Achieved R/R: <b>1:${actualRR}</b>  (planned: 1:${(signal.rr ?? 2).toFixed(1)})\n` +
+      `ID: <code>${signal.id}</code>`
+    );
+  }
+
   return (
     `✅ <b>TP HIT — ${esc(signal.symbol)}</b>\n` +
     `Direction: ${signal.direction}\n` +
     `Entry: <code>${fmtPrice(signal.entry)}</code> → Exit: <code>${fmtPrice(exitPrice)}</code>\n` +
-    `PnL: <b>+${pnl}%</b>  (R/R 1:${rr})\n` +
+    `PnL: <b>+${pnlPct.toFixed(2)}%</b>  (R/R 1:${actualRR})\n` +
     `Tier: <i>${esc(tierLabel(signal))}</i>\n` +
     `ID: <code>${signal.id}</code>`
   );
 }
 
 export function formatSlHitMessage(signal: Signal, exitPrice: number): string {
-  const loss = signal.direction === 'LONG'
+  const isBreakeven = signal.partialTpFired;
+  const lossPct = signal.direction === 'LONG'
     ? ((signal.entry - exitPrice) / signal.entry * 100).toFixed(2)
     : ((exitPrice - signal.entry) / signal.entry * 100).toFixed(2);
-  const rr = (signal.rr ?? 2).toFixed(1);
+
+  if (isBreakeven) {
+    return (
+      `⚖️ <b>BREAKEVEN EXIT — ${esc(signal.symbol)}</b>\n` +
+      `Direction: ${signal.direction}\n` +
+      `50% banked at partial TP · remaining 50% exited at entry\n` +
+      `Entry: <code>${fmtPrice(signal.entry)}</code> → Exit: <code>${fmtPrice(exitPrice)}</code>\n` +
+      `Net on remaining: <b>±0%</b>  (profit locked from partial TP)\n` +
+      `ID: <code>${signal.id}</code>`
+    );
+  }
+
   return (
     `❌ <b>SL HIT — ${esc(signal.symbol)}</b>\n` +
     `Direction: ${signal.direction}\n` +
     `Entry: <code>${fmtPrice(signal.entry)}</code> → Exit: <code>${fmtPrice(exitPrice)}</code>\n` +
-    `Loss: <b>-${loss}%</b>  (R/R was 1:${rr})\n` +
+    `Loss: <b>-${lossPct}%</b>\n` +
     `ID: <code>${signal.id}</code>`
   );
 }
