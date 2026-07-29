@@ -1,0 +1,390 @@
+//@version=6
+indicator("Pump Detector Pro v6", overlay = true, max_labels_count = 500, max_lines_count = 500, max_boxes_count = 300)
+
+// ═══════════════════════ COLORS ═══════════════════════
+color C1 = #6b8f7a   // bullish
+color C2 = #2f2a25   // bearish / dark
+color C3 = #b08a3e   // liquidity accent (BSL/SSL)
+
+// ═══════════════════════ INPUTS ═══════════════════════
+grpBase = "Step 0 — Base (Dump + Consolidation)"
+minDumpPercent   = input.float(30.0, "Min Dump % From Swing High", minval = 5, group = grpBase)
+baseLookback     = input.int(100, "Base Lookback (bars, for swing high)", minval = 20, group = grpBase)
+maxRangePercent  = input.float(15.0, "Max Range % (consolidation tightness)", minval = 2, group = grpBase)
+rangeLookback    = input.int(20, "Range Lookback (bars)", minval = 5, group = grpBase)
+baseValidWindow  = input.int(25, "Base Valid Window (bars)", minval = 5, group = grpBase)
+
+grpTop = "Step 0b — Pump / Extension (context for top detection & label filtering)"
+minPumpPercent      = input.float(50.0, "Min Pump % From Recent Low", minval = 10, group = grpTop)
+pumpLookback        = input.int(100, "Pump Lookback (bars, for swing low)", minval = 20, group = grpTop)
+extensionEmaLen     = input.int(50, "Extension EMA Length", minval = 10, group = grpTop)
+minExtensionPercent = input.float(15.0, "Min % Above EMA (extension)", minval = 2, group = grpTop)
+rsiLen              = input.int(14, "RSI Length", minval = 5, group = grpTop)
+rsiOverbought       = input.float(70.0, "RSI Overbought Level", minval = 50, maxval = 90, group = grpTop)
+rsiLookback         = input.int(20, "RSI Peak Lookback (bars)", minval = 5, group = grpTop)
+rsiDivergenceDrop   = input.float(8.0, "Min RSI Drop From Peak (divergence)", minval = 2, group = grpTop)
+requireSweepForTop  = input.bool(true, "Require HTF Sweep of High for SELL", group = grpTop)
+
+grpSweep = "Step 1 — HTF Liquidity Sweep"
+htf          = input.timeframe("240", "HTF (4H default)", group = grpSweep)
+sweepLen     = input.int(7, "Sweep Pivot Length", minval = 3, maxval = 20, group = grpSweep)
+sweepWindow  = input.int(30, "Bars Valid After HTF Sweep (LTF bars)", minval = 5, group = grpSweep)
+requireSweep = input.bool(true, "Require HTF Sweep for BUY", group = grpSweep)
+
+grpStruct = "Step 2 — LTF Structure (CHoCH/BOS)"
+structLen = input.int(5, "Structure Leg Length", minval = 3, maxval = 15, group = grpStruct)
+showInt   = input.bool(true, "Show Structure Lines/Labels", group = grpStruct)
+labelSize = input.string(size.small, "Label Size", options = [size.tiny, size.small, size.normal], group = grpStruct)
+allowBOS  = input.bool(true, "Also Signal BUY on BOS (continuation)", group = grpStruct)
+showAllBOS = input.bool(false, "Show Every CHoCH/BOS (disable context filtering)", group = grpStruct, tooltip = "OFF (default): both CHoCH and BOS labels only draw when relevant to a live setup (base active / already-extended pump). ON: show every structure break, at the cost of clutter.")
+
+grpLate = "Step 2b — Late-Entry Suppression (BUY)"
+maxATRExtension        = input.float(6.0, "Max ATR Extension From Swept Low", minval = 1, group = grpLate)
+highProximityLookback  = input.int(60, "Recent-High Lookback (bars)", minval = 10, group = grpLate)
+highProximityPercent   = input.float(3.0, "Block If Within % of Recent High", minval = 0.5, group = grpLate)
+
+grpVol = "Step 3a — Volume Confirmation"
+volLen        = input.int(25, "Volume Spike Lookback", group = grpVol)
+volMultiplier = input.float(1.2, "Volume Spike Multiplier", minval = 1.0, step = 0.1, group = grpVol)
+avgVolLen     = input.int(50, "Avg Volume Length", group = grpVol)
+minVolFilter  = input.float(0.8, "Min Volume vs Avg", minval = 0.1, step = 0.1, group = grpVol)
+
+grpVoid = "Step 3b — Liquidity Void (FVG)"
+showVoid        = input.bool(true, "Show Voids", group = grpVoid)
+voidMinATR      = input.float(0.25, "Min Void Size (x ATR)", minval = 0.05, step = 0.05, group = grpVoid)
+mitigateVoid    = input.bool(true, "Recolor Voids Once Swept/Filled", group = grpVoid)
+filledVoidColor = input.color(color.new(color.gray, 88), "Filled Void Color", group = grpVoid)
+voidMaxKept     = input.int(40, "Max Voids Kept Per Side", minval = 5, group = grpVoid)
+
+grpLiq = "Step 3c — Buy-Side / Sell-Side Liquidity"
+showLiq     = input.bool(true, "Show BSL/SSL Levels", group = grpLiq)
+liqPivotLen = input.int(10, "Liquidity Pivot Length", minval = 3, group = grpLiq)
+liqLevels   = input.int(3, "Visible Levels Each Side", minval = 1, maxval = 10, group = grpLiq)
+
+grpTrade = "Trade Management"
+tp1Mult      = input.float(3.0, "TP1 (ATR Mult)", minval = 0.5, step = 0.1, group = grpTrade)
+tp2Mult      = input.float(5.5, "TP2 (ATR Mult)", minval = 0.5, step = 0.1, group = grpTrade)
+slMult       = input.float(1.5, "SL (ATR Mult)", minval = 0.5, step = 0.1, group = grpTrade)
+maxSLPercent = input.float(7.0, "Max SL % Loss", minval = 1.0, maxval = 15.0, step = 0.5, group = grpTrade)
+showTrade    = input.bool(true, "Show TP/SL Lines", group = grpTrade)
+
+// ═══════════════════════ STEP 0 — BASE (DUMP + CONSOLIDATION) ═══════════════════════
+recentSwingHigh = ta.highest(high, baseLookback)
+dumpPercent     = (recentSwingHigh - close) / recentSwingHigh * 100
+
+rangeHigh       = ta.highest(high, rangeLookback)
+rangeLow        = ta.lowest(low, rangeLookback)
+consolRangePct  = (rangeHigh - rangeLow) / rangeLow * 100
+
+isDump          = dumpPercent >= minDumpPercent
+isConsolidating = consolRangePct <= maxRangePercent
+isBase          = isDump and isConsolidating
+
+var int barsSinceBase = 999999
+if isBase
+    barsSinceBase := 0
+else
+    barsSinceBase += 1
+bool baseActive = barsSinceBase <= baseValidWindow
+
+// ═══════════════════════ STEP 0b — PUMP / EXTENSION / RSI (macro context, used by both SELL and the BUY block below) ═══════════════════════
+recentSwingLow = ta.lowest(low, pumpLookback)
+pumpPercent    = (close - recentSwingLow) / recentSwingLow * 100
+hasPumped      = pumpPercent >= minPumpPercent
+
+extEma       = ta.ema(close, extensionEmaLen)
+extensionPct = (close - extEma) / extEma * 100
+isExtended   = extensionPct >= minExtensionPercent
+
+rsi           = ta.rsi(close, rsiLen)
+peakRsi       = ta.highest(rsi, rsiLookback)
+wasOverbought = peakRsi >= rsiOverbought
+rsiFaded      = (peakRsi - rsi) >= rsiDivergenceDrop
+rsiDivergence = wasOverbought and rsiFaded
+
+// ═══════════════════════ STEP 1 — HTF SWEEP ═══════════════════════
+htf_sweepLow  = request.security(syminfo.tickerid, htf, low  < nz(ta.valuewhen(not na(ta.pivotlow(low, sweepLen, sweepLen)), ta.pivotlow(low, sweepLen, sweepLen), 1)) and close > nz(ta.valuewhen(not na(ta.pivotlow(low, sweepLen, sweepLen)), ta.pivotlow(low, sweepLen, sweepLen), 1)), lookahead = barmerge.lookahead_off)
+htf_sweepHigh = request.security(syminfo.tickerid, htf, high > nz(ta.valuewhen(not na(ta.pivothigh(high, sweepLen, sweepLen)), ta.pivothigh(high, sweepLen, sweepLen), 1)) and close < nz(ta.valuewhen(not na(ta.pivothigh(high, sweepLen, sweepLen)), ta.pivothigh(high, sweepLen, sweepLen), 1)), lookahead = barmerge.lookahead_off)
+
+var int barsSinceSweepLow  = 999999
+var int barsSinceSweepHigh = 999999
+if htf_sweepLow
+    barsSinceSweepLow := 0
+else
+    barsSinceSweepLow += 1
+if htf_sweepHigh
+    barsSinceSweepHigh := 0
+else
+    barsSinceSweepHigh += 1
+
+bool sweepLowActive  = barsSinceSweepLow  <= sweepWindow
+bool sweepHighActive = barsSinceSweepHigh <= sweepWindow
+
+// ═══════════════════════ STEP 2 — LTF CHoCH / BOS ═══════════════════════
+int BULLISH = 1
+int BEARISH = -1
+
+var float intHighLevel   = na
+var float intLowLevel    = na
+var bool  intHighCrossed = false
+var bool  intLowCrossed  = false
+var int   intHighTime    = na
+var int   intLowTime     = na
+var int   intHighIdx     = na
+var int   intLowIdx      = na
+var int   intTrend       = 0
+
+highestN = ta.highest(high, structLen)
+lowestN  = ta.lowest(low, structLen)
+
+var int iLeg = 0
+if high[structLen] > highestN
+    iLeg := 0
+else if low[structLen] < lowestN
+    iLeg := 1
+
+newIntPivot  = ta.change(iLeg) != 0
+intPivotLow  = ta.change(iLeg) ==  1
+intPivotHigh = ta.change(iLeg) == -1
+
+if newIntPivot
+    if intPivotLow
+        intLowLevel   := low[structLen]
+        intLowCrossed := false
+        intLowTime    := time[structLen]
+        intLowIdx     := bar_index[structLen]
+    if intPivotHigh
+        intHighLevel   := high[structLen]
+        intHighCrossed := false
+        intHighTime    := time[structLen]
+        intHighIdx     := bar_index[structLen]
+
+bullStructure = not na(intHighLevel) and not intHighCrossed and ta.crossover(close, intHighLevel)
+bearStructure = not na(intLowLevel)  and not intLowCrossed  and ta.crossunder(close, intLowLevel)
+
+string bullTag = na
+string bearTag = na
+
+if bullStructure
+    bullTag        := intTrend == BEARISH ? "CHoCH" : "BOS"
+    intHighCrossed := true
+    intTrend       := BULLISH
+
+if bearStructure
+    bearTag       := intTrend == BULLISH ? "CHoCH" : "BOS"
+    intLowCrossed := true
+    intTrend      := BEARISH
+
+// CHoCH and BOS now share the exact same visibility gate — no more "CHoCH always shows" exception.
+showBullLabel = showInt and bullStructure and not na(bullTag) and (baseActive or showAllBOS)
+showBearLabel = showInt and bearStructure and not na(bearTag) and ((hasPumped and isExtended) or showAllBOS)
+
+if showBullLabel
+    line.new(chart.point.new(intHighTime, na, intHighLevel), chart.point.new(time, na, intHighLevel), xloc = xloc.bar_time, color = C1, style = line.style_dashed)
+    label.new(chart.point.new(na, math.round(0.5 * (intHighIdx + bar_index)), intHighLevel), bullTag, xloc = xloc.bar_index, color = color(na), textcolor = C1, style = label.style_label_down, size = labelSize)
+
+if showBearLabel
+    line.new(chart.point.new(intLowTime, na, intLowLevel), chart.point.new(time, na, intLowLevel), xloc = xloc.bar_time, color = C2, style = line.style_dashed)
+    label.new(chart.point.new(na, math.round(0.5 * (intLowIdx + bar_index)), intLowLevel), bearTag, xloc = xloc.bar_index, color = color(na), textcolor = C2, style = label.style_label_up, size = labelSize)
+
+// ═══════════════════════ STEP 2b — LATE-ENTRY SUPPRESSION (BUY) ═══════════════════════
+atr = ta.atr(14)
+
+extensionATR   = not na(intLowLevel) ? (close - intLowLevel) / atr : na
+tooFarExtended = not na(extensionATR) and extensionATR > maxATRExtension
+
+recentMajorHigh = ta.highest(high, highProximityLookback)
+tooCloseToHigh  = close >= recentMajorHigh * (1 - highProximityPercent / 100)
+
+bool tooLate = tooFarExtended or tooCloseToHigh
+
+// ═══════════════════════ STEP 3a — VOLUME CONFIRMATION ═══════════════════════
+highestVol   = ta.highest(volume[1], volLen)
+avgVolume    = ta.sma(volume, avgVolLen)
+minVolThresh = avgVolume * minVolFilter
+
+volBuy  = close > open and volume > (highestVol * volMultiplier) and volume > minVolThresh
+volSell = close < open and volume > (highestVol * volMultiplier) and volume > minVolThresh
+
+// ═══════════════════════ STEP 3b — LIQUIDITY VOID (FVG), recolors when swept ═══════════════════════
+bullVoidTop = low
+bullVoidBot = high[2]
+bullVoid = bullVoidTop > bullVoidBot and (bullVoidTop - bullVoidBot) > atr * voidMinATR
+
+bearVoidTop = low[2]
+bearVoidBot = high
+bearVoid = bearVoidTop > bearVoidBot and (bearVoidTop - bearVoidBot) > atr * voidMinATR
+
+var box[]  bullVoidBoxes  = array.new_box()
+var bool[] bullVoidFilled = array.new_bool()
+var box[]  bearVoidBoxes  = array.new_box()
+var bool[] bearVoidFilled = array.new_bool()
+
+if showVoid and bullVoid
+    array.push(bullVoidBoxes, box.new(bar_index[2], bullVoidBot, bar_index, bullVoidTop, border_color = na, bgcolor = color.new(C1, 85)))
+    array.push(bullVoidFilled, false)
+    if array.size(bullVoidBoxes) > voidMaxKept
+        box.delete(array.shift(bullVoidBoxes))
+        array.shift(bullVoidFilled)
+
+if showVoid and bearVoid
+    array.push(bearVoidBoxes, box.new(bar_index[2], bearVoidTop, bar_index, bearVoidBot, border_color = na, bgcolor = color.new(C2, 85)))
+    array.push(bearVoidFilled, false)
+    if array.size(bearVoidBoxes) > voidMaxKept
+        box.delete(array.shift(bearVoidBoxes))
+        array.shift(bearVoidFilled)
+
+if showVoid and mitigateVoid
+    nBull = array.size(bullVoidBoxes)
+    for i = 0 to (nBull > 0 ? nBull - 1 : na)
+        bx     = array.get(bullVoidBoxes, i)
+        filled = array.get(bullVoidFilled, i)
+        if not filled
+            bot = box.get_bottom(bx)
+            box.set_right(bx, bar_index)
+            if close < bot
+                box.set_bgcolor(bx, filledVoidColor)
+                array.set(bullVoidFilled, i, true)
+    nBear = array.size(bearVoidBoxes)
+    for i = 0 to (nBear > 0 ? nBear - 1 : na)
+        bx     = array.get(bearVoidBoxes, i)
+        filled = array.get(bearVoidFilled, i)
+        if not filled
+            top = box.get_top(bx)
+            box.set_right(bx, bar_index)
+            if close > top
+                box.set_bgcolor(bx, filledVoidColor)
+                array.set(bearVoidFilled, i, true)
+
+// ═══════════════════════ STEP 3c — BUY-SIDE / SELL-SIDE LIQUIDITY ═══════════════════════
+var line[]  bslLines  = array.new_line()
+var label[] bslLabels = array.new_label()
+var bool[]  bslTaken  = array.new_bool()
+
+var line[]  sslLines  = array.new_line()
+var label[] sslLabels = array.new_label()
+var bool[]  sslTaken  = array.new_bool()
+
+liqPH = ta.pivothigh(liqPivotLen, liqPivotLen)
+liqPL = ta.pivotlow(liqPivotLen, liqPivotLen)
+
+if showLiq and not na(liqPH)
+    array.unshift(bslLines, line.new(bar_index[liqPivotLen], liqPH, bar_index + 50, liqPH, color = color.new(C3, 30), style = line.style_dotted))
+    array.unshift(bslLabels, label.new(bar_index[liqPivotLen], liqPH, "BSL", style = label.style_label_down, color = color(na), textcolor = C3, size = size.tiny))
+    array.unshift(bslTaken, false)
+    if array.size(bslLines) > liqLevels
+        line.delete(array.pop(bslLines))
+        label.delete(array.pop(bslLabels))
+        array.pop(bslTaken)
+
+if showLiq and not na(liqPL)
+    array.unshift(sslLines, line.new(bar_index[liqPivotLen], liqPL, bar_index + 50, liqPL, color = color.new(C3, 30), style = line.style_dotted))
+    array.unshift(sslLabels, label.new(bar_index[liqPivotLen], liqPL, "SSL", style = label.style_label_up, color = color(na), textcolor = C3, size = size.tiny))
+    array.unshift(sslTaken, false)
+    if array.size(sslLines) > liqLevels
+        line.delete(array.pop(sslLines))
+        label.delete(array.pop(sslLabels))
+        array.pop(sslTaken)
+
+if showLiq
+    nBsl = array.size(bslLines)
+    for i = 0 to (nBsl > 0 ? nBsl - 1 : na)
+        ln    = array.get(bslLines, i)
+        lvl   = line.get_y1(ln)
+        taken = array.get(bslTaken, i)
+        if not taken
+            line.set_x2(ln, bar_index)
+            if high > lvl
+                array.set(bslTaken, i, true)
+                line.set_color(ln, color.new(C1, 0))
+                lb = array.get(bslLabels, i)
+                label.set_text(lb, "BSL swept")
+                label.set_textcolor(lb, C1)
+    nSsl = array.size(sslLines)
+    for i = 0 to (nSsl > 0 ? nSsl - 1 : na)
+        ln    = array.get(sslLines, i)
+        lvl   = line.get_y1(ln)
+        taken = array.get(sslTaken, i)
+        if not taken
+            line.set_x2(ln, bar_index)
+            if low < lvl
+                array.set(sslTaken, i, true)
+                line.set_color(ln, color.new(C2, 0))
+                lb2 = array.get(sslLabels, i)
+                label.set_text(lb2, "SSL swept")
+                label.set_textcolor(lb2, C2)
+
+// ═══════════════════════ FINAL SIGNALS ═══════════════════════
+// BUY now explicitly blocked whenever the coin already qualifies as "pumped + extended" —
+// the same macro condition that qualifies a coin for the SELL/top signal. This stops the
+// "BUY at the top" case: a local mini-base mid-rally can no longer fire a BUY once the
+// broader move already counts as a completed pump.
+buySignal  = baseActive and bullStructure and (bullTag == "CHoCH" or (allowBOS and bullTag == "BOS")) and (not requireSweep or sweepLowActive) and volBuy and not tooLate and not (hasPumped and isExtended)
+
+sellSignal = hasPumped and isExtended and rsiDivergence and bearStructure and bearTag == "CHoCH" and volSell and (not requireSweepForTop or sweepHighActive)
+
+plotshape(buySignal,  title = "BUY (full confluence)",  location = location.belowbar, color = C1, style = shape.labelup,   text = "BUY",  textcolor = C2, size = size.tiny)
+plotshape(sellSignal, title = "SELL (top detection)",   location = location.abovebar, color = C2, style = shape.labeldown, text = "SELL", textcolor = C1, size = size.tiny)
+
+// ═══════════════════════ TRADE MANAGEMENT (TP1/TP2/SL) ═══════════════════════
+var float buyEntry = na
+var float buyTP1 = na
+var float buyTP2 = na
+var float buySL = na
+var line buyTP1Line = na
+var line buyTP2Line = na
+var line buySLLine = na
+
+var float sellEntry = na
+var float sellTP1 = na
+var float sellTP2 = na
+var float sellSL = na
+var line sellTP1Line = na
+var line sellTP2Line = na
+var line sellSLLine = na
+
+f_clean(l1, l2, l3) =>
+    if not na(l1)
+        line.delete(l1)
+        line.delete(l2)
+        line.delete(l3)
+
+if buySignal
+    f_clean(buyTP1Line, buyTP2Line, buySLLine)
+    buyEntry := close
+    structSL = not na(intLowLevel) ? intLowLevel - atr * 0.3 : close - atr * slMult
+    calcSL   = math.min(close - atr * slMult, structSL)
+    buySL   := math.max(calcSL, close * (1 - maxSLPercent / 100))
+    buyTP1  := close + atr * tp1Mult
+    buyTP2  := close + atr * tp2Mult
+    if showTrade
+        buyTP1Line := line.new(bar_index, buyTP1, bar_index + 30, buyTP1, color = color.new(C1, 50), style = line.style_dashed)
+        buyTP2Line := line.new(bar_index, buyTP2, bar_index + 30, buyTP2, color = color.new(C1, 50), style = line.style_dashed)
+        buySLLine  := line.new(bar_index, buySL,  bar_index + 30, buySL,  color = color.new(C2, 50), style = line.style_solid)
+
+if sellSignal
+    f_clean(sellTP1Line, sellTP2Line, sellSLLine)
+    sellEntry := close
+    structSL2 = not na(intHighLevel) ? intHighLevel + atr * 0.3 : close + atr * slMult
+    calcSL2   = math.max(close + atr * slMult, structSL2)
+    sellSL   := math.min(calcSL2, close * (1 + maxSLPercent / 100))
+    sellTP1  := close - atr * tp1Mult
+    sellTP2  := close - atr * tp2Mult
+    if showTrade
+        sellTP1Line := line.new(bar_index, sellTP1, bar_index + 30, sellTP1, color = color.new(C2, 50), style = line.style_dashed)
+        sellTP2Line := line.new(bar_index, sellTP2, bar_index + 30, sellTP2, color = color.new(C2, 50), style = line.style_dashed)
+        sellSLLine  := line.new(bar_index, sellSL,  bar_index + 30, sellSL,  color = color.new(C1, 50), style = line.style_solid)
+
+if not na(buyTP1Line)
+    line.set_x2(buyTP1Line, bar_index + 20)
+    line.set_x2(buyTP2Line, bar_index + 20)
+    line.set_x2(buySLLine,  bar_index + 20)
+
+if not na(sellTP1Line)
+    line.set_x2(sellTP1Line, bar_index + 20)
+    line.set_x2(sellTP2Line, bar_index + 20)
+    line.set_x2(sellSLLine,  bar_index + 20)
+
+// ═══════════════════════ ALERTS ═══════════════════════
+alertcondition(buySignal,  "Pump Detector BUY",  "Base + Sweep + CHoCH/BOS + Volume, not extended, not already-pumped — BUY")
+alertcondition(sellSignal, "Pump Detector SELL", "Confirmed pump + extension + RSI divergence + bearish CHoCH + volume — SELL (top)")
