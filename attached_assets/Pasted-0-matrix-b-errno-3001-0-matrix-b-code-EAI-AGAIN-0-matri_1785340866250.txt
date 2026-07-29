@@ -1,0 +1,30 @@
+0|matrix-b |   errno: -3001,
+0|matrix-b |   code: 'EAI_AGAIN',
+0|matrix-b |   syscall: 'getaddrinfo',
+0|matrix-b |   hostname: 'helium'
+0|matrix-b | }
+0|matrix-b | [storage] DB unavailable, falling back to file: Error: getaddrinfo EAI_AGAIN helium
+0|matrix-b |     at <anonymous> (/opt/matrix-bot/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45:11)
+0|matrix-b |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|matrix-b |     at async ensureTable (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:54:3)
+0|matrix-b |     at async initStorage (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:136:7)
+0|matrix-b |     at async <anonymous> (/opt/matrix-bot/artifacts/api-server/src/index.ts:28:5) {
+0|matrix-b |   errno: -3001,
+0|matrix-b |   code: 'EAI_AGAIN',
+0|matrix-b |   syscall: 'getaddrinfo',
+0|matrix-b |   hostname: 'helium'
+0|matrix-b | }
+0|matrix-b | [storage] DB unavailable, falling back to file: Error: getaddrinfo EAI_AGAIN helium
+0|matrix-b |     at <anonymous> (/opt/matrix-bot/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45:11)
+0|matrix-b |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|matrix-b |     at async ensureTable (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:54:3)
+0|matrix-b |     at async initStorage (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:136:7)
+0|matrix-b |     at async <anonymous> (/opt/matrix-bot/artifacts/api-server/src/index.ts:28:5) {
+0|matrix-b |   errno: -3001,
+0|matrix-b |   code: 'EAI_AGAIN',
+0|matrix-b |   syscall: 'getaddrinfo',
+0|matrix-b |   hostname: 'helium'
+0|matrix-b | }
+0|matrix-b | [scanner] Live trade skipped for NVDLUSDT: NVDLUSDT not listed on Binance Futures — skipping
+0|matrix-b | [scanner] Live trade skipped for AEHRUSDT: AEHRUSDT not listed on Binance Futures — skipping
+0|matrix-b | [scanner] Live trade skipped for MARAUSDT: MARAUSDT not listed on Binance Futures — skipping
