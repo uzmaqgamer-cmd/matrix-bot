@@ -377,8 +377,11 @@ bot.action(/^accept_(.+)$/, async (ctx) => {
   getOrCreateDailyStats(state).accepted++;
   saveState(state);
 
-  // Open a live Binance position if LIVE_TRADING=true on the VPS
+  // Open a live Binance position if LIVE_TRADING=true on the VPS.
+  // Set livePendingOpen SYNCHRONOUSLY so tracker skips TP/SL detection until fill is stamped.
+  signal.livePendingOpen = true;
   openTrade(signal).then(result => {
+    signal.livePendingOpen = false;
     if (result.ok) {
       signal.liveEnabled    = true;
       signal.liveQty        = result.quantity;
@@ -388,11 +391,26 @@ bot.action(/^accept_(.+)$/, async (ctx) => {
       signal.liveFillPrice  = result.fillPrice;
       signal.liveRiskDollar = result.riskDollar;
       signal.liveFeeEntry   = result.feeEntry;
+      // Recalculate TP/SL from actual fill so tracker monitors real levels
+      const fill = result.fillPrice;
+      if (fill > 0 && signal.atr > 0) {
+        if (signal.direction === 'LONG') {
+          signal.sl = parseFloat((fill - signal.atr).toPrecision(6));
+          signal.tp = parseFloat((fill + signal.atr * signal.rr).toPrecision(6));
+        } else {
+          signal.sl = parseFloat((fill + signal.atr).toPrecision(6));
+          signal.tp = parseFloat((fill - signal.atr * signal.rr).toPrecision(6));
+        }
+        signal.originalSl = signal.originalSl ?? signal.sl;
+      }
     } else {
       signal.liveError = result.error;
     }
     saveState(state);
-  }).catch(err => console.error('[bot] openTrade unexpected error:', err));
+  }).catch(err => {
+    signal.livePendingOpen = false;
+    console.error('[bot] openTrade unexpected error:', err);
+  });
 
   await ctx.answerCbQuery('✅ Signal accepted! Tracking started.');
   try {

@@ -86,6 +86,7 @@ export interface Signal {
   fetchFailCount?: number;   // consecutive price-fetch failures; auto-close at threshold
 
   // ── Live trading (Binance Futures) ─────────────────────────────────────────
+  livePendingOpen?: boolean; // true from the moment openTrade() is called until the fill is stamped
   liveEnabled?:    boolean;  // true once a real position is open on Binance
   liveQty?:        number;   // position size in base asset (coins)
   liveOrderId?:    string;   // entry market order ID

@@ -121,8 +121,12 @@ export async function sendSignal(params: {
       ds.accepted++;
       saveState(state);
 
-      // Open a live Binance position if LIVE_TRADING=true on the VPS
+      // Open a live Binance position if LIVE_TRADING=true on the VPS.
+      // Set livePendingOpen SYNCHRONOUSLY so the tracker skips TP/SL detection
+      // for this signal until the fill is stamped (prevents ghost-close race).
+      signal.livePendingOpen = true;
       openTrade(signal).then(result => {
+        signal.livePendingOpen = false;
         if (result.ok) {
           signal.liveEnabled    = true;
           signal.liveQty        = result.quantity;
@@ -132,13 +136,29 @@ export async function sendSignal(params: {
           signal.liveFillPrice  = result.fillPrice;
           signal.liveRiskDollar = result.riskDollar;
           signal.liveFeeEntry   = result.feeEntry;
-          console.log(`[scanner] Live trade stamped on signal ${signal.id}`);
+          // Recalculate TP/SL from actual fill price so the tracker monitors
+          // the same levels as the real position (fill may differ from signal entry).
+          const fill = result.fillPrice;
+          if (fill > 0 && signal.atr > 0) {
+            if (signal.direction === 'LONG') {
+              signal.sl = parseFloat((fill - signal.atr).toPrecision(6));
+              signal.tp = parseFloat((fill + signal.atr * signal.rr).toPrecision(6));
+            } else {
+              signal.sl = parseFloat((fill + signal.atr).toPrecision(6));
+              signal.tp = parseFloat((fill - signal.atr * signal.rr).toPrecision(6));
+            }
+            signal.originalSl = signal.originalSl ?? signal.sl;
+          }
+          console.log(`[scanner] Live trade stamped on signal ${signal.id} | sl=${signal.sl} tp=${signal.tp}`);
         } else {
           signal.liveError = result.error;
           console.warn(`[scanner] Live trade skipped for ${signal.symbol}: ${result.error}`);
         }
         saveState(state);
-      }).catch(err => console.error('[scanner] openTrade unexpected error:', err));
+      }).catch(err => {
+        signal.livePendingOpen = false;
+        console.error('[scanner] openTrade unexpected error:', err);
+      });
 
       // Admin gets verbose info; channel gets clean signal only
       const autoText =

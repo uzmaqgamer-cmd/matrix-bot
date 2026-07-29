@@ -167,6 +167,11 @@ export async function checkActiveSignals() {
       signal.fetchFailCount = 0; // reset consecutive failure counter on success
       stateChanged = true;
 
+      // Skip TP/SL evaluation while a live open order is still in-flight.
+      // Without this guard the tracker can fire a false close before liveEnabled
+      // is stamped, sending a Telegram notification with no actual Binance close.
+      if (signal.livePendingOpen) continue;
+
       // ── Partial TP: fires once when price reaches 50% of the way to TP ──────
       if (
         !signal.partialTpFired &&
