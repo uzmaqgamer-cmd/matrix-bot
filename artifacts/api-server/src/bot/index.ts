@@ -546,30 +546,50 @@ export function startBot(): void {
   process.once('SIGINT',  () => bot.stop('SIGINT'));
   process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
-  function launchTelegram(): void {
-    console.log('[bot] Connecting to Telegram…');
-    bot.launch({ dropPendingUpdates: true })
-      .then(() => {
-        console.log('[bot] Telegram connected. Matrix Signal Bot fully online.');
-      })
-      .catch((err: Error & { response?: { error_code?: number } }) => {
-        const is409 = err?.response?.error_code === 409 ||
-                      (err?.message ?? '').includes('409');
+  // Manual long-poll loop — avoids Telegraf's internal AbortController which is
+  // incompatible with Node 18's native AbortSignal, causing the polling loop to
+  // crash and drop all incoming commands/button presses.
+  let pollOffset = 0;
+  let pollStopped = false;
+
+  process.once('SIGINT',  () => { pollStopped = true; });
+  process.once('SIGTERM', () => { pollStopped = true; });
+
+  async function pollLoop(): Promise<void> {
+    // Drop updates that arrived while we were down (avoids processing stale commands)
+    try {
+      const pending = await bot.telegram.getUpdates(0, 1, -1, []);
+      if (pending.length > 0) pollOffset = pending[pending.length - 1].update_id + 1;
+    } catch { /* ignore — will retry in main loop */ }
+
+    console.log('[bot] Telegram polling started. Matrix Signal Bot fully online.');
+
+    while (!pollStopped) {
+      try {
+        const updates = await bot.telegram.getUpdates(30, 100, pollOffset, [
+          'message', 'callback_query', 'edited_message',
+        ]);
+        for (const update of updates) {
+          try {
+            await bot.handleUpdate(update);
+          } catch (e: any) {
+            console.warn('[bot] handleUpdate error:', e.message);
+          }
+          pollOffset = update.update_id + 1;
+        }
+      } catch (err: any) {
+        const is409 = (err?.response?.error_code === 409) || (err?.message ?? '').includes('409');
         if (is409) {
           console.error('[bot] 409 Conflict — two instances running simultaneously. Exiting.');
           process.exit(1);
         }
-        // "Expected signal to be an instanceof AbortSignal" is a known Telegraf/Node 18
-        // compat issue — polling restarts but bot.telegram (sender) is unaffected.
-        const isAbortCompat = (err.message ?? '').includes('AbortSignal');
-        if (!isAbortCompat) {
-          console.warn('[bot] Telegram launch failed, retrying in 60s:', err.message);
-        }
-        setTimeout(launchTelegram, isAbortCompat ? 5_000 : 60_000);
-      });
+        console.warn('[bot] Polling error, retrying in 5s:', err.message);
+        await new Promise(r => setTimeout(r, 5_000));
+      }
+    }
   }
 
-  launchTelegram();
+  pollLoop().catch(err => console.error('[bot] pollLoop fatal:', err));
   console.log('[bot] Connecting to Telegram in background…');
 }
 
