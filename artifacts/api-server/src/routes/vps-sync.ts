@@ -4,7 +4,7 @@
  * shows real exchange data instead of the Replit paper-trading state.
  * Auth: Authorization: Bearer {TELEGRAM_BOT_TOKEN}
  */
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, json } from 'express';
 import { BotState } from '../bot/types.js';
 
 const router = Router();
@@ -19,7 +19,7 @@ export function vpsStateIsAlive(): boolean {
   return _vpsState != null && (Date.now() - _vpsStateAt) < VPS_STALE_MS;
 }
 
-router.post('/vps-sync', (req: Request, res: Response) => {
+router.post('/vps-sync', json({ limit: '10mb' }), (req: Request, res: Response) => {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const auth  = req.headers.authorization ?? '';
 
