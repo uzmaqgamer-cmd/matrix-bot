@@ -351,8 +351,10 @@ export async function onTpSlHit(signal: Signal, hit: 'tp' | 'sl'): Promise<void>
     const meta      = await getSymbolMeta(signal.symbol);
     if (!meta) return;
     const closeSide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'SELL' : 'BUY';
-    const fraction  = signal.partialTpFired ? 0.5 : 1.0;
-    const closeQty  = roundStep(signal.liveQty * fraction, meta.stepSize);
+    // Use exact remainder to avoid dust: liveQty - what was already closed at partial TP
+    const closeQty = signal.partialTpFired
+      ? roundStep(signal.liveQty - (signal.liveHalfQtyClosed ?? roundStep(signal.liveQty * 0.5, meta.stepSize)), meta.stepSize)
+      : roundStep(signal.liveQty, meta.stepSize);
     if (closeQty > 0) await placeMarket(signal.symbol, closeSide, closeQty);
     console.log(`[trader] ${hit.toUpperCase()} CLOSE ${signal.symbol}: market ${closeSide} ${closeQty}`);
   } catch (err: any) {
@@ -372,6 +374,7 @@ export async function onPartialTp(signal: Signal): Promise<void> {
     if (!meta) return;
     const closeSide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'SELL' : 'BUY';
     const halfQty  = roundStep(signal.liveQty * 0.5, meta.stepSize);
+    signal.liveHalfQtyClosed = halfQty;   // store exact amount so final close uses remainder
     if (halfQty > 0) await placeMarket(signal.symbol, closeSide, halfQty);
     console.log(`[trader] PARTIAL-TP ${signal.symbol}: market-closed 50% (${halfQty})`);
   } catch (err: any) {
@@ -389,8 +392,9 @@ export async function onForceClose(signal: Signal): Promise<void> {
     const meta     = await getSymbolMeta(signal.symbol);
     if (!meta) return;
     const closeSide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'SELL' : 'BUY';
-    const fraction = signal.partialTpFired ? 0.5 : 1.0;
-    const closeQty = roundStep(signal.liveQty * fraction, meta.stepSize);
+    const closeQty = signal.partialTpFired
+      ? roundStep(signal.liveQty - (signal.liveHalfQtyClosed ?? roundStep(signal.liveQty * 0.5, meta.stepSize)), meta.stepSize)
+      : roundStep(signal.liveQty, meta.stepSize);
     if (closeQty > 0) await placeMarket(signal.symbol, closeSide, closeQty);
     console.log(`[trader] FORCE-CLOSE ${signal.symbol}: market ${closeSide} ${closeQty}`);
   } catch (err: any) {
