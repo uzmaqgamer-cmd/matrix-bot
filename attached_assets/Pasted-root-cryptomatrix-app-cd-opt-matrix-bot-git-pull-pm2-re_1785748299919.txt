@@ -1,0 +1,103 @@
+root@cryptomatrix-app:~# cd /opt/matrix-bot && git pull && pm2 restart matrix-bot
+remote: Enumerating objects: 27, done.
+remote: Counting objects: 100% (27/27), done.
+remote: Compressing objects: 100% (6/6), done.
+remote: Total 18 (delta 12), reused 18 (delta 12), pack-reused 0 (from 0)
+Unpacking objects: 100% (18/18), 211.99 KiB | 3.07 MiB/s, done.
+From https://github.com/uzmaqgamer-cmd/matrix-bot
+   01b0550..417d05d  main       -> origin/main
+Updating 01b0550..417d05d
+Fast-forward
+ artifacts/api-server/src/app.ts                                     |   2 +-
+ artifacts/api-server/src/bot/trader.ts                              |  12 ++++++++----
+ artifacts/api-server/src/bot/types.ts                               |   3 ++-
+ attached_assets/Screenshot_2026-07-31_at_00.03.17_1785438205724.png | Bin 0 -> 219570 bytes
+ 4 files changed, 11 insertions(+), 6 deletions(-)
+ create mode 100644 attached_assets/Screenshot_2026-07-31_at_00.03.17_1785438205724.png
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [matrix-bot](ids: [ 0 ])
+[PM2] [matrix-bot](0) ✓
+┌────┬───────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name          │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼───────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ matrix-bot    │ fork     │ 41   │ online    │ 0%       │ 10.9mb   │
+└────┴───────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+host metrics | cpu: 14.9% | ram usage: 35.4% | lo: ⇓ 0.001mb/s ⇑ 0.001mb/s | eth0: ⇓ 0.098mb/s ⇑ 0.014mb/s |
+root@cryptomatrix-app:/opt/matrix-bot# cd /opt/matrix-bot && git pull
+Already up to date.
+root@cryptomatrix-app:/opt/matrix-bot# pm2 restart matrix-bot && pm2 logs matrix-bot --lines 20
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [matrix-bot](ids: [ 0 ])
+[PM2] [matrix-bot](0) ✓
+┌────┬───────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name          │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼───────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ matrix-bot    │ fork     │ 42   │ online    │ 0%       │ 18.0mb   │
+└────┴───────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+host metrics | cpu: 28.9% | ram usage: 50.2% | lo: ⇓ 0.001mb/s ⇑ 0.001mb/s | eth0: ⇓ 0.134mb/s ⇑ 0.041mb/s |
+[TAILING] Tailing last 20 lines for [matrix-bot] process (change the value with --lines option)
+/root/.pm2/logs/matrix-bot-out.log last 20 lines:
+0|matrix-b | [scanner] Full scan done: 600 pairs in 15.5s | watchlist: 141 | signals: 1
+0|matrix-b | [tracker] BICOUSDT SL hit @ 0.015466 | finalPnl: $0.4377 | balance: $110.5661
+0|matrix-b | [scanner] Watchlist scan: 141 pairs
+0|matrix-b | [tracker] Real balance synced: $69.59
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Watchlist scan: 141 pairs
+0|matrix-b | [tracker] Real balance synced: $69.48
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [storage] Dedup complete — removed 0 duplicate(s). Balance: $110.5661 → $110.5657 | Trades: 316 → 316
+0|matrix-b | {"level":30,"time":1785748218965,"pid":412761,"hostname":"cryptomatrix-app","msg":"Startup dedup: no duplicates found, state is clean"}
+0|matrix-b | [bot] Scanners and tracker started.
+0|matrix-b | [bot] Daily summary scheduled in 890 minutes.
+0|matrix-b | [bot] Connecting to Telegram in background…
+0|matrix-b | {"level":30,"time":1785748219059,"pid":412761,"hostname":"cryptomatrix-app","port":8080,"msg":"Server listening"}
+0|matrix-b | [bot] Telegram polling started. Matrix Signal Bot fully online.
+0|matrix-b | [tracker] Real balance synced: $69.47
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-08-03T09:10:19.593Z
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [SKIP] QNTXUSDT → ATR 0.43% below 1.1% floor
+0|matrix-b | [scanner] Full scan done: 600 pairs in 15.6s | watchlist: 127 | signals: 1
+
+/root/.pm2/logs/matrix-bot-error.log last 20 lines:
+0|matrix-b |     at async ensureTable (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:54:3)
+0|matrix-b |     at async initStorage (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:136:7)
+0|matrix-b |     at async <anonymous> (/opt/matrix-bot/artifacts/api-server/src/index.ts:28:5) {
+0|matrix-b |   errno: -3001,
+0|matrix-b |   code: 'EAI_AGAIN',
+0|matrix-b |   syscall: 'getaddrinfo',
+0|matrix-b |   hostname: 'helium'
+0|matrix-b | }
+0|matrix-b | /opt/matrix-bot/node_modules/.pnpm/telegraf@4.16.3/node_modules/telegraf/lib/telegraf.js:218
+0|matrix-b |             throw new Error('Bot is not running!');
+0|matrix-b |             ^
+0|matrix-b | 
+0|matrix-b | 
+0|matrix-b | Error: Bot is not running!
+0|matrix-b |     at Telegraf2.stop (/opt/matrix-bot/node_modules/.pnpm/telegraf@4.16.3/node_modules/telegraf/lib/telegraf.js:218:19)
+0|matrix-b |     at process.<anonymous> (/opt/matrix-bot/artifacts/api-server/src/bot/index.ts:546:37)
+0|matrix-b |     at Object.onceWrapper (node:events:639:26)
+0|matrix-b |     at process.emit (node:events:536:35)
+0|matrix-b | 
+0|matrix-b | Node.js v20.20.2
+
+0|matrix-bot  | [storage] DB unavailable, falling back to file: Error: getaddrinfo EAI_AGAIN helium
+0|matrix-bot  |     at <anonymous> (/opt/matrix-bot/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45:11)
+0|matrix-bot  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|matrix-bot  |     at async ensureTable (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:54:3)
+0|matrix-bot  |     at async initStorage (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:136:7)
+0|matrix-bot  |     at async <anonymous> (/opt/matrix-bot/artifacts/api-server/src/index.ts:28:5) {
+0|matrix-bot  |   errno: -3001,
+0|matrix-bot  |   code: 'EAI_AGAIN',
+0|matrix-bot  |   syscall: 'getaddrinfo',
+0|matrix-bot  |   hostname: 'helium'
+0|matrix-bot  | }
+0|matrix-bot  | [storage] Dedup complete — removed 0 duplicate(s). Balance: $110.5657 → $110.5657 | Trades: 316 → 316
+0|matrix-bot  | {"level":30,"time":1785748267019,"pid":412840,"hostname":"cryptomatrix-app","msg":"Startup dedup: no duplicates found, state is clean"}
+0|matrix-bot  | [bot] Scanners and tracker started.
+0|matrix-bot  | [bot] Daily summary scheduled in 889 minutes.
+0|matrix-bot  | [bot] Connecting to Telegram in background…
+0|matrix-bot  | {"level":30,"time":1785748267105,"pid":412840,"hostname":"cryptomatrix-app","port":8080,"msg":"Server listening"}
+0|matrix-bot  | [bot] Telegram polling started. Matrix Signal Bot fully online.
+0|matrix-bot  | [tracker] Real balance synced: $69.37
+0|matrix-bot  | [sync] VPS state pushed to Replit dashboard
+0|matrix-bot  | [scanner] Full scan: 600 pairs @ 2026-08-03T09:11:08.538Z
