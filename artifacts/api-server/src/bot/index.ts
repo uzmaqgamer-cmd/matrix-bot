@@ -1,4 +1,4 @@
-import { Telegraf, Markup } from 'telegraf';
+it dimport { Telegraf, Markup } from 'telegraf';
 import { loadState, saveState, getOrCreateDailyStats } from './storage.js';
 import { openTrade } from './trader.js';
 import {
