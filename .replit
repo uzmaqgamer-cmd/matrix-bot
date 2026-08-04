@@ -25,6 +25,7 @@ timeoutMs = 20000
 TELEGRAM_ADMIN_ID = "5629038273"
 TELEGRAM_CHAT_ID = "5629038273"
 BINANCE_PROXY_URL = "https://summer-bird-4b1f.uzmaqgamer.workers.dev/"
+DASHBOARD_ONLY = "true"
 
 [[ports]]
 localPort = 8080
