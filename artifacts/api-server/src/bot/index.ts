@@ -481,7 +481,7 @@ export function startScanners(): void {
     checkActiveSignals()
       .catch(console.error)
       .finally(() => { checkInProgress = false; });
-  }, 5 * 1000);
+  }, 2 * 1000);
 
   // Skip scanner loops when running as dashboard-only (no new paper signals)
   if (process.env.DASHBOARD_ONLY !== 'true') {
