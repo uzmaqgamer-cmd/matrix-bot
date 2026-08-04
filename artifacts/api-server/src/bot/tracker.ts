@@ -247,6 +247,40 @@ export async function checkActiveSignals() {
         stateChanged = true;
       }
 
+      // ── Emergency gap-loss cap ────────────────────────────────────────────
+      // If price has blown through SL so far that unrealized loss exceeds
+      // 2.5× the planned risk amount, close immediately regardless of SL level.
+      // Prevents a 26% gap spike turning a $0.78 risk into a $7.59 loss.
+      if (signal.riskAmt && signal.riskAmt > 0 && signal.liveEnabled && signal.liveQty) {
+        const entryP = signal.liveFillPrice ?? signal.entry;
+        const dir    = signal.direction === 'LONG' ? 1 : -1;
+        const unrealizedLoss = (entryP - price) * dir * signal.liveQty; // negative = loss
+        if (unrealizedLoss < -(signal.riskAmt * 2.5)) {
+          toRemove.push(signal.id);
+          signal.status     = 'sl_hit';
+          signal.resolvedAt = Date.now();
+          await onTpSlHit(signal, 'sl');
+          if (signal.liveEnabled && signal.liveQty) {
+            const fraction   = signal.partialTpFired ? 0.5 : 1.0;
+            signal.liveFeeExit   = parseFloat((signal.liveQty * fraction * price * config.binanceTakerFee).toFixed(6));
+            signal.liveFeesTotal = parseFloat(((signal.liveFeeEntry ?? 0) + (signal.liveFeePartialExit ?? 0) + signal.liveFeeExit).toFixed(6));
+            const closeGross = (price - entryP) * dir * signal.liveQty * fraction;
+            const partialGross = signal.partialTpPrice ? (signal.partialTpPrice - entryP) * dir * signal.liveQty * 0.5 : 0;
+            signal.livePnlGross = parseFloat((closeGross + partialGross).toFixed(6));
+            signal.livePnlNet   = parseFloat((signal.livePnlGross - (signal.liveFeesTotal ?? 0)).toFixed(6));
+          }
+          const lossAmt = -(signal.riskAmt * 2.5);
+          signal.finalPnlAmt = signal.livePnlNet ?? lossAmt;
+          applyBalance(state, signal.finalPnlAmt);
+          getOrCreateDailyStats(state).slHit++;
+          state.totalSlHit++;
+          await sendAlert(`🚨 EMERGENCY EXIT — ${signal.symbol} ${signal.direction}\nPrice gapped ${signal.direction === 'LONG' ? 'down' : 'up'} past SL\nClose @ ${price.toPrecision(6)} | Loss: $${Math.abs(signal.finalPnlAmt).toFixed(4)} (${(Math.abs(signal.finalPnlAmt)/signal.riskAmt).toFixed(1)}× risk)`, true);
+          console.log(`[tracker] [EMERGENCY-EXIT] ${signal.symbol} — gap loss $${Math.abs(signal.finalPnlAmt).toFixed(4)} exceeded 2.5× risk ($${(signal.riskAmt*2.5).toFixed(4)})`);
+          stateChanged = true;
+          continue;
+        }
+      }
+
       // ── TP / SL hit check ─────────────────────────────────────────────────
       let hit: 'tp' | 'sl' | null = null;
       if (signal.partialTpFired && signal.trailActive && signal.trailStop != null) {
