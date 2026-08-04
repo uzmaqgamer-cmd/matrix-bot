@@ -1,0 +1,29 @@
+root@cryptomatrix-app:~# cd /opt/matrix-bot && git pull && pm2 restart matrix-bot
+remote: Enumerating objects: 39, done.
+remote: Counting objects: 100% (39/39), done.
+remote: Compressing objects: 100% (12/12), done.
+remote: Total 31 (delta 19), reused 31 (delta 19), pack-reused 0 (from 0)
+Unpacking objects: 100% (31/31), 179.23 KiB | 4.27 MiB/s, done.
+From https://github.com/uzmaqgamer-cmd/matrix-bot
+   417d05d..b2454be  main       -> origin/main
+Updating 417d05d..b2454be
+Fast-forward
+ artifacts/api-server/src/bot/index.ts                                       |   2 +-
+ artifacts/api-server/src/bot/tracker.ts                                     |  34 ++++++++++++
+ ...oot-cryptomatrix-app-cd-opt-matrix-bot-git-pull-pm2-re_1785748299919.txt | 103 ++++++++++++++++++++++++++++++++++++
+ attached_assets/Screenshot_2026-08-03_at_19.50.03_1785768869043.png         | Bin 0 -> 104190 bytes
+ attached_assets/Screenshot_2026-08-03_at_19.54.43_1785768891190.png         | Bin 0 -> 85021 bytes
+ 5 files changed, 138 insertions(+), 1 deletion(-)
+ create mode 100644 attached_assets/Pasted-root-cryptomatrix-app-cd-opt-matrix-bot-git-pull-pm2-re_1785748299919.txt
+ create mode 100644 attached_assets/Screenshot_2026-08-03_at_19.50.03_1785768869043.png
+ create mode 100644 attached_assets/Screenshot_2026-08-03_at_19.54.43_1785768891190.png
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [matrix-bot](ids: [ 0 ])
+[PM2] [matrix-bot](0) ✓
+┌────┬───────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name          │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼───────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ matrix-bot    │ fork     │ 43   │ online    │ 0%       │ 8.8mb    │
+└────┴───────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+host metrics | cpu: 20.4% | ram usage: 57.2% | lo: ⇓ 0.002mb/s ⇑ 0.002mb/s | eth0: ⇓ 0.303mb/s ⇑ 0.045mb/s |
+root@cryptomatrix-app:/opt/matrix-bot# 
