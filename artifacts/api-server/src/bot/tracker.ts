@@ -533,6 +533,7 @@ export async function monitorPositionTheses() {
     const signal = state.activeSignals[idx];
     const seriesResult = seriesResults[idx];
     try {
+      if (!seriesResult) continue; // guard against index mismatch if activeSignals changed mid-await
       if (seriesResult.status === 'rejected') throw seriesResult.reason;
       const [priceSeries, oiSeries, fundingSeries] = seriesResult.value;
 

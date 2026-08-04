@@ -1,0 +1,106 @@
+TAILING] Tailing last 50 lines for [matrix-bot] process (change the value with --lines option)
+/root/.pm2/logs/matrix-bot-error.log last 50 lines:
+0|matrix-b | /opt/matrix-bot/node_modules/.pnpm/telegraf@4.16.3/node_modules/telegraf/lib/telegraf.js:218
+0|matrix-b |             throw new Error('Bot is not running!');
+0|matrix-b |             ^
+0|matrix-b | 
+0|matrix-b | 
+0|matrix-b | Error: Bot is not running!
+0|matrix-b |     at Telegraf2.stop (/opt/matrix-bot/node_modules/.pnpm/telegraf@4.16.3/node_modules/telegraf/lib/telegraf.js:218:19)
+0|matrix-b |     at process.<anonymous> (/opt/matrix-bot/artifacts/api-server/src/bot/index.ts:546:37)
+0|matrix-b |     at Object.onceWrapper (node:events:639:26)
+0|matrix-b |     at process.emit (node:events:536:35)
+0|matrix-b | 
+0|matrix-b | Node.js v20.20.2
+0|matrix-b | [storage] DB unavailable, falling back to file: Error: getaddrinfo EAI_AGAIN helium
+0|matrix-b |     at <anonymous> (/opt/matrix-bot/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45:11)
+0|matrix-b |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|matrix-b |     at async ensureTable (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:54:3)
+0|matrix-b |     at async initStorage (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:136:7)
+0|matrix-b |     at async <anonymous> (/opt/matrix-bot/artifacts/api-server/src/index.ts:28:5) {
+0|matrix-b |   errno: -3001,
+0|matrix-b |   code: 'EAI_AGAIN',
+0|matrix-b |   syscall: 'getaddrinfo',
+0|matrix-b |   hostname: 'helium'
+0|matrix-b | }
+0|matrix-b | [scanner] Live trade skipped for IONQUSDT: IONQUSDT not listed on Binance Futures — skipping
+0|matrix-b | /opt/matrix-bot/node_modules/.pnpm/telegraf@4.16.3/node_modules/telegraf/lib/telegraf.js:218
+0|matrix-b |             throw new Error('Bot is not running!');
+0|matrix-b |             ^
+0|matrix-b | 
+0|matrix-b | 
+0|matrix-b | Error: Bot is not running!
+0|matrix-b |     at Telegraf2.stop (/opt/matrix-bot/node_modules/.pnpm/telegraf@4.16.3/node_modules/telegraf/lib/telegraf.js:218:19)
+0|matrix-b |     at process.<anonymous> (/opt/matrix-bot/artifacts/api-server/src/bot/index.ts:546:37)
+0|matrix-b |     at Object.onceWrapper (node:events:639:26)
+0|matrix-b |     at process.emit (node:events:536:35)
+0|matrix-b | 
+0|matrix-b | Node.js v20.20.2
+0|matrix-b | [storage] DB unavailable, falling back to file: Error: getaddrinfo EAI_AGAIN helium
+0|matrix-b |     at <anonymous> (/opt/matrix-bot/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45:11)
+0|matrix-b |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|matrix-b |     at async ensureTable (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:54:3)
+0|matrix-b |     at async initStorage (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:136:7)
+0|matrix-b |     at async <anonymous> (/opt/matrix-bot/artifacts/api-server/src/index.ts:28:5) {
+0|matrix-b |   errno: -3001,
+0|matrix-b |   code: 'EAI_AGAIN',
+0|matrix-b |   syscall: 'getaddrinfo',
+0|matrix-b |   hostname: 'helium'
+0|matrix-b | }
+0|matrix-b | [tracker] Thesis check failed for BLESSUSDT: TypeError: Cannot read properties of undefined (reading 'status')
+0|matrix-b |     at monitorPositionTheses (/opt/matrix-bot/artifacts/api-server/src/bot/tracker.ts:455:24)
+0|matrix-b |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+/root/.pm2/logs/matrix-bot-out.log last 50 lines:
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping CIENUSDT
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping ZBCNUSDT
+0|matrix-b | [scanner] Watchlist scan: 100 pairs
+0|matrix-b | [tracker] Real balance synced: $61.74
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Watchlist scan: 100 pairs
+0|matrix-b | [tracker] Real balance synced: $61.65
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping MOVEUSDT
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-08-04T18:54:03.250Z
+0|matrix-b | [scanner] Watchlist scan: 99 pairs
+0|matrix-b | [tracker] Real balance synced: $61.59
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan done: 600 pairs in 12.4s | watchlist: 121 | signals: 0
+0|matrix-b | [scanner] Watchlist scan: 121 pairs
+0|matrix-b | [tracker] Real balance synced: $61.60
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping PTBUSDT
+0|matrix-b | [scanner] Watchlist scan: 120 pairs
+0|matrix-b | [tracker] Real balance synced: $61.55
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Watchlist scan: 90 pairs
+0|matrix-b | [tracker] Real balance synced: $61.56
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping CBRSUSDT
+0|matrix-b | [scanner] Watchlist scan: 89 pairs
+0|matrix-b | [tracker] Real balance synced: $61.51
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-08-04T18:59:03.568Z
+0|matrix-b | [scanner] Watchlist scan: 89 pairs
+0|matrix-b | [tracker] Real balance synced: $61.53
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan done: 600 pairs in 11.5s | watchlist: 122 | signals: 0
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping ONUSDT
+0|matrix-b | [scanner] Watchlist scan: 121 pairs
+0|matrix-b | [tracker] Real balance synced: $61.54
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping CATSTOCKUSDT
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping PTBUSDT
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping AMATUSDT
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping CIENUSDT
+0|matrix-b | [scanner] Watchlist scan: 114 pairs
+0|matrix-b | [tracker] Real balance synced: $61.64
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping AIOZUSDT
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping TSLAUSDT
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping BNCUSDT
+0|matrix-b | [scanner] Watchlist scan: 60 pairs
+0|matrix-b | [tracker] Real balance synced: $61.57
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+
+
