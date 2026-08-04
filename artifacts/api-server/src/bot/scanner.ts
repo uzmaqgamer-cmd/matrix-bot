@@ -97,6 +97,16 @@ export async function sendSignal(params: {
     console.log(`[scanner] Cap hit (${state.activeSignals.length} active + ${pendingOpens} pending ≥ ${maxPos}) — skipping ${params.symbol}`);
     return;
   }
+  // Reserve 2 slots exclusively for HIGH priority signals so MEDIUM signals
+  // can never occupy all slots and block a HIGH from opening.
+  const MEDIUM_CAP = maxPos - 2;
+  if (params.originPriority === 'MEDIUM') {
+    const activeMedium = state.activeSignals.filter(s => s.originPriority === 'MEDIUM').length;
+    if (activeMedium >= MEDIUM_CAP) {
+      console.log(`[scanner] MEDIUM slot cap (${activeMedium}/${MEDIUM_CAP}) — holding 2 slots for HIGH signals, skipping ${params.symbol}`);
+      return;
+    }
+  }
   pendingOpens++; // claim slot — released in finally below
 
   try {
