@@ -110,6 +110,53 @@ function computeCloseAmt(signal: Signal, exitPrice: number, positionFraction: nu
   return positionFraction * (priceMoved / signal.atr) * signal.riskAmt;
 }
 
+/**
+ * Evict the weakest MEDIUM priority signal to make room for a HIGH signal.
+ * Picks the MEDIUM position with the worst tpProgressPct (most in loss / least progress).
+ * Force-closes the live position, moves it to completedSignals, updates balance.
+ * Returns true if a slot was freed, false if no MEDIUM position exists.
+ */
+export async function evictWeakestMedium(): Promise<boolean> {
+  const state = loadState();
+  const mediums = state.activeSignals
+    .filter(s => s.originPriority === 'MEDIUM' && !s.livePendingOpen)
+    .sort((a, b) => (a.tpProgressPct ?? -999) - (b.tpProgressPct ?? -999));
+  if (mediums.length === 0) return false;
+
+  const victim = mediums[0];
+  const exitPrice = victim.currentPrice ?? victim.entry;
+  const positionFraction = victim.partialTpFired ? 0.5 : 1.0;
+  const closeAmt = victim.riskAmt ? computeCloseAmt(victim, exitPrice, positionFraction) : 0;
+
+  victim.status        = 'auto_closed';
+  victim.resolvedAt    = Date.now();
+  victim.autoClosedAt  = Date.now();
+  victim.autoCloseReason = 'evicted_for_high_signal';
+  victim.autoClosePrice  = exitPrice;
+  victim.finalPnlAmt   = parseFloat(((victim.partialTpPnlAmt ?? 0) + closeAmt).toFixed(4));
+  victim.pnlPct        = victim.entry > 0
+    ? parseFloat(((exitPrice - victim.entry) / victim.entry * 100 * (victim.direction === 'LONG' ? 1 : -1)).toFixed(6))
+    : 0;
+
+  await onForceClose(victim);
+
+  if (victim.riskAmt) {
+    applyBalance(state, closeAmt);
+    state.test2TradeCount = (state.test2TradeCount ?? 0) + 1;
+  }
+
+  const isWin = (victim.finalPnlAmt ?? 0) >= 0;
+  if (isWin) { state.totalTpHit++; getOrCreateDailyStats(state).tpHit++; }
+  else        { state.totalSlHit++; getOrCreateDailyStats(state).slHit++; }
+
+  state.activeSignals  = state.activeSignals.filter(s => s.id !== victim.id);
+  state.completedSignals.push(victim);
+  saveState(state);
+
+  console.log(`[tracker] [EVICT] ${victim.symbol} (MEDIUM, tpProg=${victim.tpProgressPct?.toFixed(1)}%) evicted for incoming HIGH signal | P&L: ${victim.finalPnlAmt >= 0 ? '+' : ''}$${victim.finalPnlAmt.toFixed(4)}`);
+  return true;
+}
+
 // ─── Main price-check loop ────────────────────────────────────────────────────
 
 /**

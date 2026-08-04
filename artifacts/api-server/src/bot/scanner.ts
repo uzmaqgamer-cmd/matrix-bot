@@ -1,5 +1,6 @@
 import { getCloseSeries, getOpenInterestSeries, getFundingRateSeries, getTopSymbolsByVolume, getCachedSymbols } from './binance.js';
-import { openTrade } from './trader.js';
+import { openTrade, onForceClose } from './trader.js';
+import { evictWeakestMedium } from './tracker.js';
 import { classify } from './classifier.js';
 import { lookupRow, isDivergenceRow, MATRIX } from './matrix.js';
 import { updateWatchlist } from './watchlist.js';
@@ -94,8 +95,24 @@ export async function sendSignal(params: {
   // so it is guaranteed to be visible to the next concurrent caller.
   const maxPos = config.positionMonitoring.maxActivePositions;
   if (state.activeSignals.length + pendingOpens >= maxPos) {
-    console.log(`[scanner] Cap hit (${state.activeSignals.length} active + ${pendingOpens} pending ≥ ${maxPos}) — skipping ${params.symbol}`);
-    return;
+    // HIGH priority signals get one chance to evict the weakest MEDIUM position
+    if (params.originPriority === 'HIGH') {
+      const evicted = await evictWeakestMedium();
+      if (!evicted) {
+        console.log(`[scanner] Cap hit — no MEDIUM to evict, skipping HIGH signal ${params.symbol}`);
+        return;
+      }
+      console.log(`[scanner] Evicted weakest MEDIUM to open slot for HIGH signal ${params.symbol}`);
+      // Re-read state after eviction so activeSignals count is fresh
+      const freshState = loadState();
+      if (freshState.activeSignals.length + pendingOpens >= maxPos) {
+        console.log(`[scanner] Cap still full after eviction — skipping ${params.symbol}`);
+        return;
+      }
+    } else {
+      console.log(`[scanner] Cap hit (${state.activeSignals.length} active + ${pendingOpens} pending ≥ ${maxPos}) — skipping ${params.symbol}`);
+      return;
+    }
   }
   // Reserve 2 slots exclusively for HIGH priority signals so MEDIUM signals
   // can never occupy all slots and block a HIGH from opening.
