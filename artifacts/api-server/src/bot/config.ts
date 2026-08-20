@@ -18,8 +18,8 @@ export const config = {
    */
   bitunixTakerFee: 0.0006,
   bitunixFeeCashback: 0.60,
-  riskPerPosition: 0.0025,
-  maxAggregateRisk: 0.01,
+  riskPerPosition: 0.05,
+  maxAggregateRisk: 0.20,
   minOpenInterestUsd: 10_000_000,
   externalOiSource: 'BYBIT_PUBLIC' as const,
 
