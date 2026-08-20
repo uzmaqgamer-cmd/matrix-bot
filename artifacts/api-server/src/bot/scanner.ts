@@ -1,4 +1,4 @@
-import { assertOpenInterestSupported, getCloseSeries, getOpenInterestSeries, getFundingRateSeries, getTopSymbolsByVolume, getCachedSymbols } from './bitunix.js';
+import { assertOpenInterestSupported, getCloseSeries, getOpenInterestSeries, getOpenInterestUsd, getFundingRateSeries, getTopSymbolsByVolume, getCachedSymbols } from './bitunix.js';
 import { isLiveTradingEnabled, openTrade, onForceClose } from './trader.js';
 import { evictWeakestMedium } from './tracker.js';
 import { classify } from './classifier.js';
@@ -38,6 +38,11 @@ async function broadcastSignal(text: string, options: object = {}) {
 
 export async function scanSymbol(symbol: string) {
   try {
+    // This is the common gate for watchlist symbols and full-scan cache
+    // fallbacks. Candidate selection is only an optimization; no symbol is
+    // classified when current external OI valued at Bitunix price is below $10M.
+    const oiUsd = await getOpenInterestUsd(symbol);
+    if (oiUsd < config.minOpenInterestUsd) return null;
     const [priceSeries, oiSeries, fundingSeries] = await Promise.all([
       getCloseSeries(symbol, CANDLE_INTERVAL, LOOKBACK_CANDLES),
       getOpenInterestSeries(symbol, OI_PERIOD, LOOKBACK_CANDLES),
@@ -75,6 +80,18 @@ export async function sendSignal(params: {
 
   if (state.pendingSignals.some(s => s.symbol === params.symbol)) return;
   if (state.activeSignals.some(s => s.symbol === params.symbol)) return;
+  // Final defense for direct/manual signal paths that do not originate from
+  // scanSymbol. Fail closed if the fresh OI or Bitunix price lookup fails.
+  try {
+    const oiUsd = await getOpenInterestUsd(params.symbol);
+    if (oiUsd < config.minOpenInterestUsd) {
+      console.log(`[scanner] ${params.symbol} skipped: OI $${oiUsd.toFixed(0)} is below the $${config.minOpenInterestUsd} minimum`);
+      return;
+    }
+  } catch (error) {
+    console.warn(`[scanner] ${params.symbol} skipped: unable to validate OI gate: ${(error as Error).message}`);
+    return;
+  }
 
   // ── Cooldown guard (before claiming a slot — cheap sync check, no await) ────
   // Protects against the reversal-injection loop where auto-close → watchlist

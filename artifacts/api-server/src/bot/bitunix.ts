@@ -6,6 +6,7 @@
  * back to another exchange.
  */
 import crypto from 'crypto';
+import { config } from './config.js';
 
 const BASE = 'https://fapi.bitunix.com';
 const RETRIES = 2;
@@ -26,6 +27,12 @@ interface BitunixTicker {
   symbol: string;
   lastPrice: string;
   quoteVol: string;
+}
+
+interface BybitOiResponse {
+  retCode?: number;
+  retMsg?: string;
+  result?: { list?: Array<{ openInterest?: string }> };
 }
 
 function sleep(ms: number) { return new Promise(resolve => setTimeout(resolve, ms)); }
@@ -155,24 +162,49 @@ async function hasThirtyDayHistory(symbol: string): Promise<boolean> {
   return candles.length > 0;
 }
 
-/**
- * The official Bitunix futures public API currently does not expose market-wide
- * open interest or OI history.  The original strategy requires both, so it is
- * deliberately fail-closed until Bitunix publishes that data.  This avoids
- * silently substituting Bybit data or pretending volume is open interest.
- */
 export function assertOpenInterestSupported(): void {
-  throw new Error(
-    'Bitunix public API does not expose market-wide open-interest history; scanning is paused rather than mixing venues or fabricating an OI signal.',
-  );
+  // OI is the one explicitly approved external input. All other market data
+  // and execution remain Bitunix-only.
 }
 
-/** Kept for the matrix call sites; it intentionally never substitutes another metric. */
+async function getBybitOpenInterest(symbol: string, intervalTime = '15min', limit = 20, signal?: AbortSignal): Promise<number[]> {
+  const url = new URL('https://api.bybit.com/v5/market/open-interest');
+  url.searchParams.set('category', 'linear');
+  url.searchParams.set('symbol', symbol);
+  url.searchParams.set('intervalTime', intervalTime);
+  url.searchParams.set('limit', String(Math.min(limit, 200)));
+  const response = await fetch(url, signal ? { signal } : undefined);
+  const body = await response.json() as BybitOiResponse;
+  if (!response.ok || body.retCode !== 0) {
+    throw new Error(`Bybit OI request failed: ${body.retCode ?? response.status} ${body.retMsg ?? response.statusText}`);
+  }
+  return (body.result?.list ?? [])
+    .map(item => Number(item.openInterest))
+    .filter(Number.isFinite)
+    .reverse();
+}
+
+/** OI is intentionally the only external venue input. */
 export async function getOpenInterestSeries(
-  _symbol: string, _period = '15m', _limit = 20, _signal?: AbortSignal,
+  symbol: string, _period = '15m', limit = 20, signal?: AbortSignal,
 ): Promise<number[]> {
-  assertOpenInterestSupported();
-  return [];
+  return getBybitOpenInterest(symbol, '15min', limit, signal);
+}
+
+/**
+ * Converts the one approved external input (Bybit linear-contract OI) into a
+ * USD gate using a Bitunix price. No Bybit price/funding/candle data is used.
+ */
+export async function getOpenInterestUsd(symbol: string, knownBitunixPrice?: number): Promise<number> {
+  const [oiContracts, bitunixPrice] = await Promise.all([
+    getOpenInterestSeries(symbol, '15m', 1),
+    knownBitunixPrice != null ? Promise.resolve(knownBitunixPrice) : getCurrentPrice(symbol),
+  ]);
+  const contracts = oiContracts[0] ?? 0;
+  if (contracts <= 0 || !Number.isFinite(bitunixPrice) || bitunixPrice <= 0) {
+    throw new Error(`No usable external OI or Bitunix price for ${symbol}`);
+  }
+  return contracts * bitunixPrice;
 }
 
 export async function getTopSymbolsByVolume(n: number): Promise<string[]> {
@@ -188,7 +220,12 @@ export async function getTopSymbolsByVolume(n: number): Promise<string[]> {
     const batch = liquid.slice(index, index + 8);
     const aged = await Promise.all(batch.map(async ticker => ({
       symbol: ticker.symbol,
-      eligible: await hasThirtyDayHistory(ticker.symbol).catch(() => false),
+      eligible: await (async () => {
+        const hasAge = await hasThirtyDayHistory(ticker.symbol).catch(() => false);
+        if (!hasAge) return false;
+        const oiUsd = await getOpenInterestUsd(ticker.symbol, Number(ticker.lastPrice)).catch(() => 0);
+        return oiUsd >= config.minOpenInterestUsd;
+      })(),
     })));
     selected.push(...aged.filter(item => item.eligible).map(item => item.symbol));
     if (index + 8 < liquid.length && selected.length < n) await sleep(1_000);

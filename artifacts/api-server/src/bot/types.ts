@@ -35,6 +35,8 @@ export interface Signal {
   direction: SignalDirection;
   /** Venue that supplied the signal inputs; required before Bitunix execution. */
   marketVenue?: 'BITUNIX';
+  /** Explicit exception: OI is sourced externally from Bybit public data. */
+  oiSource?: 'BYBIT_PUBLIC';
   entry: number;
   tp: number;
   sl: number;

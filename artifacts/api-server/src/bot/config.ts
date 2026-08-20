@@ -12,7 +12,7 @@ export const config = {
   maxAtrPercentOfPrice: 3.0,
 
   /**
-   * Binance USDT-M Futures taker fee rate.
+   * Bitunix USDT perpetual taker fee rate.
    * Used to estimate fees on each trade entry and exit.
    * Standard rate: 0.04% = 0.0004. VIP tiers are lower.
    */
@@ -20,6 +20,8 @@ export const config = {
   bitunixFeeCashback: 0.60,
   riskPerPosition: 0.0025,
   maxAggregateRisk: 0.01,
+  minOpenInterestUsd: 10_000_000,
+  externalOiSource: 'BYBIT_PUBLIC' as const,
 
   positionMonitoring: {
     /**

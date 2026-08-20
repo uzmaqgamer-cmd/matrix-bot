@@ -97,6 +97,7 @@ export async function buildSignal(params: {
       symbol: params.symbol,
       direction: params.direction,
       marketVenue: 'BITUNIX',
+      oiSource: 'BYBIT_PUBLIC',
       entry,
       tp: parseFloat(tp.toPrecision(6)),
       sl: parseFloat(sl.toPrecision(6)),
