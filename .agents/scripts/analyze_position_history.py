@@ -36,7 +36,7 @@ for page_no,page in enumerate(doc,1):
             if k>0:
                 # one or two lines immediately before margin mode
                 symbol=lines[k-1]
-                if k-2>=0 and lines[k-2] not in ('Symbol','Status') and not date_re.match(lines[k-2]):
+                if k-2>=0 and lines[k-2] not in ('Symbol','Status','Closed') and not date_re.match(lines[k-2]):
                     symbol=lines[k-2]+symbol
             rows.append({
               'page':page_no,'symbol':symbol,'pnl':pnl,'entry':entry,'avg_close':avg_close,
