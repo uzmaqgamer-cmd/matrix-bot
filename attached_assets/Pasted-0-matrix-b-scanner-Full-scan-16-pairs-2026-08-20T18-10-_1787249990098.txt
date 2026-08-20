@@ -1,0 +1,43 @@
+0|matrix-b | [scanner] Full scan: 16 pairs @ 2026-08-20T18:10:26.806Z
+0|matrix-b | [scanner] Full scan done: 16 pairs in 2.8s | watchlist: 1 | signals: 0
+0|matrix-b | [storage] Dedup complete — removed 0 duplicate(s). Balance: $100.0000 → $100.0000 | Trades: 0 → 0
+0|matrix-b | {"level":30,"time":1787249449736,"pid":779136,"hostname":"cryptomatrix-app","msg":"Startup dedup: no duplicates found, state is clean"}
+0|matrix-b | [bot] DASHBOARD_ONLY mode — scanner disabled, tracker running.
+0|matrix-b | [bot] Daily summary scheduled in 349 minutes.
+0|matrix-b | [bot] Connecting to Telegram in background…
+0|matrix-b | {"level":30,"time":1787249449832,"pid":779136,"hostname":"cryptomatrix-app","port":8080,"msg":"Server listening"}
+0|matrix-b | [bot] Telegram polling started. Matrix Signal Bot fully online.
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | {"level":30,"time":1787249889523,"pid":779136,"hostname":"cryptomatrix-app","req":{"id":1,"method":"GET","url":"/"},"res":{"statusCode":404},"responseTime":7,"msg":"request completed"}
+0|matrix-b | {"level":30,"time":1787249889950,"pid":779136,"hostname":"cryptomatrix-app","req":{"id":2,"method":"GET","url":"/favicon.ico"},"res":{"statusCode":404},"responseTime":3,"msg":"request completed"}
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+
+/root/.pm2/logs/matrix-bot-error.log last 20 lines:
+0|matrix-b | Error: TELEGRAM_BOT_TOKEN is required
+0|matrix-b |     at <anonymous> (/opt/matrix-bot/artifacts/api-server/src/bot/index.ts:17:23)
+0|matrix-b |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|matrix-b |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|matrix-b | Error: TELEGRAM_BOT_TOKEN is required
+0|matrix-b |     at <anonymous> (/opt/matrix-bot/artifacts/api-server/src/bot/index.ts:17:23)
+0|matrix-b |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|matrix-b |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|matrix-b | Error: TELEGRAM_BOT_TOKEN is required
+0|matrix-b |     at <anonymous> (/opt/matrix-bot/artifacts/api-server/src/bot/index.ts:17:23)
+0|matrix-b |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|matrix-b |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|matrix-b | Error: TELEGRAM_BOT_TOKEN is required
+0|matrix-b |     at <anonymous> (/opt/matrix-bot/artifacts/api-server/src/bot/index.ts:17:23)
+0|matrix-b |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|matrix-b |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|matrix-b | Error: TELEGRAM_BOT_TOKEN is required
+0|matrix-b |     at <anonymous> (/opt/matrix-bot/artifacts/api-server/src/bot/index.ts:17:23)
+0|matrix-b |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|matrix-b |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+
