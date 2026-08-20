@@ -1,0 +1,30 @@
+0|matrix-b | {"level":30,"time":1787249415550,"pid":779063,"hostname":"cryptomatrix-app","req":{"id":10,"method":"GET","url":"/login.html"},"res":{"statusCode":404},"responseTime":2,"msg":"request completed"}
+0|matrix-b | {"level":30,"time":1787249416235,"pid":779063,"hostname":"cryptomatrix-app","req":{"id":11,"method":"GET","url":"/login.jsp"},"res":{"statusCode":404},"responseTime":2,"msg":"request completed"}
+0|matrix-b | {"level":30,"time":1787249417271,"pid":779063,"hostname":"cryptomatrix-app","req":{"id":12,"method":"GET","url":"/login"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+0|matrix-b | {"level":30,"time":1787249417717,"pid":779063,"hostname":"cryptomatrix-app","req":{"id":13,"method":"GET","url":"/doc/index.html"},"res":{"statusCode":404},"responseTime":3,"msg":"request completed"}
+0|matrix-b | {"level":30,"time":1787249417827,"pid":779063,"hostname":"cryptomatrix-app","req":{"id":14,"method":"GET","url":"/remote/login"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+0|matrix-b | {"level":30,"time":1787249418052,"pid":779063,"hostname":"cryptomatrix-app","req":{"id":15,"method":"GET","url":"/admin/login.asp"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+0|matrix-b | {"level":30,"time":1787249418529,"pid":779063,"hostname":"cryptomatrix-app","req":{"id":16,"method":"GET","url":"/web/"},"res":{"statusCode":404},"responseTime":2,"msg":"request completed"}
+0|matrix-b | {"level":30,"time":1787249418960,"pid":779063,"hostname":"cryptomatrix-app","req":{"id":17,"method":"GET","url":"/webpages/login.html"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+0|matrix-b | {"level":30,"time":1787249419307,"pid":779063,"hostname":"cryptomatrix-app","req":{"id":18,"method":"GET","url":"/favicon.ico"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+0|matrix-b | [storage] Dedup complete — removed 0 duplicate(s). Balance: $100.0000 → $100.0000 | Trades: 0 → 0
+0|matrix-b | {"level":30,"time":1787249421237,"pid":779111,"hostname":"cryptomatrix-app","msg":"Startup dedup: no duplicates found, state is clean"}
+0|matrix-b | [bot] Scanners and tracker started.
+0|matrix-b | [bot] Daily summary scheduled in 350 minutes.
+0|matrix-b | [bot] Connecting to Telegram in background…
+0|matrix-b | {"level":30,"time":1787249421326,"pid":779111,"hostname":"cryptomatrix-app","port":8080,"msg":"Server listening"}
+0|matrix-b | [bot] Telegram polling started. Matrix Signal Bot fully online.
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 16 pairs @ 2026-08-20T18:10:26.806Z
+0|matrix-b | [scanner] Full scan done: 16 pairs in 2.8s | watchlist: 1 | signals: 0
+0|matrix-b | [storage] Dedup complete — removed 0 duplicate(s). Balance: $100.0000 → $100.0000 | Trades: 0 → 0
+0|matrix-b | {"level":30,"time":1787249449736,"pid":779136,"hostname":"cryptomatrix-app","msg":"Startup dedup: no duplicates found, state is clean"}
+0|matrix-b | [bot] DASHBOARD_ONLY mode — scanner disabled, tracker running.
+0|matrix-b | [bot] Daily summary scheduled in 349 minutes.
+0|matrix-b | [bot] Connecting to Telegram in background…
+0|matrix-b | {"level":30,"time":1787249449832,"pid":779136,"hostname":"cryptomatrix-app","port":8080,"msg":"Server listening"}
+0|matrix-b | [bot] Telegram polling started. Matrix Signal Bot fully online.
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
