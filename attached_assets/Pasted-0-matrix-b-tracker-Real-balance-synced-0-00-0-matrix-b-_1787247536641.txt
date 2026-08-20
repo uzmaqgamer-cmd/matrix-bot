@@ -1,0 +1,107 @@
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | {"level":30,"time":1787246202616,"pid":778281,"hostname":"cryptomatrix-app","req":{"id":2,"method":"GET","url":"/login"},"res":{"statusCode":404},"responseTime":7,"msg":"request completed"}
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] LITUSDT SL hit @ 2.759 | finalPnl: $0.0000 | balance: $139.2600
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] AGIUSDT SL hit @ 0.002504 | finalPnl: $0.0000 | balance: $139.2600
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [storage] Partial history (494 of 1702 trades in memory) — using stored balance $139.2600
+0|matrix-b | [storage] Dedup complete — removed 0 duplicate(s). Balance: $139.2600 → $139.2600 | Trades: 1702 → 1702
+0|matrix-b | {"level":30,"time":1787247510542,"pid":778604,"hostname":"cryptomatrix-app","msg":"Startup dedup: no duplicates found, state is clean"}
+0|matrix-b | [bot] Scanners and tracker started.
+0|matrix-b | [bot] Daily summary scheduled in 381 minutes.
+0|matrix-b | [bot] Connecting to Telegram in background…
+0|matrix-b | {"level":30,"time":1787247510638,"pid":778604,"hostname":"cryptomatrix-app","port":8080,"msg":"Server listening"}
+0|matrix-b | [bot] Telegram polling started. Matrix Signal Bot fully online.
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 9 pairs @ 2026-08-20T17:38:33.946Z
+0|matrix-b | [scanner] Full scan done: 9 pairs in 0.6s | watchlist: 76 | signals: 0
+
+/root/.pm2/logs/matrix-bot-error.log last 50 lines:
+0|matrix-b |             ^
+0|matrix-b | 
+0|matrix-b | 
+0|matrix-b | Error: Bot is not running!
+0|matrix-b |     at Telegraf2.stop (/opt/matrix-bot/node_modules/.pnpm/telegraf@4.16.3/node_modules/telegraf/lib/telegraf.js:218:19)
+0|matrix-b |     at process.<anonymous> (/opt/matrix-bot/artifacts/api-server/src/bot/index.ts:546:37)
+0|matrix-b |     at Object.onceWrapper (node:events:639:26)
+0|matrix-b |     at process.emit (node:events:536:35)
+0|matrix-b | 
+0|matrix-b | Node.js v20.20.2
+0|matrix-b | [storage] DB unavailable, falling back to file: Error: getaddrinfo EAI_AGAIN helium
+0|matrix-b |     at <anonymous> (/opt/matrix-bot/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45:11)
+0|matrix-b |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|matrix-b |     at async ensureTable (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:54:3)
+0|matrix-b |     at async initStorage (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:136:7)
+0|matrix-b |     at async <anonymous> (/opt/matrix-bot/artifacts/api-server/src/index.ts:28:5) {
+0|matrix-b |   errno: -3001,
+0|matrix-b |   code: 'EAI_AGAIN',
+0|matrix-b |   syscall: 'getaddrinfo',
+0|matrix-b |   hostname: 'helium'
+0|matrix-b | }
+0|matrix-b | /opt/matrix-bot/node_modules/.pnpm/telegraf@4.16.3/node_modules/telegraf/lib/telegraf.js:218
+0|matrix-b |             throw new Error('Bot is not running!');
+0|matrix-b |             ^
+0|matrix-b | 
+0|matrix-b | 
+0|matrix-b | Error: Bot is not running!
+0|matrix-b |     at Telegraf2.stop (/opt/matrix-bot/node_modules/.pnpm/telegraf@4.16.3/node_modules/telegraf/lib/telegraf.js:218:19)
+0|matrix-b |     at process.<anonymous> (/opt/matrix-bot/artifacts/api-server/src/bot/index.ts:546:37)
+0|matrix-b |     at Object.onceWrapper (node:events:639:26)
+0|matrix-b |     at process.emit (node:events:536:35)
+0|matrix-b | 
+0|matrix-b | Node.js v20.20.2
+0|matrix-b | [storage] DB unavailable, falling back to file: Error: getaddrinfo EAI_AGAIN helium
+0|matrix-b |     at <anonymous> (/opt/matrix-bot/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45:11)
+0|matrix-b |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|matrix-b |     at async ensureTable (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:54:3)
+0|matrix-b |     at async initStorage (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:136:7)
+0|matrix-b |     at async <anonymous> (/opt/matrix-bot/artifacts/api-server/src/index.ts:28:5) {
+0|matrix-b |   errno: -3001,
+0|matrix-b |   code: 'EAI_AGAIN',
+0|matrix-b |   syscall: 'getaddrinfo',
+0|matrix-b |   hostname: 'helium'
+0|matrix-b | }
+0|matrix-b | [tracker] syncRealBalance failed: Bitunix account response has no positive available USDT balance
+0|matrix-b | [tracker] 1 legacy live position(s) quarantined; no local close is permitted
+0|matrix-b | [tracker] 1 legacy live position(s) quarantined; no local close is permitted
+0|matrix-b | [tracker] 1 legacy live position(s) quarantined; no local close is permitted
+0|matrix-b | [tracker] 1 legacy live position(s) quarantined; no local close is permitted
+0|matrix-b | [tracker] 1 legacy live position(s) quarantined; no local close is permitted
+
+0|matrix-bot  | [tracker] 1 legacy live position(s) quarantined; no local close is permitted
+0|matrix-bot  | [tracker] 1 legacy live position(s) quarantined; no local close is permitted
+0|matrix-bot  | [tracker] 1 legacy live position(s) quarantined; no local close is permitted
+0
