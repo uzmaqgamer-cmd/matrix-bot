@@ -40,7 +40,7 @@ for page_no,page in enumerate(doc,1):
                     symbol=lines[k-2]+symbol
             rows.append({
               'page':page_no,'symbol':symbol,'pnl':pnl,'entry':entry,'avg_close':avg_close,
-              'max_open':max_open,'closed_vol':closed_vol,'opened':lines[i],'closed':lines[i+1]
+              'max_open':max_open,'closed_vol':closed_vol,'opened':lines[i-1],'closed':lines[i]
             })
 print('rows',len(rows),'pages',len(doc))
 # summarize
