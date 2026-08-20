@@ -33,13 +33,16 @@ for page_no,page in enumerate(doc,1):
             while k>=0 and lines[k] not in ('Cross','Isolated'):
                 k-=1
             symbol='?'
+            direction='?'
             if k>0:
                 # one or two lines immediately before margin mode
                 symbol=lines[k-1]
                 if k-2>=0 and lines[k-2] not in ('Symbol','Status','Closed') and not date_re.match(lines[k-2]):
                     symbol=lines[k-2]+symbol
+                if k+1 < len(lines):
+                    direction=lines[k+1]
             rows.append({
-              'page':page_no,'symbol':symbol,'pnl':pnl,'entry':entry,'avg_close':avg_close,
+              'page':page_no,'symbol':symbol,'direction':direction,'pnl':pnl,'entry':entry,'avg_close':avg_close,
               'max_open':max_open,'closed_vol':closed_vol,'opened':lines[i-1],'closed':lines[i]
             })
 print('rows',len(rows),'pages',len(doc))
