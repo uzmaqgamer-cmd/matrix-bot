@@ -4,7 +4,7 @@ import { isLiveTradingEnabled, openTrade } from './trader.js';
 import { config } from './config.js';
 import {
   formatWinRate, formatDailyResults, formatActiveSignals,
-  formatTestResults, formatRadar, fmtPrice, esc,
+  formatLiveEntryConfirmedMessage, formatTestResults, formatRadar, fmtPrice, esc,
 } from './formatter.js';
 import { runFullScan, runWatchlistScan, initScanner, sendSignal, scanSymbol, getRadarData, lastScanSummary } from './scanner.js';
 import { checkActiveSignals, initTracker, monitorPositionTheses, sendDailySummary, syncRealBalance } from './tracker.js';
@@ -436,13 +436,13 @@ bot.action(/^accept_(.+)$/, async (ctx) => {
     });
   } catch { /* ok */ }
 
-  const cap = (state.signalMode ?? 'LIMITED') === 'LIMITED' ? '/5' : '/∞';
-  await ctx.reply(
-    `✅ <b>Tracking: ${esc(signal.symbol)}</b>\n` +
-    `Entry <code>${fmtPrice(signal.entry)}</code>  |  TP <code>${fmtPrice(signal.tp)}</code>  |  SL <code>${fmtPrice(signal.sl)}</code>\n` +
-    `Active: ${state.activeSignals.length}${cap}`,
-    { parse_mode: 'HTML' }
-  );
+  const cap = (state.signalMode ?? 'LIMITED') === 'LIMITED' ? '/4' : '/∞';
+  const confirmation = signal.liveEnabled
+    ? `${formatLiveEntryConfirmedMessage(signal)}\n\n<i>Active live positions: ${state.activeSignals.length}${cap}</i>`
+    : `✅ <b>Tracking: ${esc(signal.symbol)}</b>\n` +
+      `Entry <code>${fmtPrice(signal.entry)}</code>  |  TP <code>${fmtPrice(signal.tp)}</code>  |  SL <code>${fmtPrice(signal.sl)}</code>\n` +
+      `Active: ${state.activeSignals.length}${cap}`;
+  await ctx.reply(confirmation, { parse_mode: 'HTML' });
 });
 
 bot.action(/^ignore_(.+)$/, async (ctx) => {

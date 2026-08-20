@@ -148,27 +148,55 @@ function livePnl(signal: Signal): string {
 // ─── Signal card ─────────────────────────────────────────────────────────────
 
 export function formatSignalMessage(signal: Signal): string {
-  const emoji = signal.direction === 'LONG' ? '🟢' : '🔴';
   const tpPct = pctChange(signal.entry, signal.tp);
   const slPct = pctChange(signal.entry, signal.sl);
   const rr = (signal.rr ?? 2).toFixed(1);
 
   return (
-    `${emoji} <b>MATRIX SIGNAL — ${signal.direction}</b>\n` +
-    `Pair: <code>${esc(signal.symbol)}</code>\n` +
-    `━━━━━━━━━━━━━━━━━━\n` +
-    `Entry:  <code>${fmtPrice(signal.entry)}</code>\n` +
-    `TP:     <code>${fmtPrice(signal.tp)}</code>  (${esc(tpPct)})\n` +
-    `SL:     <code>${fmtPrice(signal.sl)}</code>  (${esc(slPct)})\n` +
-    `R/R:    1:${rr}\n` +
-    `━━━━━━━━━━━━━━━━━━\n` +
-    `Matrix Row #${signal.matrixRow} — <i>${esc(signal.matrixMeaning)}</i>\n` +
-    `Origin: Row #${signal.originRow} (${esc(signal.originPriority)} priority)\n` +
-    `ATR:    <code>${fmtPrice(signal.atr)}</code>  (${((signal.atr / signal.entry) * 100).toFixed(3)}% of price)\n` +
-    `TP multiplier: <b>${esc(tierLabel(signal))}</b>\n` +
-    `Time:   ${esc(fmtTime(signal.createdAt))}\n` +
-    `━━━━━━━━━━━━━━━━━━\n` +
-    `<i>Accept to track (max 8 active). Ignored signals don't count.</i>`
+    `📡 <b>BITUNIX LONG SETUP</b>\n` +
+    `<i>New-run candidate — no order has been placed yet.</i>\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `Pair      <code>${esc(signal.symbol)}</code>\n` +
+    `Entry     <code>${fmtPrice(signal.entry)}</code>\n` +
+    `Target    <code>${fmtPrice(signal.tp)}</code>  <b>${esc(tpPct)}</b>\n` +
+    `Stop      <code>${fmtPrice(signal.sl)}</code>  <b>${esc(slPct)}</b>\n` +
+    `Reward/Risk  <b>1:${rr}</b>\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `Matrix    <b>#${signal.matrixRow}</b> — <i>${esc(signal.matrixMeaning)}</i>\n` +
+    `Priority  ${esc(signal.originPriority)} · origin row #${signal.originRow}\n` +
+    `ATR       <code>${fmtPrice(signal.atr)}</code> · ${((signal.atr / signal.entry) * 100).toFixed(2)}%\n` +
+    `Data      Bitunix price/funding/ATR · Bybit public OI\n` +
+    `Safety    Native Bitunix position stop required\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `<i>Accepting in live mode places an order only after the Bitunix fill and native stop are both confirmed.</i>`
+  );
+}
+
+/**
+ * Sent only after Bitunix has confirmed both the entry fill and the
+ * position-bound protective stop. This is intentionally distinct from a setup
+ * message so there is no ambiguity about a real order.
+ */
+export function formatLiveEntryConfirmedMessage(signal: Signal): string {
+  const fill = signal.liveFillPrice ?? signal.entry;
+  const qty = signal.liveQty ?? 0;
+  const risk = signal.liveRiskDollar ?? signal.riskAmt ?? 0;
+  return (
+    `🟢 <b>LIVE ORDER CONFIRMED — BITUNIX</b>\n` +
+    `<b>${esc(signal.symbol)} LONG</b> · <i>new-run live trade</i>\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `Fill      <code>${fmtPrice(fill)}</code>\n` +
+    `Size      <code>${qty}</code>\n` +
+    `Target    <code>${fmtPrice(signal.tp)}</code>\n` +
+    `Stop      <code>${fmtPrice(signal.sl)}</code>\n` +
+    `Risk      <b>$${risk.toFixed(4)}</b> (0.25% cap)\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `Protection  <b>ACTIVE</b> — Bitunix native position stop accepted\n` +
+    `Evidence    entry fill + stop order confirmed by Bitunix\n` +
+    `Market data Bitunix · OI source Bybit public\n` +
+    `Order ID    <code>${esc(signal.liveOrderId ?? 'confirmed')}</code>\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `<i>This trade is now counted in the fresh confirmed-fill performance run.</i>`
   );
 }
 

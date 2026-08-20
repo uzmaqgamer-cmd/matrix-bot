@@ -7,7 +7,7 @@ import { updateWatchlist } from './watchlist.js';
 import { buildSignal } from './signalBuilder.js';
 import { loadState, saveState, getOrCreateDailyStats } from './storage.js';
 import { config } from './config.js';
-import { formatSignalMessage } from './formatter.js';
+import { formatLiveEntryConfirmedMessage, formatSignalMessage } from './formatter.js';
 import { logActivity, logScan } from './eventLog.js';
 import type { Telegram } from 'telegraf';
 import { Markup } from 'telegraf';
@@ -211,10 +211,9 @@ export async function sendSignal(params: {
       saveState(state);
 
       // Admin gets verbose info; channel gets clean signal only
-      const autoText =
-        `⚡ <b>AUTO-TRACKED</b>\n` +
-        text +
-        `\n\n<i>Unlimited mode — tracking ${state.activeSignals.length} active signals.</i>`;
+      const autoText = signal.liveEnabled
+        ? `${formatLiveEntryConfirmedMessage(signal)}\n\n<i>Active live positions: ${state.activeSignals.length}/4</i>`
+        : `⚡ <b>AUTO-TRACKED</b>\n${text}\n\n<i>Unlimited mode — tracking ${state.activeSignals.length} active signals.</i>`;
       await telegramRef!.sendMessage(adminChatId, autoText, { parse_mode: 'HTML' });
       if (CHANNEL_ID) {
         try { await telegramRef!.sendMessage(CHANNEL_ID, text, { parse_mode: 'HTML' }); }
