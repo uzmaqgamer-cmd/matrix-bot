@@ -48,3 +48,4 @@ Thumbs.db
 .cache/
 .local/
 data/bot-state.json
+artifacts/api-server/data/bot-state.json

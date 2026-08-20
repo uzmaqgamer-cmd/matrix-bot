@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { dirname } from 'path';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import pg from 'pg';
 import type { BotState, BalanceLogEntry } from './types.js';
 import { activityLog } from './eventLog.js';
@@ -7,7 +8,12 @@ import { activityLog } from './eventLog.js';
 const { Pool } = pg;
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
-const STATE_FILE = '/home/runner/workspace/data/bot-state.json';
+// Resolved relative to this module's own location (works whether this runs from
+// Replit's workspace, a VPS checkout, or any other deploy path) rather than a
+// hardcoded Replit-only absolute path. Overridable via BOT_STATE_FILE for
+// environments that want the file elsewhere.
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const STATE_FILE = process.env.BOT_STATE_FILE || join(__dirname, '..', 'data', 'bot-state.json');
 
 const DEFAULT_STATE: BotState = {
   signalsEnabled: false,
