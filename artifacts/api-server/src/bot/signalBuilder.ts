@@ -1,4 +1,4 @@
-import { getOhlcSeries, calcATR, getCurrentPrice } from './binance.js';
+import { getOhlcSeries, calcATR, getCurrentPrice } from './bitunix.js';
 import { config } from './config.js';
 import type { Signal, SignalDirection, TpTier } from './types.js';
 
@@ -62,9 +62,9 @@ export async function buildSignal(params: {
     // ── ATR minimum gate ─────────────────────────────────────────────────────
     // Signals with stops so tight that normal volatility triggers them are useless.
     const atrPct = (atr / entry) * 100;
-    if (atrPct < config.minAtrPercentOfPrice) {
+    if (atrPct < config.minAtrPercentOfPrice || atrPct > config.maxAtrPercentOfPrice) {
       console.log(
-        `[SKIP] ${params.symbol} → ATR ${atrPct.toFixed(2)}% below ${config.minAtrPercentOfPrice}% floor`
+        `[SKIP] ${params.symbol} → ATR ${atrPct.toFixed(2)}% outside ${config.minAtrPercentOfPrice}%–${config.maxAtrPercentOfPrice}% Bitunix pilot range`
       );
       return null;
     }
@@ -96,6 +96,7 @@ export async function buildSignal(params: {
       id: genId(),
       symbol: params.symbol,
       direction: params.direction,
+      marketVenue: 'BITUNIX',
       entry,
       tp: parseFloat(tp.toPrecision(6)),
       sl: parseFloat(sl.toPrecision(6)),

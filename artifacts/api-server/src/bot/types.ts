@@ -33,6 +33,8 @@ export interface Signal {
   id: string;
   symbol: string;
   direction: SignalDirection;
+  /** Venue that supplied the signal inputs; required before Bitunix execution. */
+  marketVenue?: 'BITUNIX';
   entry: number;
   tp: number;
   sl: number;
@@ -50,6 +52,8 @@ export interface Signal {
   messageId?: number;        // telegram message ID for editing
   currentPrice?: number;     // last known market price (updated by tracker every 30s)
   currentPriceAt?: number;   // timestamp of last price update
+  pnlPct?: number | null;
+  tpProgressPct?: number | null;
 
   // ── Test 2: compounding 1% risk per trade ──────────────────────────────────
   balanceAtEntry?: number;   // paper balance snapshot at the moment this signal was accepted
@@ -96,6 +100,14 @@ export interface Signal {
   liveFillPrice?:  number;   // actual entry fill price from Binance
   liveRiskDollar?: number;   // dollar risk at entry (freeBalance × RISK_PCT)
   liveError?:      string;   // order-placement error message (if open failed)
+  liveVenue?:      'BITUNIX';
+  livePositionId?: string;
+  liveFillConfirmed?: boolean;
+  liveProtectionConfirmed?: boolean;
+  liveExitConfirmed?: boolean;
+  liveFeeCashback?: number;
+  livePartialRealizedPnl?: number;
+  liveExitRealizedPnl?: number;
 }
 
 export interface DailyStats {

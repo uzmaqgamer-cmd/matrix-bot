@@ -1,403 +1,283 @@
 /**
- * Binance USDT-M Futures live trading module.
- *
- * All execution is gated behind LIVE_TRADING=true so paper trading remains
- * the default until explicitly enabled on the VPS.
- *
- * Required env vars (set in /opt/matrix-bot/.env on the VPS):
- *   BINANCE_API_KEY    — Futures read+trade API key
- *   BINANCE_API_SECRET — Matching secret
- *   LIVE_TRADING       — Must be exactly "true" to place real orders
- *   TRADE_RISK_PCT     — % of free USDT balance to risk per trade (default 2)
- *   TRADE_LEVERAGE     — Cross-margin leverage to set per symbol (default 10)
+ * Bitunix-only live execution. A trade is live only after its market fill and
+ * exchange-native position stop both succeed; otherwise it is flattened.
  */
-
-import crypto from 'crypto';
+import { bitunixPrivate, getAllPerpSymbols } from './bitunix.js';
 import type { Signal } from './types.js';
 import { config } from './config.js';
+import { loadState } from './storage.js';
 
-const FAPI      = 'https://fapi.binance.com';
-const RISK_PCT  = parseFloat(process.env['TRADE_RISK_PCT']  ?? '2')  / 100; // e.g. 0.02
-const LEVERAGE  = parseInt (process.env['TRADE_LEVERAGE']   ?? '10', 10);
+interface Position { positionId?: string; symbol?: string; qty?: string; positionQty?: string }
+interface OrderDetail {
+  orderId?: string; status?: string; avgPrice?: string; tradeQty?: string;
+  fee?: string; realizedPNL?: string;
+}
+interface TradeFill {
+  positionId?: string; fee?: string; realizedPNL?: string; ctime?: number | string;
+}
 
-// ─── Guard ────────────────────────────────────────────────────────────────────
+const LEVERAGE = Math.max(1, Number.parseInt(process.env['BITUNIX_LEVERAGE'] ?? '10', 10));
 
 export function isLiveTradingEnabled(): boolean {
-  return (
-    process.env['LIVE_TRADING']         === 'true' &&
-    !!process.env['BINANCE_API_KEY']               &&
-    !!process.env['BINANCE_API_SECRET']
-  );
+  return process.env['LIVE_TRADING'] === 'true' &&
+    !!process.env['BITUNIX_API_KEY'] &&
+    !!process.env['BITUNIX_API_SECRET'];
 }
 
-// ─── Authenticated REST helper ────────────────────────────────────────────────
-
-function buildQs(params: Record<string, string | number>): string {
-  return Object.entries(params)
-    .map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`)
-    .join('&');
+function num(value: unknown): number {
+  const result = Number(value);
+  return Number.isFinite(result) ? result : 0;
 }
 
-function sign(qs: string): string {
-  return crypto
-    .createHmac('sha256', process.env['BINANCE_API_SECRET']!)
-    .update(qs)
-    .digest('hex');
+function floorPrecision(value: number, precision: number): number {
+  const factor = 10 ** precision;
+  return Math.floor((value + Number.EPSILON) * factor) / factor;
 }
 
-async function fapi(
-  method: 'GET' | 'POST' | 'DELETE',
-  path: string,
-  params: Record<string, string | number> = {},
-): Promise<any> {
-  const qs  = buildQs({ ...params, timestamp: Date.now() });
-  const sig = sign(qs);
-  const key = process.env['BINANCE_API_KEY']!;
-
-  let url: string;
-  let init: RequestInit;
-
-  if (method === 'GET' || method === 'DELETE') {
-    url  = `${FAPI}${path}?${qs}&signature=${sig}`;
-    init = { method, headers: { 'X-MBX-APIKEY': key } };
-  } else {
-    url  = `${FAPI}${path}`;
-    init = {
-      method,
-      headers: {
-        'X-MBX-APIKEY': key,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `${qs}&signature=${sig}`,
-    };
-  }
-
-  const res  = await fetch(url, init);
-  const data = await res.json() as any;
-  if (!res.ok) throw new Error(`Binance ${method} ${path} ${res.status}: ${JSON.stringify(data)}`);
-  return data;
+async function getOrderDetail(orderId: string) {
+  return bitunixPrivate<OrderDetail>('GET', '/api/v1/futures/trade/get_order_detail', { orderId });
 }
 
-// ─── Position mode cache (One-Way vs Hedge) ───────────────────────────────────
-// Checked once per session. Hedge mode requires positionSide on every order.
-
-let _positionMode: 'oneway' | 'hedge' | null = null;
-
-async function getPositionMode(): Promise<'oneway' | 'hedge'> {
-  if (_positionMode) return _positionMode;
-  try {
-    const res = await fapi('GET', '/fapi/v1/positionSide/dual');
-    _positionMode = res.dualSidePosition ? 'hedge' : 'oneway';
-  } catch {
-    _positionMode = 'oneway'; // safe default
-  }
-  console.log(`[trader] Position mode: ${_positionMode}`);
-  return _positionMode;
-}
-
-// ─── Exchange info cache (LOT_SIZE + PRICE_FILTER per symbol) ─────────────────
-// Refreshed once per hour — avoids hitting exchangeInfo on every trade.
-
-interface SymbolMeta { stepSize: number; tickSize: number; minNotional: number }
-const _metaCache    = new Map<string, SymbolMeta>();
-let   _metaFetchedAt = 0;
-
-async function getSymbolMeta(symbol: string): Promise<SymbolMeta | null> {
-  const STALE = 60 * 60_000; // 1 hour
-  if (_metaCache.has(symbol) && Date.now() - _metaFetchedAt < STALE) {
-    return _metaCache.get(symbol)!;
-  }
-  const res  = await fetch(`${FAPI}/fapi/v1/exchangeInfo`);
-  const data = await res.json() as any;
-  _metaFetchedAt = Date.now();
-  for (const sym of data.symbols as any[]) {
-    const lot   = sym.filters.find((f: any) => f.filterType === 'LOT_SIZE');
-    const price = sym.filters.find((f: any) => f.filterType === 'PRICE_FILTER');
-    const notio = sym.filters.find((f: any) => f.filterType === 'MIN_NOTIONAL');
-    if (lot && price) {
-      _metaCache.set(sym.symbol, {
-        stepSize:    parseFloat(lot.stepSize),
-        tickSize:    parseFloat(price.tickSize),
-        minNotional: parseFloat(notio?.notional ?? '5'),
-      });
+async function waitForFill(orderId: string): Promise<OrderDetail> {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const order = await getOrderDetail(orderId);
+    if (order.status === 'FILLED' && num(order.avgPrice) > 0 && num(order.tradeQty) > 0) return order;
+    if (['CANCELED', 'REJECTED', 'EXPIRED'].includes(order.status ?? '')) {
+      throw new Error(`Bitunix order ${orderId} ended as ${order.status}`);
     }
+    await new Promise(resolve => setTimeout(resolve, 400));
   }
-  // Return null if symbol doesn't exist on Binance Futures
-  return _metaCache.get(symbol) ?? null;
+  throw new Error(`Bitunix order ${orderId} did not confirm filled within 3.2 seconds`);
 }
 
-function roundStep(value: number, step: number): number {
-  if (step <= 0) return value;
-  const p = Math.max(0, Math.round(-Math.log10(step)));
-  return parseFloat((Math.floor(value / step) * step).toFixed(p));
+async function positions(): Promise<Position[]> {
+  return bitunixPrivate<Position[]>('GET', '/api/v1/futures/position/get_pending_positions');
 }
-
-function roundTick(value: number, tick: number): number {
-  if (tick <= 0) return value;
-  const p = Math.max(0, Math.round(-Math.log10(tick)));
-  return parseFloat((Math.round(value / tick) * tick).toFixed(p));
-}
-
-// ─── Account ─────────────────────────────────────────────────────────────────
 
 export async function getUsdtBalance(): Promise<number> {
-  const balances = await fapi('GET', '/fapi/v2/balance') as any[];
-  const usdt = balances.find(b => b.asset === 'USDT');
-  return parseFloat(usdt?.availableBalance ?? '0');
+  const account = await bitunixPrivate<Record<string, unknown>>('GET', '/api/v1/futures/account', { marginCoin: 'USDT' });
+  const nested = account.account as Record<string, unknown> | undefined;
+  const balance = [account.availableBalance, account.available, account.usdtAvailable, nested?.availableBalance, nested?.available]
+    .map(num).find(value => value > 0);
+  if (!balance) throw new Error('Bitunix account response has no positive available USDT balance');
+  return balance;
 }
 
-/**
- * Count open positions on Binance (any symbol with non-zero positionAmt).
- * Used as a hard exchange-side cap before opening new trades.
- */
-async function countOpenBinancePositions(): Promise<number> {
-  const positions = await fapi('GET', '/fapi/v2/positionRisk') as any[];
-  return positions.filter((p: any) => parseFloat(p.positionAmt ?? '0') !== 0).length;
-}
-
-// ─── Order helpers ────────────────────────────────────────────────────────────
-
-async function placeMarket(
-  symbol: string, side: 'BUY' | 'SELL', quantity: number,
-): Promise<{ orderId: number; avgPrice: number }> {
-  const res = await fapi('POST', '/fapi/v1/order', {
-    symbol, side, type: 'MARKET', quantity: String(quantity),
+async function marketOrder(
+  symbol: string, side: 'BUY' | 'SELL', qty: number, tradeSide: 'OPEN' | 'CLOSE', positionId?: string,
+): Promise<string> {
+  const result = await bitunixPrivate<{ orderId?: string }>('POST', '/api/v1/futures/trade/place_order', {}, {
+    symbol, side, orderType: 'MARKET', qty: String(qty), tradeSide, effect: 'IOC',
+    reduceOnly: tradeSide === 'CLOSE', ...(positionId ? { positionId } : {}),
+    clientId: `matrix-${Date.now()}`,
   });
-  return { orderId: res.orderId, avgPrice: parseFloat(res.avgPrice ?? '0') };
+  if (!result.orderId) throw new Error('Bitunix returned no order ID');
+  return result.orderId;
 }
 
-/**
- * TP order — plain LIMIT order in the close direction.
- * Sits in the order book; fills when price reaches the TP level.
- * Universally supported on all Binance Futures account types.
- */
-async function placeTpOrder(
-  symbol: string,
-  side: 'BUY' | 'SELL',
-  positionSide: 'LONG' | 'SHORT',
-  quantity: number,         // always required for LIMIT
-  tpPrice: number,
-  tick: number,
-): Promise<number> {
-  const mode   = await getPositionMode();
-  const price  = String(roundTick(tpPrice, tick));
-  const params: Record<string, string | number> = {
-    symbol, side,
-    type:        'LIMIT',
-    price,
-    quantity:    String(quantity),
-    timeInForce: 'GTC',
-  };
-  if (mode === 'hedge') {
-    params['positionSide'] = positionSide;
-  } else {
-    params['reduceOnly'] = 'true';
-  }
-  const res = await fapi('POST', '/fapi/v1/order', params);
-  return res.orderId;
+async function getLivePosition(signal: Signal): Promise<{ position: Position; quantity: number; precision: number }> {
+  const [instruments, open] = await Promise.all([getAllPerpSymbols(), positions()]);
+  const instrument = instruments.find(item => item.symbol === signal.symbol);
+  if (!instrument) throw new Error(`${signal.symbol} is not an eligible Bitunix USDT perpetual`);
+  const position = open.find(item => item.symbol === signal.symbol && num(item.qty ?? item.positionQty) > 0);
+  if (!position?.positionId) throw new Error(`No open Bitunix position found for ${signal.symbol}`);
+  const quantity = floorPrecision(num(position.qty ?? position.positionQty), instrument.basePrecision);
+  if (quantity <= 0) throw new Error(`Bitunix returned an invalid close quantity for ${signal.symbol}`);
+  return { position, quantity, precision: instrument.basePrecision };
 }
 
-/**
- * SL order — STOP (stop-limit) order in the close direction.
- * When mark price reaches stopPrice, a LIMIT order at price fires.
- * price is set slightly beyond stopPrice to ensure fill in a fast move.
- */
-async function placeSlOrder(
-  symbol: string,
-  side: 'BUY' | 'SELL',
-  positionSide: 'LONG' | 'SHORT',
-  quantity: number,         // always required
-  slPrice: number,
-  tick: number,
-): Promise<number> {
-  const mode      = await getPositionMode();
-  const stopPrice = roundTick(slPrice, tick);
-  // Limit price: for a SELL SL move slightly below trigger; for BUY SL slightly above
-  const limitPrice = side === 'SELL'
-    ? roundTick(stopPrice * 0.997, tick)   // 0.3% slip buffer
-    : roundTick(stopPrice * 1.003, tick);
-  const params: Record<string, string | number> = {
-    symbol, side,
-    type:        'STOP',
-    stopPrice:   String(stopPrice),
-    price:       String(limitPrice),
-    quantity:    String(quantity),
-    timeInForce: 'GTC',
-    workingType: 'MARK_PRICE',
-  };
-  if (mode === 'hedge') {
-    params['positionSide'] = positionSide;
-  } else {
-    params['reduceOnly'] = 'true';
-  }
-  const res = await fapi('POST', '/fapi/v1/order', params);
-  return res.orderId;
+async function reconcileNativeStopExit(signal: Signal): Promise<boolean> {
+  if (!signal.livePositionId) return false;
+  const page = await bitunixPrivate<any>('GET', '/api/v1/futures/trade/get_history_trades', {
+    symbol: signal.symbol, positionId: signal.livePositionId, limit: 20,
+  });
+  const trades: TradeFill[] = Array.isArray(page)
+    ? page
+    : (page.tradeList ?? page.list ?? page.orderList ?? []);
+  const latest = trades
+    .filter((trade: TradeFill) => trade.realizedPNL != null || trade.fee != null)
+    .sort((a: TradeFill, b: TradeFill) => num(b.ctime) - num(a.ctime))[0];
+  if (!latest) return false;
+  signal.liveExitConfirmed = true;
+  signal.liveFeeExit = num(latest.fee) * (1 - config.bitunixFeeCashback);
+  signal.liveExitRealizedPnl = num(latest.realizedPNL);
+  recordConfirmedExit(signal);
+  return true;
 }
 
-async function cancelOrder(symbol: string, orderId: string | number): Promise<void> {
+async function closeCurrentPosition(signal: Signal, fraction = 1): Promise<{ order: OrderDetail | null; quantity: number }> {
+  let live: { position: Position; quantity: number; precision: number };
   try {
-    await fapi('DELETE', '/fapi/v1/order', { symbol, orderId: Number(orderId) });
-  } catch (err: any) {
-    // Already filled or cancelled — safe to ignore
-    console.warn(`[trader] Cancel ${symbol} #${orderId}: ${err.message}`);
+    live = await getLivePosition(signal);
+  } catch (error) {
+    if (await reconcileNativeStopExit(signal)) return { order: null, quantity: 0 };
+    throw error;
   }
+  const { position, quantity, precision } = live;
+  const closeQty = floorPrecision(quantity * fraction, precision);
+  if (closeQty <= 0) throw new Error(`Close quantity rounds to zero for ${signal.symbol}`);
+  const id = await marketOrder(
+    signal.symbol,
+    signal.direction === 'LONG' ? 'SELL' : 'BUY',
+    closeQty,
+    'CLOSE',
+    position.positionId,
+  );
+  return { order: await waitForFill(id), quantity: closeQty };
 }
 
-// ─── Public API ───────────────────────────────────────────────────────────────
+async function closeKnownFill(signal: Signal, qty: number, positionId?: string): Promise<OrderDetail> {
+  const id = await marketOrder(signal.symbol, signal.direction === 'LONG' ? 'SELL' : 'BUY', qty, 'CLOSE', positionId);
+  return waitForFill(id);
+}
+
+function recordConfirmedExit(signal: Signal): void {
+  signal.livePnlGross = parseFloat(
+    ((signal.livePartialRealizedPnl ?? 0) + (signal.liveExitRealizedPnl ?? 0)).toFixed(6),
+  );
+  signal.liveFeesTotal = parseFloat(
+    ((signal.liveFeeEntry ?? 0) + (signal.liveFeePartialExit ?? 0) + (signal.liveFeeExit ?? 0)).toFixed(6),
+  );
+  signal.livePnlNet = parseFloat((signal.livePnlGross - signal.liveFeesTotal).toFixed(6));
+}
+
+function requireBitunixCloseAccess(signal: Signal): boolean {
+  // Paper signals are intentionally local-only. Every live signal must either
+  // be closed through its original Bitunix venue or remain active for operator
+  // reconciliation; it is never silently finalized.
+  if (!signal.liveEnabled) return false;
+  if (signal.liveVenue !== 'BITUNIX') {
+    throw new Error(`Legacy live signal ${signal.symbol} is quarantined; it cannot be closed through the Bitunix adapter`);
+  }
+  if (!isLiveTradingEnabled()) {
+    throw new Error(`Bitunix credentials are unavailable; ${signal.symbol} remains active for reconciliation`);
+  }
+  return true;
+}
+
+/**
+ * The documented Bitunix position TP/SL endpoint closes the attached position
+ * at market on trigger. Binding it to positionId makes it reduce-only by design.
+ */
+async function placePositionStop(symbol: string, positionId: string, sl: number): Promise<string> {
+  const result = await bitunixPrivate<{ orderId?: string }>('POST', '/api/v1/futures/tpsl/position/place_order', {}, {
+    symbol, positionId, slPrice: String(sl), slStopType: 'MARK_PRICE',
+  });
+  if (!result.orderId) throw new Error('Bitunix did not return a protective-stop order ID');
+  return result.orderId;
+}
 
 export interface OpenTradeResult {
-  ok: true;
-  orderId:    string;
-  tpOrderId:  string;
-  slOrderId:  string;
-  quantity:   number;
-  fillPrice:  number;
-  riskDollar: number;
-  feeEntry:   number;  // taker fee paid at entry (qty × fillPrice × takerFee)
+  ok: true; orderId: string; tpOrderId: string; slOrderId: string; quantity: number;
+  fillPrice: number; riskDollar: number; feeEntry: number; positionId: string;
 }
-export interface OpenTradeError  { ok: false; error: string }
+export interface OpenTradeError {
+  ok: false; error: string;
+  unreconciled?: { orderId: string; quantity: number; fillPrice: number; positionId?: string };
+}
 export type OpenTradeOutcome = OpenTradeResult | OpenTradeError;
 
-/**
- * Opens a live Binance Futures position for the given signal.
- *
- * Sizing: quantity = (freeBalance × RISK_PCT) / |entry − sl|
- * After entry fills, places TP (TAKE_PROFIT_MARKET) and SL (STOP_MARKET)
- * with reduceOnly=true so they can only reduce the position.
- *
- * Caller is responsible for stamping liveEnabled/liveQty/liveOrderId/etc.
- * onto the signal and calling saveState().
- */
 export async function openTrade(signal: Signal): Promise<OpenTradeOutcome> {
-  if (!isLiveTradingEnabled()) return { ok: false, error: 'LIVE_TRADING not enabled' };
+  if (!isLiveTradingEnabled()) return { ok: false, error: 'LIVE_TRADING is not enabled with Bitunix credentials' };
+  if (signal.direction !== 'LONG') return { ok: false, error: 'Bitunix pilot is LONG-only; SHORT execution is blocked' };
 
+  let confirmedEntry: { orderId: string; quantity: number; fillPrice: number } | null = null;
   try {
-    const meta    = await getSymbolMeta(signal.symbol);
-    if (!meta) return { ok: false, error: `${signal.symbol} not listed on Binance Futures — skipping` };
+    const [instruments, balance, open] = await Promise.all([getAllPerpSymbols(), getUsdtBalance(), positions()]);
+    const instrument = instruments.find(item => item.symbol === signal.symbol);
+    if (!instrument) throw new Error(`${signal.symbol} is not an eligible Bitunix USDT perpetual`);
+    const openCount = open.filter(item => num(item.qty ?? item.positionQty) !== 0).length;
+    if (openCount >= config.positionMonitoring.maxActivePositions) throw new Error(`Bitunix position cap reached (${openCount}/4)`);
 
-    // Hard exchange-side cap: count actual open Binance positions, not just bot state.
-    // This catches cases where state is stale or positions were opened outside the bot.
-    const openCount = await countOpenBinancePositions();
-    if (openCount >= config.positionMonitoring.maxActivePositions) {
-      return { ok: false, error: `Exchange cap: ${openCount} positions already open (max ${config.positionMonitoring.maxActivePositions})` };
+    const riskDollar = balance * config.riskPerPosition;
+    const allocatedRisk = loadState().activeSignals
+      .filter(item => item.liveEnabled)
+      .reduce((sum, item) => sum + (item.liveRiskDollar ?? 0), 0);
+    if (allocatedRisk + riskDollar > balance * config.maxAggregateRisk) {
+      throw new Error('Portfolio risk cap would exceed 1% of available balance');
     }
 
-    const balance = await getUsdtBalance();
+    const stopDistance = Math.abs(signal.entry - signal.sl);
+    if (stopDistance <= 0) throw new Error('Signal has no valid stop distance');
+    const qty = floorPrecision(riskDollar / stopDistance, instrument.basePrecision);
+    if (qty < num(instrument.minTradeVolume)) throw new Error('Risk-sized quantity is below Bitunix minimum trade volume');
 
-    // Position sizing — risk a fixed % of balance
-    const riskDollar = balance * RISK_PCT;
-    const slDist     = Math.abs(signal.entry - signal.sl);
-    if (slDist === 0) throw new Error('SL distance is zero');
+    await bitunixPrivate('POST', '/api/v1/futures/account/change_leverage', {}, {
+      symbol: signal.symbol, leverage: Math.min(LEVERAGE, instrument.maxLeverage), marginCoin: 'USDT',
+    });
 
-    const qty = roundStep(riskDollar / slDist, meta.stepSize);
-    if (qty <= 0) throw new Error(`Quantity rounds to 0 (balance=${balance.toFixed(2)}, step=${meta.stepSize})`);
+    const entryId = await marketOrder(signal.symbol, 'BUY', qty, 'OPEN');
+    const entry = await waitForFill(entryId);
+    const filledQty = num(entry.tradeQty);
+    confirmedEntry = { orderId: entryId, quantity: filledQty, fillPrice: num(entry.avgPrice) };
+    const actualRisk = filledQty * Math.abs(confirmedEntry.fillPrice - signal.sl);
+    if (actualRisk > riskDollar + 0.000001) {
+      throw new Error(
+        `Fill-to-stop risk $${actualRisk.toFixed(6)} exceeds the $${riskDollar.toFixed(6)} position cap`,
+      );
+    }
+    const livePosition = (await positions()).find(item => item.symbol === signal.symbol && num(item.qty ?? item.positionQty) > 0);
+    if (!livePosition?.positionId) throw new Error('Bitunix fill has no position ID for protective stop');
 
-    const notional = qty * signal.entry;
-    if (notional < meta.minNotional) {
-      throw new Error(`Notional $${notional.toFixed(2)} < min $${meta.minNotional} — account balance too small for this SL distance`);
+    let stopId: string;
+    try {
+      stopId = await placePositionStop(signal.symbol, livePosition.positionId, signal.sl);
+    } catch (stopError) {
+      throw new Error(`Protective stop rejected: ${(stopError as Error).message}`);
     }
 
-    // Set leverage — fall back to lower tiers if symbol cap is below requested
-    const LEVERAGE_TIERS = [LEVERAGE, 50, 20, 10, 5];
-    let usedLeverage = LEVERAGE;
-    for (const lev of LEVERAGE_TIERS) {
+    return {
+      ok: true, orderId: entryId, tpOrderId: '', slOrderId: stopId, quantity: filledQty,
+      fillPrice: num(entry.avgPrice), riskDollar: actualRisk,
+      feeEntry: num(entry.fee) * (1 - config.bitunixFeeCashback),
+      positionId: livePosition.positionId,
+    };
+  } catch (error) {
+    const message = (error as Error).message;
+    if (confirmedEntry) {
       try {
-        await fapi('POST', '/fapi/v1/leverage', { symbol: signal.symbol, leverage: lev });
-        usedLeverage = lev;
-        break;
-      } catch (e: any) {
-        if (e.message?.includes('-4028') || e.message?.includes('leverage')) continue;
-        throw e; // unrelated error — rethrow
+        await closeKnownFill(signal, confirmedEntry.quantity);
+        return { ok: false, error: `${message}; confirmed entry was immediately flattened` };
+      } catch (flattenError) {
+        const critical = `${message}; CRITICAL: confirmed entry could not be flattened: ${(flattenError as Error).message}`;
+        console.error(`[trader] ${critical}`);
+        return {
+          ok: false,
+          error: critical,
+          unreconciled: { ...confirmedEntry },
+        };
       }
     }
-
-    const entrySide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'BUY' : 'SELL';
-
-    // Market entry — tracker monitors price and fires MARKET closes for TP/SL/partial
-    const { orderId, avgPrice } = await placeMarket(signal.symbol, entrySide, qty);
-    const fillPrice = avgPrice > 0 ? avgPrice : signal.entry;
-
-    console.log(
-      `[trader] ✅ LIVE OPEN  ${signal.direction} ${signal.symbol} | ` +
-      `qty=${qty} fill≈${fillPrice} TP=${signal.tp} SL=${signal.sl} ` +
-      `lev=${usedLeverage}× risk=$${riskDollar.toFixed(2)} — tracker will close`,
-    );
-
-    const feeEntry = parseFloat((qty * fillPrice * config.binanceTakerFee).toFixed(6));
-    console.log(
-      `[trader] ✅ LIVE OPEN  ${signal.direction} ${signal.symbol} | ` +
-      `qty=${qty} fill≈${fillPrice} lev=${usedLeverage}× risk=$${riskDollar.toFixed(2)} fee≈$${feeEntry.toFixed(4)} — tracker will close`,
-    );
-    return { ok: true, orderId: String(orderId), tpOrderId: '', slOrderId: '', quantity: qty, fillPrice, riskDollar, feeEntry };
-  } catch (err: any) {
-    const msg = err.message ?? String(err);
-    // Suppress noisy logs for known non-error conditions
-    if (msg.includes('not listed on Binance Futures')) {
-      console.log(`[trader] ⏭ ${signal.symbol} not on Binance Futures — paper only`);
-    } else {
-      console.error(`[trader] ❌ openTrade ${signal.symbol}: ${msg}`);
-    }
-    return { ok: false, error: msg };
+    console.error(`[trader] Bitunix open failed for ${signal.symbol}: ${message}`);
+    return { ok: false, error: message };
   }
 }
 
-/**
- * Called when the tracker detects TP or SL hit.
- * No standing orders exist — fire a MARKET close for the remaining position.
- */
-export async function onTpSlHit(signal: Signal, hit: 'tp' | 'sl'): Promise<void> {
-  if (!isLiveTradingEnabled() || !signal.liveEnabled || !signal.liveQty) return;
-  try {
-    const meta      = await getSymbolMeta(signal.symbol);
-    if (!meta) return;
-    const closeSide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'SELL' : 'BUY';
-    // Use exact remainder to avoid dust: liveQty - what was already closed at partial TP
-    const closeQty = signal.partialTpFired
-      ? roundStep(signal.liveQty - (signal.liveHalfQtyClosed ?? roundStep(signal.liveQty * 0.5, meta.stepSize)), meta.stepSize)
-      : roundStep(signal.liveQty, meta.stepSize);
-    if (closeQty > 0) await placeMarket(signal.symbol, closeSide, closeQty);
-    console.log(`[trader] ${hit.toUpperCase()} CLOSE ${signal.symbol}: market ${closeSide} ${closeQty}`);
-  } catch (err: any) {
-    console.error(`[trader] onTpSlHit ${signal.symbol}: ${err.message}`);
-  }
+export async function onTpSlHit(signal: Signal, _hit: 'tp' | 'sl'): Promise<void> {
+  if (!requireBitunixCloseAccess(signal) || !signal.liveQty) return;
+  const exit = await closeCurrentPosition(signal);
+  if (!exit.order) return; // native stop closure reconciled from trade history
+  signal.liveExitConfirmed = true;
+  signal.liveFeeExit = num(exit.order.fee) * (1 - config.bitunixFeeCashback);
+  signal.liveExitRealizedPnl = num(exit.order.realizedPNL);
+  recordConfirmedExit(signal);
 }
 
-/**
- * Called when tracker detects price reached 50% of TP.
- * Market-closes 50% of the position. Tracker will monitor remaining half
- * and fire onTpSlHit when full TP or breakeven SL is reached.
- */
 export async function onPartialTp(signal: Signal): Promise<void> {
-  if (!isLiveTradingEnabled() || !signal.liveEnabled || !signal.liveQty) return;
-  try {
-    const meta     = await getSymbolMeta(signal.symbol);
-    if (!meta) return;
-    const closeSide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'SELL' : 'BUY';
-    const halfQty  = roundStep(signal.liveQty * 0.5, meta.stepSize);
-    signal.liveHalfQtyClosed = halfQty;   // store exact amount so final close uses remainder
-    if (halfQty > 0) await placeMarket(signal.symbol, closeSide, halfQty);
-    console.log(`[trader] PARTIAL-TP ${signal.symbol}: market-closed 50% (${halfQty})`);
-  } catch (err: any) {
-    console.error(`[trader] onPartialTp ${signal.symbol}: ${err.message}`);
-  }
+  if (!requireBitunixCloseAccess(signal) || !signal.liveQty) return;
+  const exit = await closeCurrentPosition(signal, 0.5);
+  if (!exit.order) return; // a native stop already closed the position
+  signal.liveHalfQtyClosed = exit.quantity;
+  signal.liveFeePartialExit = num(exit.order.fee) * (1 - config.bitunixFeeCashback);
+  signal.livePartialRealizedPnl = num(exit.order.realizedPNL);
 }
 
-/**
- * Force-closes a live position (thesis invalidation or zombie-close).
- * Sends a MARKET close for the remaining quantity.
- */
 export async function onForceClose(signal: Signal): Promise<void> {
-  if (!isLiveTradingEnabled() || !signal.liveEnabled || !signal.liveQty) return;
-  try {
-    const meta     = await getSymbolMeta(signal.symbol);
-    if (!meta) return;
-    const closeSide: 'BUY' | 'SELL' = signal.direction === 'LONG' ? 'SELL' : 'BUY';
-    const closeQty = signal.partialTpFired
-      ? roundStep(signal.liveQty - (signal.liveHalfQtyClosed ?? roundStep(signal.liveQty * 0.5, meta.stepSize)), meta.stepSize)
-      : roundStep(signal.liveQty, meta.stepSize);
-    if (closeQty > 0) await placeMarket(signal.symbol, closeSide, closeQty);
-    console.log(`[trader] FORCE-CLOSE ${signal.symbol}: market ${closeSide} ${closeQty}`);
-  } catch (err: any) {
-    console.error(`[trader] onForceClose ${signal.symbol}: ${err.message}`);
-  }
+  if (!requireBitunixCloseAccess(signal) || !signal.liveQty) return;
+  const exit = await closeCurrentPosition(signal);
+  if (!exit.order) return; // native stop closure reconciled from trade history
+  signal.liveExitConfirmed = true;
+  signal.liveFeeExit = num(exit.order.fee) * (1 - config.bitunixFeeCashback);
+  signal.liveExitRealizedPnl = num(exit.order.realizedPNL);
+  recordConfirmedExit(signal);
 }

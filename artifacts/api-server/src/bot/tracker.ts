@@ -1,4 +1,4 @@
-import { getCurrentPrice, getAllCurrentPrices, getCachedPrices, getCloseSeries, getOpenInterestSeries, getFundingRateSeries } from './binance.js';
+import { getCurrentPrice, getAllCurrentPrices, getCachedPrices, getCloseSeries, getOpenInterestSeries, getFundingRateSeries } from './bitunix.js';
 import { onTpSlHit, onPartialTp, onForceClose, getUsdtBalance, isLiveTradingEnabled } from './trader.js';
 import { classify } from './classifier.js';
 import { lookupRow } from './matrix.js';
@@ -127,6 +127,7 @@ export async function evictWeakestMedium(): Promise<boolean> {
   const exitPrice = victim.currentPrice ?? victim.entry;
   const positionFraction = victim.partialTpFired ? 0.5 : 1.0;
   const closeAmt = victim.riskAmt ? computeCloseAmt(victim, exitPrice, positionFraction) : 0;
+  await onForceClose(victim);
 
   victim.status        = 'auto_closed';
   victim.resolvedAt    = Date.now();
@@ -137,8 +138,6 @@ export async function evictWeakestMedium(): Promise<boolean> {
   victim.pnlPct        = victim.entry > 0
     ? parseFloat(((exitPrice - victim.entry) / victim.entry * 100 * (victim.direction === 'LONG' ? 1 : -1)).toFixed(6))
     : 0;
-
-  await onForceClose(victim);
 
   if (victim.riskAmt) {
     applyBalance(state, closeAmt);
@@ -183,6 +182,54 @@ const STALE_SIGNAL_MS = 30 * 60 * 1000; // 30 minutes
 export async function checkActiveSignals() {
   const state = loadState();
   if (state.activeSignals.length === 0) return;
+
+  // Pre-migration Binance/Bybit live state cannot be safely managed through
+  // Bitunix. Keep it visible, prevent local finalization, and require explicit
+  // reconciliation on its original venue.
+  const legacyLive = state.activeSignals.filter(signal => signal.liveEnabled && signal.liveVenue !== 'BITUNIX');
+  if (legacyLive.length > 0) {
+    for (const signal of legacyLive) {
+      signal.liveError = `CRITICAL: legacy live position quarantined from Bitunix execution (${signal.symbol})`;
+    }
+    saveState(state);
+    console.error(`[tracker] ${legacyLive.length} legacy live position(s) quarantined; no local close is permitted`);
+    return;
+  }
+
+  // A confirmed entry without a confirmed native stop is an emergency state,
+  // never a normal price-tracked signal. Retry the compensating flatten on every
+  // fast tracker tick until Bitunix confirms that the position is closed.
+  const unprotected = state.activeSignals.filter(signal =>
+    signal.liveEnabled && signal.liveFillConfirmed && !signal.liveProtectionConfirmed,
+  );
+  if (unprotected.length > 0) {
+    const resolved: string[] = [];
+    for (const signal of unprotected) {
+      try {
+        await onForceClose(signal);
+        signal.status = 'auto_closed';
+        signal.resolvedAt = Date.now();
+        signal.autoClosedAt = Date.now();
+        signal.autoCloseReason = 'unprotected_entry_emergency_flatten';
+        signal.finalPnlAmt = signal.livePnlNet ?? 0;
+        state.completedSignals.push({ ...signal });
+        resolved.push(signal.id);
+        await sendAlert(`🚨 <b>Emergency Bitunix flatten confirmed</b>\n${signal.symbol} had no confirmed protective stop and was closed immediately.`, true);
+      } catch (error) {
+        signal.liveError = `CRITICAL unprotected reconciliation retry failed: ${(error as Error).message}`;
+        await sendAlert(`🚨 <b>Critical Bitunix exposure</b>\n${signal.symbol} has a filled position without a confirmed protective stop. Automatic flatten retry failed; do not treat it as a normal trade.`, true);
+      }
+    }
+    if (resolved.length > 0) {
+      state.activeSignals = state.activeSignals.filter(signal => !resolved.includes(signal.id));
+      if (state.completedSignals.length > 500) state.completedSignals = state.completedSignals.slice(-500);
+      saveState(state);
+    }
+    // Do not let an unprotected position pass into normal TP/SL processing.
+    if (state.activeSignals.some(signal => signal.liveEnabled && signal.liveFillConfirmed && !signal.liveProtectionConfirmed)) {
+      return;
+    }
+  }
 
   // ONE bulk request for all perp prices — avoids N concurrent calls that
   // trigger Binance rate-limits / connection timeouts on low-liquidity symbols.
@@ -236,6 +283,9 @@ export async function checkActiveSignals() {
         if (pctToTp >= config.positionMonitoring.breakevenTriggerPct) {
           // Close 50% of the position at current price
           const partialChange = computeCloseAmt(signal, price, 0.5);
+          // For a live position, the exchange must confirm the partial close
+          // before paper state, stop state, or notifications advance.
+          await onPartialTp(signal);
 
           signal.partialTpFired = true;
           signal.partialTpAt = Date.now();
@@ -248,9 +298,9 @@ export async function checkActiveSignals() {
           signal.trailStop = signal.entry;
 
           // Partial exit fee for live trades
-          if (signal.liveEnabled && signal.liveQty) {
+           if (signal.liveEnabled && signal.liveQty && !signal.liveFeePartialExit) {
             signal.liveFeePartialExit = parseFloat(
-              (signal.liveQty * 0.5 * price * config.binanceTakerFee).toFixed(6)
+              (signal.liveQty * 0.5 * price * config.bitunixTakerFee * (1 - config.bitunixFeeCashback)).toFixed(6)
             );
           }
 
@@ -264,8 +314,6 @@ export async function checkActiveSignals() {
             symbol: signal.symbol,
           });
           console.log(`[tracker] [PARTIAL-TP] ${signal.symbol}, 50% closed at $${price.toPrecision(6)}, SL moved to breakeven. P&L: +$${partialChange.toFixed(4)}`);
-          // Live: close 50%, cancel old TP/SL, re-place for remaining half
-          await onPartialTp(signal);
         }
       }
 
@@ -303,13 +351,13 @@ export async function checkActiveSignals() {
         const dir    = signal.direction === 'LONG' ? 1 : -1;
         const unrealizedLoss = (entryP - price) * dir * signal.liveQty; // negative = loss
         if (unrealizedLoss < -(signal.riskAmt * 2.5)) {
+          await onTpSlHit(signal, 'sl');
           toRemove.push(signal.id);
           signal.status     = 'sl_hit';
           signal.resolvedAt = Date.now();
-          await onTpSlHit(signal, 'sl');
-          if (signal.liveEnabled && signal.liveQty) {
+          if (signal.liveEnabled && signal.liveQty && !signal.liveExitConfirmed) {
             const fraction   = signal.partialTpFired ? 0.5 : 1.0;
-            signal.liveFeeExit   = parseFloat((signal.liveQty * fraction * price * config.binanceTakerFee).toFixed(6));
+             signal.liveFeeExit   = parseFloat((signal.liveQty * fraction * price * config.bitunixTakerFee * (1 - config.bitunixFeeCashback)).toFixed(6));
             signal.liveFeesTotal = parseFloat(((signal.liveFeeEntry ?? 0) + (signal.liveFeePartialExit ?? 0) + signal.liveFeeExit).toFixed(6));
             const closeGross = (price - entryP) * dir * signal.liveQty * fraction;
             const partialGross = signal.partialTpPrice ? (signal.partialTpPrice - entryP) * dir * signal.liveQty * 0.5 : 0;
@@ -355,11 +403,12 @@ export async function checkActiveSignals() {
       }
 
       if (hit) {
+        // A failed close leaves the position in activeSignals for retry and
+        // reconciliation; never finalize stats from a tracker price alone.
+        await onTpSlHit(signal, hit);
         toRemove.push(signal.id);
         signal.status = hit === 'tp' ? 'tp_hit' : 'sl_hit';
         signal.resolvedAt = Date.now();
-        // MARKET close for remaining position (tracker-managed — no standing orders)
-        await onTpSlHit(signal, hit);
 
         // ── Live fee + net P&L tracking ──────────────────────────────────────
         if (signal.liveEnabled && signal.liveQty) {
@@ -367,7 +416,9 @@ export async function checkActiveSignals() {
           const entryPrice  = signal.liveFillPrice ?? signal.entry;
           const dir         = signal.direction === 'LONG' ? 1 : -1;
 
-          signal.liveFeeExit   = parseFloat((signal.liveQty * fraction * price * config.binanceTakerFee).toFixed(6));
+          if (!signal.liveFeeExit) {
+            signal.liveFeeExit = parseFloat((signal.liveQty * fraction * price * config.bitunixTakerFee * (1 - config.bitunixFeeCashback)).toFixed(6));
+          }
           signal.liveFeesTotal = parseFloat(
             ((signal.liveFeeEntry ?? 0) + (signal.liveFeePartialExit ?? 0) + signal.liveFeeExit).toFixed(6)
           );
@@ -378,6 +429,10 @@ export async function checkActiveSignals() {
             : 0;
           signal.livePnlGross = parseFloat((finalGross + partialGross).toFixed(6));
           signal.livePnlNet   = parseFloat((signal.livePnlGross - (signal.liveFeesTotal ?? 0)).toFixed(6));
+          if (signal.liveExitConfirmed) {
+            signal.livePnlGross = parseFloat(((signal.livePartialRealizedPnl ?? 0) + (signal.liveExitRealizedPnl ?? 0)).toFixed(6));
+            signal.livePnlNet = parseFloat((signal.livePnlGross - (signal.liveFeesTotal ?? 0)).toFixed(6));
+          }
 
           // Sync real balance after close so dashboard reflects actual exchange balance
           syncRealBalance().catch(console.error);
@@ -408,9 +463,11 @@ export async function checkActiveSignals() {
           state.test2TradeCount++;
         }
 
-        signal.finalPnlAmt = parseFloat(
-          ((signal.partialTpPnlAmt ?? 0) + finalCloseAmt).toFixed(4)
-        );
+        // Exchange-confirmed Bitunix fills are the only live-performance
+        // source of truth. Paper tracking remains separate for observation.
+        signal.finalPnlAmt = signal.liveExitConfirmed && signal.livePnlNet != null
+          ? parseFloat(signal.livePnlNet.toFixed(4))
+          : parseFloat(((signal.partialTpPnlAmt ?? 0) + finalCloseAmt).toFixed(4));
 
         // Update lifetime stats
         if (hit === 'tp') {
@@ -467,6 +524,10 @@ export async function checkActiveSignals() {
         const positionFraction = signal.partialTpFired ? 0.5 : 1.0;
         if (signal.riskAmt) {
           closeAmt = computeCloseAmt(signal, exitPrice, positionFraction);
+        }
+        // Confirm a live flatten before recording an automatic close.
+        await onForceClose(signal);
+        if (signal.riskAmt) {
           applyBalance(state, closeAmt);
           state.test2TradeCount++;
         }
@@ -476,9 +537,6 @@ export async function checkActiveSignals() {
         signal.autoCloseReason = 'price_data_unavailable';
         signal.autoClosePrice = exitPrice;
         signal.finalPnlAmt = parseFloat(((signal.partialTpPnlAmt ?? 0) + closeAmt).toFixed(4));
-        // Live: cancel TP/SL orders and market-close the position
-        await onForceClose(signal);
-
         const acIsWin = (signal.finalPnlAmt ?? 0) >= 0;
         if (acIsWin) { state.totalTpHit++; getOrCreateDailyStats(state).tpHit++; }
         else          { state.totalSlHit++; getOrCreateDailyStats(state).slHit++; }
@@ -565,6 +623,8 @@ export async function monitorPositionTheses() {
 
       const positionFraction = signal.partialTpFired ? 0.5 : 1.0;
       const closeAmt = signal.riskAmt ? computeCloseAmt(signal, exitPrice, positionFraction) : 0;
+      // A live force-close must be confirmed before this signal is finalized.
+      await onForceClose(signal);
 
       signal.status = 'auto_closed';
       signal.resolvedAt = Date.now();
@@ -574,9 +634,6 @@ export async function monitorPositionTheses() {
       signal.finalPnlAmt = parseFloat(
         ((signal.partialTpPnlAmt ?? 0) + closeAmt).toFixed(4)
       );
-      // Live: cancel TP/SL orders and market-close the position
-      await onForceClose(signal);
-
       if (signal.riskAmt) {
         applyBalance(state, closeAmt);
         state.test2TradeCount++;

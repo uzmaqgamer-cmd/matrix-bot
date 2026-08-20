@@ -4,7 +4,8 @@ import { getVpsState, vpsStateIsAlive } from './vps-sync.js';
 import { lastScanSummary } from '../bot/scanner.js';
 import { activityLog, scanFeed, logActivity } from '../bot/eventLog.js';
 import { MATRIX, HIGH_PRIORITY_ROWS } from '../bot/matrix.js';
-import { getCurrentPrice } from '../bot/binance.js';
+import { getCurrentPrice } from '../bot/bitunix.js';
+import { onForceClose } from '../bot/trader.js';
 import type { Signal, BotState } from '../bot/types.js';
 
 const router: IRouter = Router();
@@ -269,6 +270,27 @@ function computeTest1Stats(state: BotState) {
   };
 }
 
+/** Live performance is deliberately derived only from confirmed Bitunix fills. */
+function computeConfirmedPerformance(state: BotState) {
+  const trades = state.completedSignals.filter(signal =>
+    signal.liveVenue === 'BITUNIX' &&
+    signal.liveFillConfirmed === true &&
+    signal.liveExitConfirmed === true &&
+    signal.livePnlNet != null,
+  );
+  const netPnl = trades.reduce((total, signal) => total + (signal.livePnlNet ?? 0), 0);
+  const wins = trades.filter(signal => (signal.livePnlNet ?? 0) > 0).length;
+  return {
+    venue: 'BITUNIX',
+    tradeCount: trades.length,
+    wins,
+    losses: trades.length - wins,
+    winRate: trades.length ? parseFloat((wins / trades.length * 100).toFixed(1)) : null,
+    netPnl: parseFloat(netPnl.toFixed(6)),
+    confirmedOnly: true,
+  };
+}
+
 // ─── GET /api/dashboard ───────────────────────────────────────────────────────
 
 router.get('/dashboard', (_req, res) => {
@@ -288,6 +310,7 @@ router.get('/dashboard', (_req, res) => {
   const priorityResolution = computePriorityResolution(state.completedSignals);
   const test2Stats = computeTest2Stats(state);
   const test1Stats = computeTest1Stats(state);
+  const confirmedPerformance = computeConfirmedPerformance(state);
 
   const total = state.totalTpHit + state.totalSlHit;
   const escalationAccuracyPct = total > 0
@@ -354,6 +377,7 @@ router.get('/dashboard', (_req, res) => {
     realBalanceLog,
     test2Stats,
     test1Stats,
+    confirmedPerformance,
     test2StartedAt: state.test2StartedAt,
     rowFrequency,
     priorityResolution,
@@ -394,7 +418,7 @@ router.get('/dashboard/activity', (_req, res) => {
 // Manually force-close an active signal as auto_closed (thesis_invalidated).
 
 router.post('/force-close/:symbol', requireApiKey, async (req, res) => {
-  const symbol = req.params.symbol.toUpperCase();
+  const symbol = (Array.isArray(req.params.symbol) ? req.params.symbol[0] : req.params.symbol).toUpperCase();
   const state = loadState();
 
   const idx = state.activeSignals.findIndex(s => s.symbol === symbol);
@@ -404,6 +428,16 @@ router.post('/force-close/:symbol', requireApiKey, async (req, res) => {
   }
 
   const signal = state.activeSignals[idx];
+  try {
+    // Preserve and continue monitoring the signal on a failed exchange close.
+    // Local state changes happen only after the Bitunix close is confirmed.
+    await onForceClose(signal);
+  } catch (error) {
+    res.status(502).json({
+      error: `Bitunix close was not confirmed; position remains active for reconciliation: ${(error as Error).message}`,
+    });
+    return;
+  }
 
   // Fetch current price
   let exitPrice = signal.currentPrice ?? 0;

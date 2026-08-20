@@ -21,6 +21,7 @@ export function runOfflineTests(): { results: TestResult[]; passed: number; fail
     activeSignals: [], pendingSignals: [], completedSignals: [],
     dailyStats: [], watchlist: {}, totalSent: 0, totalAccepted: 0,
     totalIgnored: 0, totalTpHit: 0, totalSlHit: 0,
+    paperBalance: 100, test2StartedAt: Date.now(), test2TradeCount: 0, balanceLog: [],
   });
 
   // Test 1: Row 2 PUMP scenario

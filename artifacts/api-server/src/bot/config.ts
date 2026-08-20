@@ -9,13 +9,17 @@ export const config = {
    * Original value was 0.5%; raised to 1.1% to filter low-volatility noise.
    */
   minAtrPercentOfPrice: 1.1,
+  maxAtrPercentOfPrice: 3.0,
 
   /**
    * Binance USDT-M Futures taker fee rate.
    * Used to estimate fees on each trade entry and exit.
    * Standard rate: 0.04% = 0.0004. VIP tiers are lower.
    */
-  binanceTakerFee: 0.0004,
+  bitunixTakerFee: 0.0006,
+  bitunixFeeCashback: 0.60,
+  riskPerPosition: 0.0025,
+  maxAggregateRisk: 0.01,
 
   positionMonitoring: {
     /**
@@ -43,6 +47,6 @@ export const config = {
      * New signals are silently skipped when this cap is reached.
      * Default: 8.
      */
-    maxActivePositions: 8,
+    maxActivePositions: 4,
   },
 } as const;

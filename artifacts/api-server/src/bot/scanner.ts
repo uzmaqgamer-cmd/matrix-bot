@@ -1,5 +1,5 @@
-import { getCloseSeries, getOpenInterestSeries, getFundingRateSeries, getTopSymbolsByVolume, getCachedSymbols } from './binance.js';
-import { openTrade, onForceClose } from './trader.js';
+import { assertOpenInterestSupported, getCloseSeries, getOpenInterestSeries, getFundingRateSeries, getTopSymbolsByVolume, getCachedSymbols } from './bitunix.js';
+import { isLiveTradingEnabled, openTrade, onForceClose } from './trader.js';
 import { evictWeakestMedium } from './tracker.js';
 import { classify } from './classifier.js';
 import { lookupRow, isDivergenceRow, MATRIX } from './matrix.js';
@@ -12,7 +12,7 @@ import { logActivity, logScan } from './eventLog.js';
 import type { Telegram } from 'telegraf';
 import { Markup } from 'telegraf';
 
-const TOP_N = 600;
+const TOP_N = 50;
 const CANDLE_INTERVAL = '15m';
 const OI_PERIOD = '15m';
 const LOOKBACK_CANDLES = 20;
@@ -65,6 +65,10 @@ export async function sendSignal(params: {
   originPriority: 'HIGH' | 'MEDIUM';
 }, forceSend = false) {
   if (!telegramRef || !adminChatId) return;
+  if (params.direction !== 'LONG') {
+    console.log(`[scanner] Bitunix pilot is LONG-only — skipping ${params.symbol} SHORT signal`);
+    return;
+  }
 
   const state = loadState();
   if (!state.signalsEnabled && !forceSend) return;
@@ -135,11 +139,52 @@ export async function sendSignal(params: {
 
     if (isUnlimited) {
       // ─── UNLIMITED MODE: auto-accept, no user prompt ─────────────────────
+      // In live mode, a signal becomes an accepted bot position only after an
+      // exchange-confirmed fill and protective stop.  Paper mode remains useful
+      // for observation but is never mixed into confirmed-fill statistics.
+      if (isLiveTradingEnabled()) {
+        signal.livePendingOpen = true;
+        const result = await openTrade(signal);
+        signal.livePendingOpen = false;
+        if (!result.ok) {
+          signal.liveError = result.error;
+          if (result.unreconciled) {
+            // Do not lose sight of a position when a network failure prevents
+            // the compensating flatten. It is deliberately active-but-unprotected
+            // so the tracker keeps trying to reconcile/close it.
+            signal.status = 'accepted';
+            signal.liveEnabled = true;
+            signal.liveVenue = 'BITUNIX';
+            signal.liveFillConfirmed = true;
+            signal.liveProtectionConfirmed = false;
+            signal.liveOrderId = result.unreconciled.orderId;
+            signal.liveQty = result.unreconciled.quantity;
+            signal.liveFillPrice = result.unreconciled.fillPrice;
+            signal.livePositionId = result.unreconciled.positionId;
+            signal.liveRiskDollar = (state.realBalance ?? state.paperBalance) * config.riskPerPosition;
+            state.activeSignals.push(signal);
+            saveState(state);
+          }
+          console.warn(`[scanner] Bitunix trade rejected for ${signal.symbol}: ${result.error}`);
+          return;
+        }
+        signal.liveEnabled = true;
+        signal.liveVenue = 'BITUNIX';
+        signal.liveFillConfirmed = true;
+        signal.liveProtectionConfirmed = true;
+        signal.liveQty = result.quantity;
+        signal.liveOrderId = result.orderId;
+        signal.liveSlOrderId = result.slOrderId;
+        signal.liveFillPrice = result.fillPrice;
+        signal.liveRiskDollar = result.riskDollar;
+        signal.liveFeeEntry = result.feeEntry;
+        signal.livePositionId = result.positionId;
+      }
       signal.status = 'accepted';
       // Stamp compounding risk amounts at the moment of acceptance (Test 2)
       const balanceForSizing = state.realBalance ?? state.paperBalance;
       signal.balanceAtEntry = balanceForSizing;
-      signal.riskAmt = parseFloat((balanceForSizing * 0.01).toFixed(4));
+      signal.riskAmt = parseFloat((balanceForSizing * config.riskPerPosition).toFixed(4));
       state.activeSignals.push(signal);
       state.totalSent++;
       state.totalAccepted++;
@@ -147,45 +192,6 @@ export async function sendSignal(params: {
       ds.sent++;
       ds.accepted++;
       saveState(state);
-
-      // Open a live Binance position if LIVE_TRADING=true on the VPS.
-      // Set livePendingOpen SYNCHRONOUSLY so the tracker skips TP/SL detection
-      // for this signal until the fill is stamped (prevents ghost-close race).
-      signal.livePendingOpen = true;
-      openTrade(signal).then(result => {
-        signal.livePendingOpen = false;
-        if (result.ok) {
-          signal.liveEnabled    = true;
-          signal.liveQty        = result.quantity;
-          signal.liveOrderId    = result.orderId;
-          signal.liveTpOrderId  = result.tpOrderId;
-          signal.liveSlOrderId  = result.slOrderId;
-          signal.liveFillPrice  = result.fillPrice;
-          signal.liveRiskDollar = result.riskDollar;
-          signal.liveFeeEntry   = result.feeEntry;
-          // Recalculate TP/SL from actual fill price so the tracker monitors
-          // the same levels as the real position (fill may differ from signal entry).
-          const fill = result.fillPrice;
-          if (fill > 0 && signal.atr > 0) {
-            if (signal.direction === 'LONG') {
-              signal.sl = parseFloat((fill - signal.atr).toPrecision(6));
-              signal.tp = parseFloat((fill + signal.atr * signal.rr).toPrecision(6));
-            } else {
-              signal.sl = parseFloat((fill + signal.atr).toPrecision(6));
-              signal.tp = parseFloat((fill - signal.atr * signal.rr).toPrecision(6));
-            }
-            signal.originalSl = signal.originalSl ?? signal.sl;
-          }
-          console.log(`[scanner] Live trade stamped on signal ${signal.id} | sl=${signal.sl} tp=${signal.tp}`);
-        } else {
-          signal.liveError = result.error;
-          console.warn(`[scanner] Live trade skipped for ${signal.symbol}: ${result.error}`);
-        }
-        saveState(state);
-      }).catch(err => {
-        signal.livePendingOpen = false;
-        console.error('[scanner] openTrade unexpected error:', err);
-      });
 
       // Admin gets verbose info; channel gets clean signal only
       const autoText =
@@ -248,6 +254,13 @@ export let lastScanSummary: {
 export async function runFullScan(silent = false) {
   const state = loadState();
   if (!state.signalsEnabled) return;
+
+  try {
+    assertOpenInterestSupported();
+  } catch (error) {
+    console.warn(`[scanner] Scan blocked: ${(error as Error).message}`);
+    return;
+  }
 
   let symbols: string[];
   try {
@@ -378,6 +391,12 @@ export async function runFullScan(silent = false) {
 export async function runWatchlistScan() {
   const state = loadState();
   if (!state.signalsEnabled) return;
+  try {
+    assertOpenInterestSupported();
+  } catch (error) {
+    console.warn(`[scanner] Watchlist scan blocked: ${(error as Error).message}`);
+    return;
+  }
 
   const symbols = Object.keys(state.watchlist);
   if (symbols.length === 0) return;
@@ -406,7 +425,7 @@ export async function runWatchlistScan() {
         originPriority: action.originPriority,
       });
       watchlistChanged = false;
-    } else if (action.type !== 'unchanged') {
+    } else if (action.type !== 'NONE') {
       watchlistChanged = true;
     }
   }

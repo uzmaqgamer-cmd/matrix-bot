@@ -1,6 +1,7 @@
 import { Telegraf, Markup } from 'telegraf';
 import { loadState, saveState, getOrCreateDailyStats } from './storage.js';
-import { openTrade } from './trader.js';
+import { isLiveTradingEnabled, openTrade } from './trader.js';
+import { config } from './config.js';
 import {
   formatWinRate, formatDailyResults, formatActiveSignals,
   formatTestResults, formatRadar, fmtPrice, esc,
@@ -366,51 +367,67 @@ bot.action(/^accept_(.+)$/, async (ctx) => {
   }
 
   const signal = state.pendingSignals[idx];
+  if (signal.marketVenue !== 'BITUNIX') {
+    // Pending signals written before the Bitunix migration have no trustworthy
+    // Bitunix market-data provenance. Quarantine rather than execute them.
+    signal.status = 'ignored';
+    state.pendingSignals.splice(idx, 1);
+    state.totalIgnored++;
+    getOrCreateDailyStats(state).ignored++;
+    saveState(state);
+    return void ctx.answerCbQuery('This legacy signal is quarantined; wait for a Bitunix-verified signal.');
+  }
+  if (signal.direction !== 'LONG') {
+    return void ctx.answerCbQuery('Bitunix pilot is LONG-only.');
+  }
+  // A live acceptance is not counted until the exchange confirms the entry fill
+  // and the native protective stop. This prevents tracker-only ghost trades.
+  if (isLiveTradingEnabled()) {
+    signal.livePendingOpen = true;
+    const result = await openTrade(signal);
+    signal.livePendingOpen = false;
+    if (!result.ok) {
+      signal.liveError = result.error;
+      if (result.unreconciled) {
+        signal.status = 'accepted';
+        signal.liveEnabled = true;
+        signal.liveVenue = 'BITUNIX';
+        signal.liveFillConfirmed = true;
+        signal.liveProtectionConfirmed = false;
+        signal.liveOrderId = result.unreconciled.orderId;
+        signal.liveQty = result.unreconciled.quantity;
+        signal.liveFillPrice = result.unreconciled.fillPrice;
+        signal.livePositionId = result.unreconciled.positionId;
+        signal.liveRiskDollar = (state.realBalance ?? state.paperBalance) * config.riskPerPosition;
+        state.activeSignals.push(signal);
+        state.pendingSignals.splice(idx, 1);
+        saveState(state);
+      }
+      saveState(state);
+      return void ctx.answerCbQuery(`Live order rejected: ${result.error}`.slice(0, 190));
+    }
+    signal.liveEnabled = true;
+    signal.liveVenue = 'BITUNIX';
+    signal.liveFillConfirmed = true;
+    signal.liveProtectionConfirmed = true;
+    signal.liveQty = result.quantity;
+    signal.liveOrderId = result.orderId;
+    signal.liveSlOrderId = result.slOrderId;
+    signal.liveFillPrice = result.fillPrice;
+    signal.liveRiskDollar = result.riskDollar;
+    signal.liveFeeEntry = result.feeEntry;
+    signal.livePositionId = result.positionId;
+  }
   signal.status = 'accepted';
   // Use real exchange balance if available (VPS), otherwise paper balance (Replit)
   const balanceForSizing = state.realBalance ?? state.paperBalance;
   signal.balanceAtEntry = balanceForSizing;
-  signal.riskAmt = parseFloat((balanceForSizing * 0.01).toFixed(4));
+  signal.riskAmt = parseFloat((balanceForSizing * config.riskPerPosition).toFixed(4));
   state.activeSignals.push(signal);
   state.pendingSignals.splice(idx, 1);
   state.totalAccepted++;
   getOrCreateDailyStats(state).accepted++;
   saveState(state);
-
-  // Open a live Binance position if LIVE_TRADING=true on the VPS.
-  // Set livePendingOpen SYNCHRONOUSLY so tracker skips TP/SL detection until fill is stamped.
-  signal.livePendingOpen = true;
-  openTrade(signal).then(result => {
-    signal.livePendingOpen = false;
-    if (result.ok) {
-      signal.liveEnabled    = true;
-      signal.liveQty        = result.quantity;
-      signal.liveOrderId    = result.orderId;
-      signal.liveTpOrderId  = result.tpOrderId;
-      signal.liveSlOrderId  = result.slOrderId;
-      signal.liveFillPrice  = result.fillPrice;
-      signal.liveRiskDollar = result.riskDollar;
-      signal.liveFeeEntry   = result.feeEntry;
-      // Recalculate TP/SL from actual fill so tracker monitors real levels
-      const fill = result.fillPrice;
-      if (fill > 0 && signal.atr > 0) {
-        if (signal.direction === 'LONG') {
-          signal.sl = parseFloat((fill - signal.atr).toPrecision(6));
-          signal.tp = parseFloat((fill + signal.atr * signal.rr).toPrecision(6));
-        } else {
-          signal.sl = parseFloat((fill + signal.atr).toPrecision(6));
-          signal.tp = parseFloat((fill - signal.atr * signal.rr).toPrecision(6));
-        }
-        signal.originalSl = signal.originalSl ?? signal.sl;
-      }
-    } else {
-      signal.liveError = result.error;
-    }
-    saveState(state);
-  }).catch(err => {
-    signal.livePendingOpen = false;
-    console.error('[bot] openTrade unexpected error:', err);
-  });
 
   await ctx.answerCbQuery('✅ Signal accepted! Tracking started.');
   try {
