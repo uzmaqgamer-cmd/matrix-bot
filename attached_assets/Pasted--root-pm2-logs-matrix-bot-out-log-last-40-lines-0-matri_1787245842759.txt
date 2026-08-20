@@ -1,0 +1,42 @@
+/root/.pm2/logs/matrix-bot-out.log last 40 lines:
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping 4USDT
+0|matrix-b | {"level":30,"time":1787245463059,"pid":439524,"hostname":"cryptomatrix-app","req":{"id":2299,"method":"GET","url":"/favicon.ico"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+0|matrix-b | [scanner] Watchlist scan: 63 pairs
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping PENGUUSDT
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-08-20T17:05:19.878Z
+0|matrix-b | [scanner] Full scan done: 600 pairs in 14.8s | watchlist: 82 | signals: 0
+0|matrix-b | [scanner] Watchlist scan: 82 pairs
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Watchlist scan: 82 pairs
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | {"level":30,"time":1787245652782,"pid":439524,"hostname":"cryptomatrix-app","req":{"id":2300,"method":"GET","url":"/"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+0|matrix-b | {"level":30,"time":1787245653333,"pid":439524,"hostname":"cryptomatrix-app","req":{"id":2301,"method":"GET","url":"/favicon.ico"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+0|matrix-b | [scanner] Watchlist scan: 78 pairs
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping COAIUSDT
+0|matrix-b | {"level":30,"time":1787245690966,"pid":439524,"hostname":"cryptomatrix-app","req":{"id":2302,"method":"GET","url":"/favicon.ico"},"res":{"statusCode":404},"responseTime":3,"msg":"request completed"}
+0|matrix-b | [scanner] Cap hit (8 active + 0 pending ≥ 8) — skipping JTOUSDT
+0|matrix-b | [tracker] ZBCNUSDT TP hit @ 0.00191 | finalPnl: $0.0000 | balance: $139.2600
+0|matrix-b | [scanner] Watchlist scan: 76 pairs
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Watchlist scan: 76 pairs
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 600 pairs @ 2026-08-20T17:10:19.411Z
+0|matrix-b | [storage] Partial history (496 of 1702 trades in memory) — using stored balance $139.2600
+0|matrix-b | [storage] Dedup complete — removed 0 duplicate(s). Balance: $139.2600 → $139.2600 | Trades: 1702 → 1702
+0|matrix-b | [bot] DASHBOARD_ONLY mode — scanner disabled, tracker running.
+0|matrix-b | {"level":30,"time":1787245822596,"pid":778281,"hostname":"cryptomatrix-app","msg":"Startup dedup: no duplicates found, state is clean"}
+0|matrix-b | [bot] Daily summary scheduled in 410 minutes.
+0|matrix-b | [bot] Connecting to Telegram in background…
+0|matrix-b | {"level":30,"time":1787245822696,"pid":778281,"hostname":"cryptomatrix-app","port":8080,"msg":"Server listening"}
+0|matrix-b | [bot] Telegram polling started. Matrix Signal Bot fully online.
+0|matrix-b | [tracker] Real balance synced: $0.00
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+
