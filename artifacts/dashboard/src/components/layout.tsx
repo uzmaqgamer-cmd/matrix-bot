@@ -35,7 +35,7 @@ export function Header({ dashboard }: { dashboard: DashboardSnapshot }) {
         ) : (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold border bg-[#ffaa00]/10 text-[#ffaa00] border-[#ffaa00]/20 shadow-[0_0_10px_rgba(255,170,0,0.1)]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#ffaa00] animate-pulse shadow-[0_0_6px_#ffaa00]" />
-            LIMITED · 8 MAX
+            LIMITED · 5 MAX
           </div>
         )}
         
