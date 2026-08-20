@@ -10,6 +10,7 @@ import { runFullScan, runWatchlistScan, initScanner, sendSignal, scanSymbol, get
 import { checkActiveSignals, initTracker, monitorPositionTheses, sendDailySummary, syncRealBalance } from './tracker.js';
 import { runOfflineTests } from './tests.js';
 import { MATRIX } from './matrix.js';
+import { activityLog, scanFeed } from './eventLog.js';
 
 const BOT_TOKEN = process.env['TELEGRAM_BOT_TOKEN']!;
 const ADMIN_ID  = process.env['TELEGRAM_ADMIN_ID'] || process.env['TELEGRAM_CHAT_ID'] || '';
@@ -523,10 +524,16 @@ export function startScanners(): void {
   if (REPLIT_SYNC_URL && BOT_TOKEN) {
     const pushState = async () => {
       try {
+        const payload = {
+          ...loadState(),
+          activityLog,
+          scanFeed,
+          lastScanSummary,
+        };
         await fetch(`${REPLIT_SYNC_URL}/api/vps-sync`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${BOT_TOKEN}` },
-          body:    JSON.stringify(loadState()),
+          body:    JSON.stringify(payload),
           signal:  AbortSignal.timeout(8000),
         });
         console.log('[sync] VPS state pushed to Replit dashboard');

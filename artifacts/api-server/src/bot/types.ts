@@ -158,4 +158,16 @@ export interface BotState {
 
   // ── Activity log persistence ────────────────────────────────────────────────
   activityLog?: import('./eventLog.js').ActivityEntry[]; // persisted so restarts don't wipe history
+
+  // ── Live scan telemetry (VPS → Replit sync only; not persisted to disk/DB) ──
+  scanFeed?: import('./eventLog.js').ScanEntry[];
+  lastScanSummary?: {
+    startedAt: number;
+    finishedAt: number | null;
+    scanned: number;
+    total: number;
+    watchlistCount: number;
+    signalsSent: number;
+    inProgress: boolean;
+  };
 }

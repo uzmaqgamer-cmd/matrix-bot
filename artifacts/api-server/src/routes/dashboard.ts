@@ -355,7 +355,13 @@ router.get('/dashboard', (_req, res) => {
     return b.cyclesWatched - a.cyclesWatched;
   });
 
-  const scan = lastScanSummary;
+  // Prefer live scan telemetry pushed from the VPS (where the real scanner runs)
+  // over this process's own local state, which stays empty when running in
+  // DASHBOARD_ONLY mode.
+  const vpsAlive = vpsStateIsAlive();
+  const scan = (vpsAlive && state.lastScanSummary) ? state.lastScanSummary : lastScanSummary;
+  const liveScanFeed = (vpsAlive && state.scanFeed) ? state.scanFeed : scanFeed;
+  const liveActivity = (vpsAlive && state.activityLog) ? state.activityLog : activityLog;
 
   const response = {
     devMode: process.env.NODE_ENV !== 'production',
@@ -386,8 +392,8 @@ router.get('/dashboard', (_req, res) => {
     pendingSignals: state.pendingSignals.map(enrichSignal),
     recentTrades: [...state.completedSignals].reverse().slice(0, 100).map(enrichSignal),
     watchlist: watchlistItems,
-    scanFeed: scanFeed.slice(0, 30),
-    activity: activityLog.slice(0, 20),
+    scanFeed: liveScanFeed.slice(0, 30),
+    activity: liveActivity.slice(0, 20),
     today: { ...todayStats, partialTpHit: todayPartialTpHit },
     scan: {
       inProgress: scan.inProgress,
