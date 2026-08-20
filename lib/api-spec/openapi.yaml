@@ -419,6 +419,20 @@ components:
           items:
             type: number
           description: Running paper balance after each Test 2 trade close (starts at 100)
+        realBalance:
+          type: ["number", "null"]
+          description: Latest confirmed Bitunix USDT futures available balance (VPS live trading only; null on Replit paper trading)
+        realBalanceDelta:
+          type: ["number", "null"]
+          description: Change in real exchange balance since the start of the current realBalanceLog
+        realBalanceAt:
+          type: ["number", "null"]
+          description: Unix timestamp of the last successful real-balance sync
+        realBalanceLog:
+          type: array
+          items:
+            type: number
+          description: Sampled real exchange balance after each trade close (last 100)
         test2Stats:
           $ref: "#/components/schemas/Test2Stats"
         test1Stats:

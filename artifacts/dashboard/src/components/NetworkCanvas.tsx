@@ -52,7 +52,7 @@ export function NetworkCanvas({ label, accentUp, accentDown, unit, nodes, height
       pulse: Math.random() * Math.PI * 2,
     }));
 
-    const dirColor = (d: 1 | 0 | -1) => d > 0 ? accentUp : d < 0 ? accentDown : '#3a4650';
+    const dirColor = (d: 1 | 0 | -1) => d > 0 ? accentUp : d < 0 ? accentDown : '#475569'; // slate-600
 
     const draw = () => {
       const w = cw(), h = ch();
@@ -75,7 +75,7 @@ export function NetworkCanvas({ label, accentUp, accentDown, unit, nodes, height
           const a = phys[i], b = phys[j];
           const d = Math.hypot(a.x - b.x, a.y - b.y);
           if (d < 110) {
-            ctx.strokeStyle = `rgba(255,255,255,${0.06 * (1 - d / 110)})`;
+            ctx.strokeStyle = `rgba(255,255,255,${0.08 * (1 - d / 110)})`;
             ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
           }
@@ -90,23 +90,23 @@ export function NetworkCanvas({ label, accentUp, accentDown, unit, nodes, height
 
         ctx.save();
         ctx.shadowColor = col;
-        ctx.shadowBlur = nd.dir === 0 ? 3 : 12;
+        ctx.shadowBlur = nd.dir === 0 ? 5 : 15;
         ctx.fillStyle = col;
         ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
 
         // Symbol label
         ctx.fillStyle = col;
-        ctx.font = "bold 8px 'JetBrains Mono', monospace";
+        ctx.font = "bold 9px 'JetBrains Mono', monospace";
         ctx.textAlign = 'center';
         const shortName = p.name.replace('USDT', '').slice(0, 6);
-        ctx.fillText(shortName, p.x, p.y - r - 3);
+        ctx.fillText(shortName, p.x, p.y - r - 4);
 
         // Value
         const sign = nd.val >= 0 ? '+' : '';
-        ctx.font = "8px 'JetBrains Mono', monospace";
+        ctx.font = "bold 8px 'JetBrains Mono', monospace";
         ctx.fillStyle = `${col}cc`;
-        ctx.fillText(`${sign}${nd.val.toFixed(2)}${unit}`, p.x, p.y + r + 9);
+        ctx.fillText(`${sign}${nd.val.toFixed(2)}${unit}`, p.x, p.y + r + 10);
       });
 
       animId = requestAnimationFrame(draw);
@@ -119,8 +119,8 @@ export function NetworkCanvas({ label, accentUp, accentDown, unit, nodes, height
   }, [accentUp, accentDown, unit, height]);
 
   return (
-    <div className="matrix-card flex flex-col p-2 z-10">
-      <div className="text-[9px] text-[#55636f] tracking-[0.9px] uppercase font-medium mb-1">{label}</div>
+    <div className="glass-panel flex flex-col p-2.5 z-10 bg-black/20 hover:bg-black/30 transition-colors cursor-default">
+      <div className="text-[9px] text-slate-400 tracking-widest uppercase font-semibold mb-1 px-1 font-sans">{label}</div>
       <canvas ref={canvasRef} className="w-full block" style={{ height }} />
     </div>
   );

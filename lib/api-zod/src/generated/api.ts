@@ -33,6 +33,10 @@ export const GetDashboardResponse = zod.object({
   "paperBalanceDelta": zod.number(),
   "paperBalancePct": zod.number(),
   "balanceHistory": zod.array(zod.number()).describe('Running paper balance after each Test 2 trade close (starts at 100)'),
+  "realBalance": zod.number().nullish().describe('Latest confirmed Bitunix USDT futures available balance (VPS live trading only; null on Replit paper trading)'),
+  "realBalanceDelta": zod.number().nullish().describe('Change in real exchange balance since the start of the current realBalanceLog'),
+  "realBalanceAt": zod.number().nullish().describe('Unix timestamp of the last successful real-balance sync'),
+  "realBalanceLog": zod.array(zod.number()).optional().describe('Sampled real exchange balance after each trade close (last 100)'),
   "test2Stats": zod.object({
   "balance": zod.number().optional(),
   "tradeCount": zod.number().optional(),

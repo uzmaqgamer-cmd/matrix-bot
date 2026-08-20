@@ -11,33 +11,44 @@ export function Header({ dashboard }: { dashboard: DashboardSnapshot }) {
   }, []);
 
   return (
-    <div className="flex items-center justify-between shrink-0 z-10 font-sans px-1">
-      <div className="flex items-center gap-3">
-        <div className="w-7 h-7 rounded-lg bg-[radial-gradient(circle_at_30%_30%,#1D9E75,#04342C)] flex items-center justify-center text-[#5DCAA5] font-bold text-[13px] shadow-[0_0_16px_rgba(29,158,117,0.5)]">M</div>
+    <div className="flex items-center justify-between shrink-0 z-10 px-2 py-1">
+      <div className="flex items-center gap-4">
+        {/* Logo Mark */}
+        <div className="relative flex items-center justify-center w-11 h-11 rounded-2xl bg-white/5 border border-white/10 shadow-[0_0_25px_rgba(0,229,255,0.15)] overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#00e5ff]/20 to-transparent" />
+          <span className="relative text-[#00e5ff] font-bold text-xl tracking-tighter">M</span>
+        </div>
+        
         <div>
-          <div className="text-[13px] font-semibold text-[#e8ecf0]">MATRIX SIGNAL ENGINE</div>
-          <div className="text-[10px] text-[#55636f]">OI · PRICE · FUNDING NEURAL LATTICE</div>
+          <div className="text-[17px] font-bold text-white tracking-wide">MATRIX ENGINE</div>
+          <div className="text-[10px] text-slate-400 font-mono tracking-[0.2em] mt-0.5">AUTONOMOUS SIGNAL LATTICE</div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {/* Signal mode badge */}
         {(dashboard as any).signalMode === 'UNLIMITED' ? (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] tracking-[0.4px] font-medium border bg-[rgba(133,183,235,0.1)] text-[#85B7EB] border-[rgba(133,183,235,0.3)]">
-            <span>♾ UNLIMITED</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold border bg-[#00e5ff]/10 text-[#00e5ff] border-[#00e5ff]/20 shadow-[0_0_10px_rgba(0,229,255,0.1)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00e5ff] animate-pulse shadow-[0_0_6px_#00e5ff]" />
+            UNLIMITED
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] tracking-[0.4px] font-medium border bg-[rgba(245,180,87,0.1)] text-[#F5B457] border-[rgba(245,180,87,0.3)]">
-            <span>LIMITED · 8 MAX</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold border bg-[#ffaa00]/10 text-[#ffaa00] border-[#ffaa00]/20 shadow-[0_0_10px_rgba(255,170,0,0.1)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#ffaa00] animate-pulse shadow-[0_0_6px_#ffaa00]" />
+            LIMITED · 8 MAX
           </div>
         )}
+        
         {/* Signals enabled/disabled badge */}
-        <div className={`flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] tracking-[0.4px] font-medium border ${dashboard.signalsEnabled ? 'bg-[rgba(93,202,165,0.1)] text-[#5DCAA5] border-[rgba(93,202,165,0.3)]' : 'bg-[rgba(240,113,110,0.1)] text-[#F0716E] border-[rgba(240,113,110,0.3)]'}`}>
-          <span>{dashboard.signalsEnabled ? 'SIGNAL-ONLY' : 'SIGNALS DISABLED'}</span>
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold border ${dashboard.signalsEnabled ? 'bg-[#00e5ff]/10 text-[#00e5ff] border-[#00e5ff]/20' : 'bg-[#ff2a5f]/10 text-[#ff2a5f] border-[#ff2a5f]/20'}`}>
+          <span>{dashboard.signalsEnabled ? 'SIGNALS ACTIVE' : 'SIGNALS OFFLINE'}</span>
         </div>
-        <span className="font-mono text-[9.5px] text-[#55636f] tracking-[0.9px] uppercase font-medium">
-          {format(time, 'HH:mm:ss')}
-        </span>
+        
+        <div className="glass-panel px-4 py-1.5 rounded-lg flex items-center justify-center min-w-[100px] border border-white/10">
+           <span className="font-mono text-sm text-slate-200 tracking-widest font-semibold">
+             {format(time, 'HH:mm:ss')}
+           </span>
+        </div>
       </div>
     </div>
   );
@@ -53,7 +64,7 @@ export function TopStats({ dashboard }: { dashboard: DashboardSnapshot }) {
   };
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 shrink-0">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0 z-10">
       <StatCard
         label={dashboard.realBalance != null ? 'EXCHANGE BALANCE' : 'PAPER BALANCE'}
         value={`$${(dashboard.realBalance ?? dashboard.paperBalance).toFixed(2)}`}
@@ -86,45 +97,46 @@ export function TopStats({ dashboard }: { dashboard: DashboardSnapshot }) {
 }
 
 function StatCard({ label, value, sub, delta, deltaFormat, color, isHits }: any) {
-  let valNode: React.ReactNode = <span className="text-[#e8ecf0]">{value}</span>;
+  let valNode: React.ReactNode = <span className="text-white">{value}</span>;
 
   if (label === 'PAPER BALANCE') {
-    valNode = <span className="text-[#5DCAA5] glow-green">{value}</span>;
+    valNode = <span className="glow-text-cyan">{value}</span>;
   } else if (label === 'ESCALATION ACCURACY') {
     if (color === 'emerald') {
-      valNode = <span className="text-[#5DCAA5] glow-green">{value}</span>;
+      valNode = <span className="glow-text-cyan">{value}</span>;
     } else if (color === 'rose') {
-      valNode = <span className="text-[#F0716E] glow-red">{value}</span>;
+      valNode = <span className="glow-text-rose">{value}</span>;
     } else {
-      valNode = <span className="text-[#e8ecf0]">{value}</span>;
+      valNode = <span className="text-white">{value}</span>;
     }
   } else if (isHits) {
     const parts = value.split(' / ');
     if (parts.length === 2) {
       valNode = (
         <>
-          <span className="text-[#5DCAA5] glow-green">{parts[0]}</span>
-          <span className="text-[#55636f]"> / </span>
-          <span className="text-[#F0716E] glow-red">{parts[1]}</span>
+          <span className="glow-text-cyan">{parts[0]}</span>
+          <span className="text-slate-600 mx-2">/</span>
+          <span className="glow-text-rose">{parts[1]}</span>
         </>
       );
     }
   } else if (color === 'muted') {
-    valNode = <span className="text-[#e8ecf0]">{value}</span>;
+    valNode = <span className="text-slate-200">{value}</span>;
   }
 
   return (
-    <div className="matrix-card p-3 flex flex-col justify-between font-mono">
-      <div className="text-[9.5px] text-[#55636f] tracking-[0.9px] uppercase font-medium">{label}</div>
-      <div className="flex items-end justify-between mt-1">
-        <div className={`text-[22px] font-bold`}>{valNode}</div>
+    <div className="glass-panel p-4 flex flex-col justify-between hover:bg-white/[0.03] transition-colors relative overflow-hidden group">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-white/[0.02] rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-white/[0.04] transition-colors pointer-events-none" />
+      <div className="text-[10px] text-slate-400 tracking-widest uppercase font-semibold font-sans mb-3">{label}</div>
+      <div className="flex items-end justify-between mt-1 relative z-10">
+        <div className="text-2xl font-bold font-mono tracking-tight">{valNode}</div>
         {delta !== undefined && (
-          <div className={`text-[10.5px] ${delta >= 0 ? 'text-[#5DCAA5]' : 'text-[#F0716E]'}`}>
+          <div className={`text-[11px] font-mono font-bold bg-black/30 px-2 py-1 rounded border border-white/5 ${delta >= 0 ? 'text-[#00e5ff]' : 'text-[#ff2a5f]'}`}>
             {delta > 0 ? '+' : ''}{deltaFormat === 'money' ? '$' : ''}{delta.toFixed(2)}
           </div>
         )}
       </div>
-      {sub && <div className="text-[10.5px] text-[#55636f] mt-1">{sub}</div>}
+      {sub && <div className="text-[10px] text-slate-500 mt-3 font-sans relative z-10">{sub}</div>}
     </div>
   );
 }

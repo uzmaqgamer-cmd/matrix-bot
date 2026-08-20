@@ -33,6 +33,23 @@ export interface DashboardSnapshot {
   paperBalancePct: number;
   /** Running paper balance after each Test 2 trade close (starts at 100) */
   balanceHistory: number[];
+  /**
+     * Latest confirmed Bitunix USDT futures available balance (VPS live trading only; null on Replit paper trading)
+     * @nullable
+     */
+  realBalance?: number | null;
+  /**
+     * Change in real exchange balance since the start of the current realBalanceLog
+     * @nullable
+     */
+  realBalanceDelta?: number | null;
+  /**
+     * Unix timestamp of the last successful real-balance sync
+     * @nullable
+     */
+  realBalanceAt?: number | null;
+  /** Sampled real exchange balance after each trade close (last 100) */
+  realBalanceLog?: number[];
   test2Stats?: Test2Stats;
   test1Stats?: Test1Stats;
   /** Unix timestamp when Test 2 was activated */

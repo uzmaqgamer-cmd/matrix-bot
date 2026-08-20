@@ -80,10 +80,11 @@ export function NeuralNerveCanvas() {
 
     // ── Nerve fibers ──────────────────────────────────────────────────────────
     const NUM_FIBERS = 16;
+    // Glass theme cool teals/blues/purples for base fibers
     const FIBER_COLORS = [
-      '#0d6b52', '#0f7a5c', '#0a4a3a', '#0d5c48',
-      '#0d4f5c', '#0a3a5c', '#0f6b5a', '#124a3c',
-      '#1a7060', '#0d5240', '#083a2c', '#0a5046',
+      '#0e7490', '#0369a1', '#1d4ed8', '#0f766e',
+      '#075985', '#1e3a8a', '#0369a1', '#115e59',
+      '#0284c7', '#0891b2', '#1e40af', '#0f766e',
     ];
 
     const mkFiber = (): Fiber => ({
@@ -110,7 +111,8 @@ export function NeuralNerveCanvas() {
     const fibers: Fiber[] = Array.from({ length: NUM_FIBERS }, mkFiber);
 
     // ── Signal packets ────────────────────────────────────────────────────────
-    const PACKET_COLORS = ['#5DCAA5', '#00ff9d', '#4ae3c8', '#7dffd1', '#2affa0', '#48d9b0', '#9effd8'];
+    // Amber and Cyan packets running through
+    const PACKET_COLORS = ['#00e5ff', '#ffaa00', '#0ea5e9', '#38bdf8', '#f59e0b', '#00e5ff'];
     const NUM_PACKETS = 32;
 
     const mkPacket = (): Packet => ({
@@ -134,17 +136,6 @@ export function NeuralNerveCanvas() {
       r: 1.2 + Math.random() * 1.6,
     }));
 
-    // ── Text flicker state ────────────────────────────────────────────────────
-    const TEXT_LINES = [
-      'NEURAL VERIFICATION LAYER',
-      'SIGNAL FORMATION PENDING',
-      'BOT MATRIX SCANNING',
-      'AWAITING TRIGGER CONDITIONS',
-    ];
-    let textIdx = 0;
-    let textTimer = 0;
-    const TEXT_INTERVAL = 140; // frames
-
     // ── Draw loop ─────────────────────────────────────────────────────────────
     let frame = 0;
 
@@ -155,13 +146,8 @@ export function NeuralNerveCanvas() {
         return;
       }
 
-      // Background
+      // Background - completely clear to show glass panel beneath
       ctx.clearRect(0, 0, W, H);
-      const bg = ctx.createRadialGradient(W * 0.5, H * 0.4, 0, W * 0.5, H * 0.5, Math.max(W, H) * 0.85);
-      bg.addColorStop(0, 'rgba(8,17,14,0.96)');
-      bg.addColorStop(1, 'rgba(4,9,12,0.99)');
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, W, H);
 
       // Subtle hex-grid background dots
       const gridStep = 28;
@@ -169,7 +155,7 @@ export function NeuralNerveCanvas() {
         for (let gy = 0; gy < H + gridStep; gy += gridStep * 0.866) {
           const offset = (Math.floor(gy / (gridStep * 0.866)) % 2) * gridStep * 0.5;
           const px = gx + offset;
-          ctx.fillStyle = 'rgba(13,92,72,0.09)';
+          ctx.fillStyle = 'rgba(255,255,255,0.03)';
           ctx.beginPath();
           ctx.arc(px, gy, 0.6, 0, Math.PI * 2);
           ctx.fill();
@@ -208,7 +194,6 @@ export function NeuralNerveCanvas() {
       // Bright highlight fibers when packet is nearby
       packets.forEach(p => {
         const f = fibers[p.fiberIdx];
-        const pos = bezierPt(f, p.t);
         // Tiny bright streak on the fiber near the packet
         const t0 = Math.max(0, p.t - 0.06);
         const t1 = Math.min(1, p.t + 0.01);
@@ -272,12 +257,13 @@ export function NeuralNerveCanvas() {
         n.pulse += n.pulseSpeed;
         const glow = 0.25 + Math.sin(n.pulse) * 0.20;
         const r = n.r + Math.sin(n.pulse) * 0.7;
+        const colorCyan = '0,229,255';
 
         // Outer halo
         ctx.save();
-        ctx.shadowColor = '#5DCAA5';
+        ctx.shadowColor = '#00e5ff';
         ctx.shadowBlur = 8;
-        ctx.fillStyle = `rgba(93,202,165,${glow * 0.6})`;
+        ctx.fillStyle = `rgba(${colorCyan},${glow * 0.4})`;
         ctx.beginPath();
         ctx.arc(n.x, n.y, r * 2.2, 0, Math.PI * 2);
         ctx.fill();
@@ -285,42 +271,14 @@ export function NeuralNerveCanvas() {
 
         // Core
         ctx.save();
-        ctx.shadowColor = '#5DCAA5';
+        ctx.shadowColor = '#00e5ff';
         ctx.shadowBlur = 4;
-        ctx.fillStyle = `rgba(93,202,165,${glow + 0.1})`;
+        ctx.fillStyle = `rgba(${colorCyan},${glow + 0.1})`;
         ctx.beginPath();
         ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       });
-
-      // ── Overlay text ────────────────────────────────────────────────────────
-      textTimer++;
-      if (textTimer >= TEXT_INTERVAL) {
-        textTimer = 0;
-        textIdx = (textIdx + 1) % TEXT_LINES.length;
-      }
-
-      const textAlpha = textTimer < 20
-        ? textTimer / 20
-        : textTimer > TEXT_INTERVAL - 20
-          ? (TEXT_INTERVAL - textTimer) / 20
-          : 1;
-
-      ctx.save();
-      ctx.textAlign = 'center';
-      ctx.font = `bold 9px 'JetBrains Mono', monospace`;
-      ctx.fillStyle = `rgba(93,202,165,${0.22 * textAlpha})`;
-      ctx.fillText(TEXT_LINES[textIdx], W / 2, H / 2 - 6);
-
-      ctx.font = `7px 'JetBrains Mono', monospace`;
-      ctx.fillStyle = `rgba(85,99,111,${0.35 * textAlpha})`;
-      ctx.fillText(
-        `${NUM_PACKETS} SIGNAL PATHWAYS · ${NUM_FIBERS} NEURAL FIBERS · MATRIX ACTIVE`,
-        W / 2,
-        H / 2 + 10,
-      );
-      ctx.restore();
 
       animId = requestAnimationFrame(draw);
     };
@@ -334,7 +292,7 @@ export function NeuralNerveCanvas() {
   }, []);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 w-full h-full">
+    <div ref={containerRef} className="absolute inset-0 w-full h-full pointer-events-none">
       <canvas ref={canvasRef} className="absolute inset-0" />
     </div>
   );
