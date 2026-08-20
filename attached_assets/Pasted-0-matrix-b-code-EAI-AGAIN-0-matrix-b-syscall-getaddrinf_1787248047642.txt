@@ -1,0 +1,62 @@
+0|matrix-b |   code: 'EAI_AGAIN',
+0|matrix-b |   syscall: 'getaddrinfo',
+0|matrix-b |   hostname: 'helium'
+0|matrix-b | }
+0|matrix-b | [tracker] syncRealBalance failed: Bitunix account response has no positive available USDT balance
+0|matrix-b | [tracker] syncRealBalance failed: Bitunix account response has no positive available USDT balance
+0|matrix-b | /opt/matrix-bot/node_modules/.pnpm/telegraf@4.16.3/node_modules/telegraf/lib/telegraf.js:218
+0|matrix-b |             throw new Error('Bot is not running!');
+0|matrix-b |             ^
+0|matrix-b | 
+0|matrix-b | 
+0|matrix-b | Error: Bot is not running!
+0|matrix-b |     at Telegraf2.stop (/opt/matrix-bot/node_modules/.pnpm/telegraf@4.16.3/node_modules/telegraf/lib/telegraf.js:218:19)
+0|matrix-b |     at process.<anonymous> (/opt/matrix-bot/artifacts/api-server/src/bot/index.ts:563:37)
+0|matrix-b |     at Object.onceWrapper (node:events:639:26)
+0|matrix-b |     at process.emit (node:events:536:35)
+0|matrix-b | 
+0|matrix-b | Node.js v20.20.2
+0|matrix-b | [storage] DB unavailable, falling back to file: Error: getaddrinfo EAI_AGAIN helium
+0|matrix-b |     at <anonymous> (/opt/matrix-bot/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45:11)
+0|matrix-b |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|matrix-b |     at async ensureTable (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:60:3)
+0|matrix-b |     at async initStorage (/opt/matrix-bot/artifacts/api-server/src/bot/storage.ts:142:7)
+0|matrix-b |     at async <anonymous> (/opt/matrix-bot/artifacts/api-server/src/index.ts:28:5) {
+0|matrix-b |   errno: -3001,
+0|matrix-b |   code: 'EAI_AGAIN',
+0|matrix-b |   syscall: 'getaddrinfo',
+0|matrix-b |   hostname: 'helium'
+0|matrix-b | }
+0|matrix-b | [tracker] syncRealBalance failed: Bitunix account response has no positive available USDT balance
+
+/root/.pm2/logs/matrix-bot-out.log last 30 lines:
+0|matrix-b | [bot] Telegram polling started. Matrix Signal Bot fully online.
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 9 pairs @ 2026-08-20T17:38:33.946Z
+0|matrix-b | [scanner] Full scan done: 9 pairs in 0.6s | watchlist: 76 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 9 pairs @ 2026-08-20T17:43:33.473Z
+0|matrix-b | [scanner] Full scan done: 9 pairs in 1.4s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [storage] Dedup complete — removed 0 duplicate(s). Balance: $100.0000 → $100.0000 | Trades: 0 → 0
+0|matrix-b | {"level":30,"time":1787247953529,"pid":778733,"hostname":"cryptomatrix-app","msg":"Startup dedup: no duplicates found, state is clean"}
+0|matrix-b | [bot] Scanners and tracker started.
+0|matrix-b | [bot] Daily summary scheduled in 374 minutes.
+0|matrix-b | [bot] Connecting to Telegram in background…
+0|matrix-b | {"level":30,"time":1787247953637,"pid":778733,"hostname":"cryptomatrix-app","port":8080,"msg":"Server listening"}
+0|matrix-b | [bot] Telegram polling started. Matrix Signal Bot fully online.
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [storage] Dedup complete — removed 0 duplicate(s). Balance: $100.0000 → $100.0000 | Trades: 0 → 0
+0|matrix-b | {"level":30,"time":1787248027867,"pid":778813,"hostname":"cryptomatrix-app","msg":"Startup dedup: no duplicates found, state is clean"}
+0|matrix-b | [bot] Scanners and tracker started.
+0|matrix-b | [bot] Daily summary scheduled in 373 minutes.
+0|matrix-b | [bot] Connecting to Telegram in background…
+0|matrix-b | {"level":30,"time":1787248027964,"pid":778813,"hostname":"cryptomatrix-app","port":8080,"msg":"Server listening"}
+0|matrix-b | [bot] Telegram polling started. Matrix Signal Bot fully online.
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
