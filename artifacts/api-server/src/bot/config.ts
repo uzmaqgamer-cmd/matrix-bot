@@ -20,7 +20,23 @@ export const config = {
   bitunixFeeCashback: 0.60,
   riskPerPosition: 0.05,
   maxAggregateRisk: 0.20,
-  minOpenInterestUsd: 10_000_000,
+
+  /**
+   * Minimum 24h Bitunix quote turnover (USD) for a pair to enter the scan
+   * universe. Lowered from $20M to $1M on 2026-08-21 to widen the universe
+   * to 100+ pairs at the user's explicit request. Below $20M, pairs are
+   * meaningfully thinner and more prone to slippage/manipulation on stops.
+   */
+  minTurnoverUsd: 1_000_000,
+
+  /**
+   * Minimum Bybit-sourced open interest (USD) for a pair to remain eligible.
+   * Lowered from $10M to $2M on 2026-08-21 alongside the turnover floor, to
+   * reach a 100+ pair universe. This intentionally admits thinner/meme-tier
+   * markets; OI availability itself is still a hard requirement (fail closed
+   * when Bybit has no OI data for a symbol).
+   */
+  minOpenInterestUsd: 2_000_000,
   externalOiSource: 'BYBIT_PUBLIC' as const,
 
   positionMonitoring: {

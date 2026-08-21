@@ -211,7 +211,7 @@ export async function getTopSymbolsByVolume(n: number): Promise<string[]> {
   const [instruments, tickers] = await Promise.all([getAllPerpSymbols(), get24hTickers()]);
   const allowed = new Set(instruments.map(item => item.symbol));
   const liquid = tickers
-    .filter(ticker => allowed.has(ticker.symbol) && Number(ticker.quoteVol) >= 20_000_000)
+    .filter(ticker => allowed.has(ticker.symbol) && Number(ticker.quoteVol) >= config.minTurnoverUsd)
     .sort((a, b) => Number(b.quoteVol) - Number(a.quoteVol));
 
   const selected: string[] = [];
