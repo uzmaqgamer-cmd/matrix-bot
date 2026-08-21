@@ -1,0 +1,127 @@
+atrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T05:38:05.246Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.7s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T05:43:04.819Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.7s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T05:48:05.439Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.8s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T05:53:05.593Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.8s | watchlist: 0 | signals: 0
+0|matrix-b | {"level":30,"time":1787291624945,"pid":780468,"hostname":"cryptomatrix-app","req":{"id":117,"method":"GET","url":"/"},"res":{"statusCode":404},"responseTime":4,"msg":"request completed"}
+0|matrix-b | {"level":30,"time":1787291625365,"pid":780468,"hostname":"cryptomatrix-app","req":{"id":118,"method":"GET","url":"/favicon.ico"},"res":{"statusCode":404},"responseTime":0,"msg":"request completed"}
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T05:58:05.392Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.7s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T06:03:05.147Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.7s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T06:08:05.232Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.7s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T06:13:05.695Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.7s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T06:18:06.084Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.8s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T06:23:06.079Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.8s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | {"level":30,"time":1787293656054,"pid":780468,"hostname":"cryptomatrix-app","req":{"id":119,"method":"GET","url":"/login"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T06:28:05.883Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.8s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T06:33:05.691Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.8s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T06:38:05.213Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.7s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T06:43:05.387Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.7s | watchlist: 0 | signals: 0
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T06:48:05.832Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 2.8s | watchlist: 1 | signals: 0
+0|matrix-b | [scanner] Watchlist scan: 1 pairs
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Watchlist scan: 1 pairs
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Watchlist scan: 1 pairs
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Watchlist scan: 1 pairs
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Watchlist scan: 1 pairs
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Full scan: 13 pairs @ 2026-08-21T06:53:05.775Z
+0|matrix-b | [scanner] Full scan done: 13 pairs in 1.6s | watchlist: 1 | signals: 0
+0|matrix-b | [scanner] Watchlist scan: 1 pairs
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Watchlist scan: 1 pairs
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Watchlist scan: 1 pairs
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+0|matrix-b | [scanner] Watchlist scan: 1 pairs
+0|matrix-b | [sync] VPS state pushed to Replit dashboard
+
